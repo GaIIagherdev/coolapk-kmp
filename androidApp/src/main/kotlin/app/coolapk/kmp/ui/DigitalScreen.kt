@@ -1,6 +1,24 @@
 package app.coolapk.kmp.ui
 
 import android.content.Intent
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SecondaryScrollableTabRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import com.coolapk.kmp.core.productSpecs
+import kotlinx.coroutines.flow.filter
 import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -121,50 +139,112 @@ internal fun DigitalScreen(
             state.configError ?: "暂无数码栏目",
             onRetry = viewModel::loadConfig,
         )
-        else -> Column(Modifier.fillMaxSize()) {
-            LazyRow(
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(state.tabs, key = DigitalTab::key) { tab ->
-                    FilterChip(
-                        selected = state.selectedKey == tab.key,
-                        onClick = { viewModel.selectTab(tab) },
-                        label = { Text(tab.title) },
-                    )
-                }
+        else -> DigitalChannels(
+            state = state,
+            viewModel = viewModel,
+            onOpen = ::openEntity,
+            onLike = onLike,
+            onOpenFeed = onOpenFeed,
+            onOpenImage = onOpenImage,
+            feedState = feedState,
+        )
+    }
+}
+
+/** 数码频道：顶部可滚动频道栏 + 左右滑动翻页，每个频道独立保留列表与选中状态。 */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@Composable
+private fun DigitalChannels(
+    state: DigitalUiState,
+    viewModel: DigitalViewModel,
+    onOpen: (DigitalEntity) -> Unit,
+    onLike: (FeedItem) -> Unit,
+    onOpenFeed: (String, FeedItem?, Boolean) -> Unit,
+    onOpenImage: (List<String>, Int) -> Unit,
+    feedState: HomeUiState,
+) {
+    val context = LocalContext.current
+    val selectedIndex = state.tabs.indexOfFirst { it.key == state.selectedKey }.coerceAtLeast(0)
+    val pagerState = rememberPagerState(initialPage = selectedIndex) { state.tabs.size }
+    LaunchedEffect(selectedIndex) {
+        if (pagerState.currentPage != selectedIndex) pagerState.animateScrollToPage(selectedIndex)
+    }
+    // 只在一次滚动结束且停在非当前频道上时切换；网页频道改为打开浏览器并回弹
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.isScrollInProgress }.distinctUntilChanged().filter { !it }.collect {
+            val tab = state.tabs.getOrNull(pagerState.settledPage) ?: return@collect
+            if (tab.key == state.selectedKey) return@collect
+            val webUrl = tab.webUrl?.takeIf { it.startsWith("http") }
+            if (webUrl != null) {
+                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(webUrl))) }
+                pagerState.animateScrollToPage(selectedIndex)
+            } else {
+                viewModel.selectTab(tab)
             }
-            val tab = state.selectedTab
-            when {
-                tab == null -> DigitalEmptyState("暂无数码栏目", viewModel::loadConfig)
-                tab.webUrl?.let { url -> url.startsWith("http") } == true -> DigitalWebTab(tab.webUrl.orEmpty()) {
-                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(tab.webUrl.orEmpty()))) }
-                }
-                tab.category -> DigitalLibrary(
-                    state = state,
-                    onMode = viewModel::selectLibraryMode,
-                    onSelect = viewModel::selectLibraryItem,
-                    onRefresh = viewModel::refresh,
-                    onLoadMore = viewModel::loadMore,
-                    onOpen = ::openEntity,
-                    onLike = onLike,
-                    onOpenFeed = onOpenFeed,
-                    onOpenImage = onOpenImage,
-                    feedState = feedState,
+        }
+    }
+
+    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+        SecondaryScrollableTabRow(
+            selectedTabIndex = selectedIndex,
+            modifier = Modifier.widthIn(max = 900.dp).fillMaxWidth(),
+            edgePadding = 16.dp,
+        ) {
+            state.tabs.forEachIndexed { index, tab ->
+                Tab(
+                    selected = index == selectedIndex,
+                    onClick = {
+                        val webUrl = tab.webUrl?.takeIf { it.startsWith("http") }
+                        if (webUrl != null) {
+                            runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(webUrl))) }
+                        } else {
+                            viewModel.selectTab(tab)
+                        }
+                    },
+                    text = { Text(tab.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 )
-                else -> key(tab.key) {
-                    DigitalEntityList(
-                        content = state.content,
+            }
+        }
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+            beyondViewportPageCount = 1,
+            key = { page -> state.tabs.getOrNull(page)?.key ?: page },
+        ) { page ->
+            val tab = state.tabs[page]
+            val selected = page == selectedIndex
+            val webUrl = tab.webUrl?.takeIf { it.startsWith("http") }
+            when {
+                webUrl != null -> DigitalWebTab(webUrl) {
+                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(webUrl))) }
+                }
+                tab.category -> if (selected) {
+                    DigitalLibrary(
+                        state = state,
+                        onMode = viewModel::selectLibraryMode,
+                        onSelect = viewModel::selectLibraryItem,
                         onRefresh = viewModel::refresh,
                         onLoadMore = viewModel::loadMore,
-                        onOpen = ::openEntity,
+                        onOpen = onOpen,
                         onLike = onLike,
                         onOpenFeed = onOpenFeed,
                         onOpenImage = onOpenImage,
                         feedState = feedState,
                     )
+                } else {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { ExpressiveLoadingIndicator() }
                 }
+                else -> DigitalEntityList(
+                    content = state.contentByTab[tab.key]
+                        ?: if (selected) DigitalContentState() else DigitalContentState(loading = true),
+                    onRefresh = if (selected) viewModel::refresh else ({}),
+                    onLoadMore = if (selected) viewModel::loadMore else ({}),
+                    onOpen = onOpen,
+                    onLike = onLike,
+                    onOpenFeed = onOpenFeed,
+                    onOpenImage = onOpenImage,
+                    feedState = feedState,
+                )
             }
         }
     }
@@ -183,22 +263,43 @@ private fun DigitalLibrary(
     onOpenImage: (List<String>, Int) -> Unit,
     feedState: HomeUiState,
 ) {
+    var query by rememberSaveable { mutableStateOf("") }
+    var productGrid by rememberSaveable { mutableStateOf(true) }
+    val options = remember(state.libraryOptions, query) {
+        state.libraryOptions.filter { query.isBlank() || it.title.orEmpty().contains(query.trim(), ignoreCase = true) }
+    }
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            DigitalLibraryMode.entries.forEach { mode ->
-                FilterChip(
+        // 品牌 / 分类切换：M3E 分段控件
+        val modes = DigitalLibraryMode.entries
+        SingleChoiceSegmentedButtonRow(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        ) {
+            modes.forEachIndexed { index, mode ->
+                SegmentedButton(
                     selected = state.libraryMode == mode,
                     onClick = { onMode(mode) },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = modes.size),
                     label = { Text(if (mode == DigitalLibraryMode.BRAND) "品牌" else "分类") },
                 )
             }
         }
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 8.dp),
+            singleLine = true,
+            placeholder = { Text(if (state.libraryMode == DigitalLibraryMode.BRAND) "搜索品牌" else "搜索分类") },
+            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+        )
         BoxWithConstraints(Modifier.fillMaxSize()) {
-            val sideWidth = if (maxWidth >= 840.dp) 220.dp else 88.dp
+            val sideWidth = if (maxWidth >= 840.dp) 240.dp else 112.dp
             Row(Modifier.fillMaxSize()) {
-                Surface(
-                    modifier = Modifier.width(sideWidth).fillMaxHeight(),
-                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                Column(
+                    Modifier
+                        .width(sideWidth)
+                        .fillMaxHeight()
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
                 ) {
                     when {
                         state.libraryLoading && state.libraryOptions.isEmpty() ->
@@ -208,24 +309,17 @@ private fun DigitalLibrary(
                         state.libraryOptions.isEmpty() -> DigitalEmptyState(
                             state.libraryError ?: "暂无数据", onRefresh,
                         )
-                        else -> LazyColumn {
-                            items(state.libraryOptions, key = DigitalEntity::id) { item ->
+                        options.isEmpty() -> Text(
+                            "没有匹配的结果",
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                        else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            items(options, key = DigitalEntity::id) { item ->
                                 val selected = state.selectedLibraryItem?.id == item.id
-                                Surface(
-                                    modifier = Modifier.fillMaxWidth().clickable { onSelect(item) },
-                                    color = if (selected) MaterialTheme.colorScheme.primaryContainer
-                                        else MaterialTheme.colorScheme.surfaceContainerLow,
-                                ) {
-                                    Text(
-                                        text = item.title ?: "未命名",
-                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 16.dp),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-                                            else MaterialTheme.colorScheme.onSurface,
-                                        textAlign = TextAlign.Center,
-                                    )
-                                }
-                                HorizontalDivider()
+                                LibrarySideItem(item, selected) { onSelect(item) }
                             }
                         }
                     }
@@ -233,24 +327,139 @@ private fun DigitalLibrary(
                 if (state.selectedLibraryItem == null && !state.libraryLoading) {
                     DigitalEmptyState("暂无品牌或分类", onRefresh, Modifier.weight(1f))
                 } else {
-                    key(state.libraryMode, state.selectedLibraryItem?.id) {
-                        DigitalEntityList(
-                            content = state.libraryContent,
-                            onRefresh = onRefresh,
-                            onLoadMore = onLoadMore,
-                            onOpen = onOpen,
-                            onLike = onLike,
-                            onOpenFeed = onOpenFeed,
-                            onOpenImage = onOpenImage,
-                            feedState = feedState,
-                            modifier = Modifier.weight(1f),
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
-                        )
+                    Column(Modifier.weight(1f).fillMaxHeight()) {
+                        // 当前选中项与视图切换
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    state.selectedLibraryItem?.title ?: "",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                val count = state.libraryContent.items.count { it.isProductItem() }
+                                if (count > 0) {
+                                    Text(
+                                        "共 $count 款产品",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                            SingleChoiceSegmentedButtonRow {
+                                listOf(true to "网格", false to "列表").forEachIndexed { index, (grid, label) ->
+                                    SegmentedButton(
+                                        selected = productGrid == grid,
+                                        onClick = { productGrid = grid },
+                                        shape = SegmentedButtonDefaults.itemShape(index = index, count = 2),
+                                        label = { Text(label) },
+                                    )
+                                }
+                            }
+                        }
+                        key(state.libraryMode, state.selectedLibraryItem?.id) {
+                            DigitalEntityList(
+                                content = state.libraryContent,
+                                onRefresh = onRefresh,
+                                onLoadMore = onLoadMore,
+                                onOpen = onOpen,
+                                onLike = onLike,
+                                onOpenFeed = onOpenFeed,
+                                onOpenImage = onOpenImage,
+                                feedState = feedState,
+                                productGrid = productGrid,
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                            )
+                        }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun LibrarySideItem(item: DigitalEntity, selected: Boolean, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+        contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+    ) {
+        Row(
+            Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            item.imageUrl?.let { url ->
+                AsyncImage(
+                    model = coolapkImageRequest(url),
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp),
+                    contentScale = ContentScale.Fit,
+                )
+                Spacer(Modifier.width(8.dp))
+            }
+            Text(
+                item.title ?: "未命名",
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelLarge,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/** 列表中的一个显示块：系列标题、一组连续产品、或其它实体卡片。 */
+private sealed interface DigitalBlock {
+    val key: String
+
+    data class SeriesTitle(val entity: DigitalEntity) : DigitalBlock {
+        override val key = "title-${entity.id}"
+    }
+
+    data class Products(val items: List<DigitalEntity>) : DigitalBlock {
+        override val key = "products-${items.first().id}"
+    }
+
+    data class Other(val entity: DigitalEntity) : DigitalBlock {
+        override val key = "other-${entity.id}"
+    }
+}
+
+private fun DigitalEntity.isProductItem(): Boolean =
+    entityType.equals("product", true) && entities.isEmpty()
+
+private fun List<DigitalEntity>.toDigitalBlocks(): List<DigitalBlock> {
+    val blocks = mutableListOf<DigitalBlock>()
+    var pending = mutableListOf<DigitalEntity>()
+    fun flush() {
+        if (pending.isNotEmpty()) {
+            blocks += DigitalBlock.Products(pending.toList())
+            pending = mutableListOf()
+        }
+    }
+    for (entity in this) {
+        when {
+            entity.isProductItem() -> pending += entity
+            entity.entityTemplate.equals("productGroupTitle", true) -> {
+                flush()
+                blocks += DigitalBlock.SeriesTitle(entity)
+            }
+            else -> {
+                flush()
+                blocks += DigitalBlock.Other(entity)
+            }
+        }
+    }
+    flush()
+    return blocks
 }
 
 @Composable
@@ -265,12 +474,14 @@ private fun DigitalEntityList(
     feedState: HomeUiState,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+    productGrid: Boolean = true,
 ) {
     val listState = rememberLazyListState()
+    val blocks = remember(content.items) { content.items.toDigitalBlocks() }
     LaunchedEffect(listState, content.items.size) {
         snapshotFlow {
             val last = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
-            last >= content.items.lastIndex - 2
+            last >= listState.layoutInfo.totalItemsCount - 3
         }.distinctUntilChanged().collect { nearEnd ->
             if (nearEnd && content.items.isNotEmpty()) onLoadMore()
         }
@@ -293,8 +504,18 @@ private fun DigitalEntityList(
                 contentPadding = contentPadding,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(content.items, key = DigitalEntity::id) { entity ->
-                    DigitalEntityCard(entity, onOpen, onLike, onOpenFeed, onOpenImage, feedState)
+                items(blocks, key = DigitalBlock::key) { block ->
+                    when (block) {
+                        is DigitalBlock.SeriesTitle -> DigitalSeriesTitle(block.entity.title.orEmpty())
+                        is DigitalBlock.Products -> if (productGrid) {
+                            DigitalProductGrid(block.items, onOpen)
+                        } else {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                block.items.forEach { DigitalProductCard(it, grid = false, onOpen = onOpen) }
+                            }
+                        }
+                        is DigitalBlock.Other -> DigitalEntityCard(block.entity, onOpen, onLike, onOpenFeed, onOpenImage, feedState)
+                    }
                 }
                 if (content.loading) item(key = "loading") {
                     Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
@@ -302,8 +523,133 @@ private fun DigitalEntityList(
                     }
                 }
                 content.error?.let { error -> item(key = "error") {
-                    TextButton(onClick = onLoadMore) { Text("$error · 重试") }
+                    TextButton(onClick = onLoadMore, modifier = Modifier.heightIn(min = 48.dp)) { Text("$error · 重试") }
                 } }
+                if (!content.loading && content.error == null && !content.hasMore && content.items.isNotEmpty()) {
+                    item(key = "end") {
+                        Text(
+                            "没有更多内容了",
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DigitalSeriesTitle(title: String) {
+    if (title.isBlank()) return
+    Text(
+        title,
+        modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp, start = 4.dp),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.primary,
+    )
+}
+
+/** 产品网格：两列等宽，奇数个时末尾留空位，卡片宽度保持一致。 */
+@Composable
+private fun DigitalProductGrid(items: List<DigitalEntity>, onOpen: (DigitalEntity) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        items.chunked(2).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                row.forEach { product ->
+                    DigitalProductCard(product, grid = true, onOpen = onOpen, modifier = Modifier.weight(1f))
+                }
+                if (row.size < 2) Spacer(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun DigitalProductCard(
+    product: DigitalEntity,
+    grid: Boolean,
+    onOpen: (DigitalEntity) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val specs = product.productSpecs().take(3)
+    CoolapkCard(
+        modifier = modifier.fillMaxWidth(),
+        onClick = { onOpen(product) },
+        shape = MaterialTheme.shapes.large,
+    ) {
+        if (grid) {
+            ProductImageBox(product, Modifier.fillMaxWidth().aspectRatio(4f / 3f))
+            Column(Modifier.padding(12.dp)) {
+                ProductTitle(product)
+                ProductSpecChips(specs)
+            }
+        } else {
+            Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                ProductImageBox(product, Modifier.size(96.dp))
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
+                    ProductTitle(product)
+                    ProductSpecChips(specs)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProductImageBox(product: DigitalEntity, modifier: Modifier) {
+    Box(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+        contentAlignment = Alignment.Center,
+    ) {
+        product.imageUrl?.let { url ->
+            AsyncImage(
+                model = coolapkImageRequest(url),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize().padding(8.dp),
+                contentScale = ContentScale.Fit,
+            )
+        } ?: Icon(Icons.Rounded.Devices, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun ProductTitle(product: DigitalEntity) {
+    Text(
+        product.title ?: "未命名产品",
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = FontWeight.SemiBold,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+    )
+}
+
+@Composable
+private fun ProductSpecChips(specs: List<String>) {
+    if (specs.isEmpty()) return
+    Row(
+        Modifier.fillMaxWidth().padding(top = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        specs.forEach { spec ->
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            ) {
+                Text(
+                    spec,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
     }
