@@ -53,19 +53,23 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ShortNavigationBar
+import androidx.compose.material3.ShortNavigationBarArrangement
+import androidx.compose.material3.ShortNavigationBarItem
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -77,6 +81,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -91,6 +96,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -120,6 +130,12 @@ private data class FeedRoute(
     val focusComments: Boolean = false,
 )
 
+private sealed interface ContentRoute {
+    data class Feed(val value: FeedRoute) : ContentRoute
+    data class Topic(val tag: String) : ContentRoute
+    data class User(val uid: String) : ContentRoute
+}
+
 private val destinations = listOf(
     Destination("首页", Icons.Rounded.Home),
     Destination("数码", Icons.Rounded.Apps),
@@ -146,7 +162,7 @@ internal fun CoolapkApp(
     var publishOpen by rememberSaveable { mutableStateOf(false) }
     var searchOpen by rememberSaveable { mutableStateOf(false) }
     var notificationsOpen by rememberSaveable { mutableStateOf(false) }
-    var openedFeed by remember { mutableStateOf<FeedRoute?>(null) }
+    var contentRoutes by remember { mutableStateOf<List<ContentRoute>>(emptyList()) }
     var openedApp by remember { mutableStateOf<AppItem?>(null) }
     var openedProduct by remember { mutableStateOf<String?>(null) }
     var openedImages by remember { mutableStateOf<ImageViewerSelection?>(null) }
@@ -157,6 +173,18 @@ internal fun CoolapkApp(
     val openImages: (List<String>, Int) -> Unit = { urls, index ->
         openedImages = ImageViewerSelection.create(urls, index)
     }
+    val openFeed: (FeedRoute) -> Unit = { route ->
+        contentRoutes = contentRoutes + ContentRoute.Feed(route)
+    }
+    val openUser: (String) -> Unit = { uid ->
+        uid.takeIf(String::isNotBlank)?.let { contentRoutes = contentRoutes + ContentRoute.User(it) }
+    }
+    val openTopic: (String) -> Unit = { tag ->
+        tag.trim().trimStart('#').takeIf(String::isNotBlank)?.let {
+            contentRoutes = contentRoutes + ContentRoute.Topic(it)
+        }
+    }
+    val closeContent: () -> Unit = { contentRoutes = contentRoutes.dropLast(1) }
 
     BackHandler(openedApp != null) {
         openedApp = null
@@ -252,8 +280,9 @@ internal fun CoolapkApp(
                                 onLoadMore = viewModel::loadMore,
                                 onLike = viewModel::toggleLike,
                                 onOpenDetail = { item, comments ->
-                                    openedFeed = FeedRoute(item.id, item, comments)
+                                    openFeed(FeedRoute(item.id, item, comments))
                                 },
+                                onOpenAuthor = openUser,
                                 onOpenImage = openImages,
                                 onClearSearch = viewModel::clearSearch,
                                 modifier = Modifier.fillMaxSize(),
@@ -264,7 +293,7 @@ internal fun CoolapkApp(
                             feedState = state,
                             onLike = viewModel::toggleLike,
                             onOpenFeed = { id, preview, comments ->
-                                openedFeed = FeedRoute(id, preview, comments)
+                                openFeed(FeedRoute(id, preview, comments))
                             },
                             onOpenApp = { id, title ->
                                 openedApp = AppItem(id, title, id, null, null, null, null, null)
@@ -277,7 +306,7 @@ internal fun CoolapkApp(
                             feedState = state,
                             onLike = viewModel::toggleLike,
                             onOpenFeed = { id, preview, comments ->
-                                openedFeed = FeedRoute(id, preview, comments)
+                                openFeed(FeedRoute(id, preview, comments))
                             },
                             onOpenApp = { id, title ->
                                 openedApp = AppItem(id, title, id, null, null, null, null, null)
@@ -291,8 +320,9 @@ internal fun CoolapkApp(
                                         onLoadMore = viewModel::loadMore,
                                         onLike = viewModel::toggleLike,
                                         onOpenDetail = { item, comments ->
-                                            openedFeed = FeedRoute(item.id, item, comments)
+                                            openFeed(FeedRoute(item.id, item, comments))
                                         },
+                                        onOpenAuthor = openUser,
                                         onOpenImage = openImages,
                                         onClearSearch = viewModel::clearSearch,
                                         modifier = Modifier.fillMaxSize(),
@@ -300,12 +330,20 @@ internal fun CoolapkApp(
                                 }
                             },
                         )
-                        4 -> ProfilePage(
-                            state = state,
-                            onRefresh = viewModel::refreshProfile,
+                        4 -> UserProfileScreen(
+                            uid = null,
+                            onBack = { selectedIndex = 0 },
+                            onOpenFeed = { item, comments -> openFeed(FeedRoute(item.id, item, comments)) },
+                            onOpenImage = openImages,
+                            onLike = viewModel::toggleLike,
+                            onOpenAuthor = openUser,
                             onLogin = { officialLoginOpen = true },
                             onImportCookie = { loginOpen = true },
                             onLogout = viewModel::logout,
+                            ownProfile = state.profile,
+                            embedded = true,
+                            likeOverrides = state.likeOverrides,
+                            viewModel = viewModel(key = "own-profile", factory = UserProfileViewModel.Factory),
                         )
                     }
                 }
@@ -322,11 +360,13 @@ internal fun CoolapkApp(
                                 result.imageUrl, result.subtitle, null, null, null)
                         }
                         com.coolapk.kmp.core.SearchResultKind.FEED -> result.targetId?.let { id ->
-                            openedFeed = FeedRoute(id)
+                            openFeed(FeedRoute(id))
                         }
                         com.coolapk.kmp.core.SearchResultKind.PRODUCT -> result.targetId?.let { id ->
                             openedProduct = id
                         }
+                        com.coolapk.kmp.core.SearchResultKind.TOPIC -> result.targetId?.let(openTopic)
+                        com.coolapk.kmp.core.SearchResultKind.USER -> result.targetId?.let(openUser)
                         else -> Unit
                     }
                 },
@@ -335,28 +375,10 @@ internal fun CoolapkApp(
         if (notificationsOpen) {
             NotificationScreen(
                 onBack = { notificationsOpen = false },
-                onOpenFeed = { id -> openedFeed = FeedRoute(id) },
+                onOpenFeed = { id -> openFeed(FeedRoute(id)) },
                 onLogin = {
                     notificationsOpen = false
                     officialLoginOpen = true
-                },
-            )
-        }
-        openedFeed?.let { route ->
-            FeedDetailScreen(
-                feedId = route.id,
-                preview = route.preview,
-                focusComments = route.focusComments,
-                onOpenImage = openImages,
-                onBack = { openedFeed = null },
-                onFeedChanged = {
-                    if (searchOpen) {
-                        searchViewModel.retry()
-                    } else if (selectedIndex == 3 && discoveryState.tabs.isNotEmpty()) {
-                        discoveryViewModel.refresh()
-                    } else {
-                        viewModel.refresh(force = true)
-                    }
                 },
             )
         }
@@ -370,6 +392,62 @@ internal fun CoolapkApp(
                 onBack = { openedProduct = null },
                 onOpenImage = openImages,
             )
+        }
+        contentRoutes.forEachIndexed { index, route ->
+            key(index, route) {
+                when (route) {
+                    is ContentRoute.Feed -> FeedDetailScreen(
+                        feedId = route.value.id,
+                        preview = route.value.preview,
+                        focusComments = route.value.focusComments,
+                        onOpenImage = openImages,
+                        onOpenAuthor = openUser,
+                        onBack = closeContent,
+                        onFeedChanged = {
+                            if (searchOpen) {
+                                searchViewModel.retry()
+                            } else if (selectedIndex == 3 && discoveryState.tabs.isNotEmpty()) {
+                                discoveryViewModel.refresh()
+                            } else {
+                                viewModel.refresh(force = true)
+                            }
+                        },
+                        viewModel = viewModel(
+                            key = "feed:$index:${route.value.id}",
+                            factory = FeedDetailViewModel.Factory,
+                        ),
+                    )
+                    is ContentRoute.Topic -> TopicDetailScreen(
+                        tag = route.tag,
+                        onBack = closeContent,
+                        onOpenFeed = { item, comments -> openFeed(FeedRoute(item.id, item, comments)) },
+                        onOpenImage = openImages,
+                        onLike = viewModel::toggleLike,
+                        onOpenAuthor = openUser,
+                        likedOverride = { id -> state.likeOverrides[id] },
+                        viewModel = viewModel(
+                            key = "topic:$index:${route.tag}",
+                            factory = TopicDetailViewModel.Factory,
+                        ),
+                    )
+                    is ContentRoute.User -> UserProfileScreen(
+                        uid = route.uid,
+                        onBack = closeContent,
+                        onOpenFeed = { item, comments -> openFeed(FeedRoute(item.id, item, comments)) },
+                        onOpenImage = openImages,
+                        onLike = viewModel::toggleLike,
+                        onOpenAuthor = openUser,
+                        onLogin = { officialLoginOpen = true },
+                        onImportCookie = { loginOpen = true },
+                        onLogout = viewModel::logout,
+                        likeOverrides = state.likeOverrides,
+                        viewModel = viewModel(
+                            key = "user:$index:${route.uid}",
+                            factory = UserProfileViewModel.Factory,
+                        ),
+                    )
+                }
+            }
         }
         if (publishOpen) {
             PublishScreen(
@@ -437,10 +515,20 @@ private fun AppTopBar(
             }
             Spacer(Modifier.width(8.dp))
             IconButton(onClick = onNotifications) {
-                Icon(
-                    Icons.Rounded.NotificationsNone,
-                    contentDescription = if (notificationCount > 0) "消息，${notificationCount} 条未读" else "消息",
-                )
+                BadgedBox(
+                    badge = {
+                        if (notificationCount > 0) {
+                            Badge(Modifier.clearAndSetSemantics {}) {
+                                Text(if (notificationCount > 99) "99+" else notificationCount.toString())
+                            }
+                        }
+                    },
+                ) {
+                    Icon(
+                        Icons.Rounded.NotificationsNone,
+                        contentDescription = if (notificationCount > 0) "消息，${notificationCount} 条未读" else "消息",
+                    )
+                }
             }
             IconButton(onClick = onRefresh, enabled = !refreshing) {
                 Icon(Icons.Rounded.Refresh, contentDescription = "刷新")
@@ -454,15 +542,35 @@ private fun AppNavigationBar(
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
 ) {
-    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+    ShortNavigationBar(
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        arrangement = ShortNavigationBarArrangement.EqualWeight,
+    ) {
         destinations.forEachIndexed { index, destination ->
-            NavigationBarItem(
-                selected = selectedIndex == index,
-                onClick = { onSelect(index) },
-                icon = { Icon(destination.icon, contentDescription = destination.label) },
-                label = { Text(destination.label) },
-            )
+            if (index == 2) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    PublishAction(onClick = { onSelect(index) })
+                }
+            } else {
+                ShortNavigationBarItem(
+                    selected = selectedIndex == index,
+                    onClick = { onSelect(index) },
+                    icon = { Icon(destination.icon, contentDescription = null) },
+                    label = { Text(destination.label) },
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun PublishAction(onClick: () -> Unit) {
+    FilledIconButton(
+        onClick = onClick,
+        modifier = Modifier.size(52.dp),
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        Icon(Icons.Rounded.Add, contentDescription = "发布动态")
     }
 }
 
@@ -474,12 +582,18 @@ private fun AppNavigationRail(
     NavigationRail(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
         Spacer(Modifier.height(14.dp))
         destinations.forEachIndexed { index, destination ->
-            NavigationRailItem(
-                selected = selectedIndex == index,
-                onClick = { onSelect(index) },
-                icon = { Icon(destination.icon, contentDescription = destination.label) },
-                label = { Text(destination.label) },
-            )
+            if (index == 2) {
+                Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+                    PublishAction(onClick = { onSelect(index) })
+                }
+            } else {
+                NavigationRailItem(
+                    selected = selectedIndex == index,
+                    onClick = { onSelect(index) },
+                    icon = { Icon(destination.icon, contentDescription = null) },
+                    label = { Text(destination.label) },
+                )
+            }
         }
     }
 }
@@ -491,6 +605,7 @@ private fun HomeFeed(
     onLoadMore: () -> Unit,
     onLike: (FeedItem) -> Unit,
     onOpenDetail: (FeedItem, Boolean) -> Unit,
+    onOpenAuthor: (String) -> Unit = {},
     onOpenImage: (List<String>, Int) -> Unit,
     onClearSearch: () -> Unit,
     modifier: Modifier = Modifier,
@@ -541,8 +656,8 @@ private fun HomeFeed(
                     modifier = Modifier
                         .widthIn(max = 900.dp)
                         .fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     state.searchQuery?.let { query ->
                         item(key = "searchHeader") {
@@ -571,6 +686,7 @@ private fun HomeFeed(
                             onLike = { onLike(item) },
                             onOpenDetail = { onOpenDetail(item, false) },
                             onReply = { onOpenDetail(item, true) },
+                            onOpenAuthor = onOpenAuthor,
                             onOpenImage = onOpenImage,
                         )
                     }
@@ -621,6 +737,7 @@ internal fun FeedCard(
     onLike: () -> Unit,
     onOpenDetail: () -> Unit,
     onReply: () -> Unit,
+    onOpenAuthor: (String) -> Unit = {},
     onOpenImage: (List<String>, Int) -> Unit,
 ) {
     Card(
@@ -630,37 +747,48 @@ internal fun FeedCard(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         ),
     ) {
-        Column(Modifier.padding(16.dp)) {
-            FeedHeader(item)
+        Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
+            FeedHeader(item, onOpenAuthor)
             val message = item.message.toPlainText()
-            item.title?.takeIf(String::isNotBlank)?.let { title ->
-                Spacer(Modifier.height(12.dp))
-                Text(title.toPlainText(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            val title = feedDisplayTitle(item.title, item.username)
+            title?.let {
+                Spacer(Modifier.height(10.dp))
+                Text(it, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             }
             if (message.isNotBlank()) {
-                Spacer(Modifier.height(if (item.title.isNullOrBlank()) 12.dp else 6.dp))
+                Spacer(Modifier.height(if (title == null) 10.dp else 6.dp))
                 Text(
                     text = message,
                     style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 10,
+                    maxLines = 8,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
             if (item.imageUrls.isNotEmpty()) {
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(10.dp))
                 FeedImages(item.imageUrls, onOpenImage)
             }
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(10.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(6.dp))
             FeedActions(item = item, liked = liked, onLike = onLike, onReply = onReply)
         }
     }
 }
 
+internal fun feedDisplayTitle(title: String?, username: String): String? =
+    title?.toPlainText()?.trim()?.takeIf { it.isNotEmpty() && it != "${username.trim()}的动态" }
+
 @Composable
-private fun FeedHeader(item: FeedItem) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+private fun FeedHeader(item: FeedItem, onOpenAuthor: (String) -> Unit) {
+    Row(
+        modifier = item.uid?.let { uid ->
+            Modifier.clickable(role = Role.Button, onClickLabel = "查看${item.username}的主页") {
+                onOpenAuthor(uid)
+            }
+        } ?: Modifier,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         UserAvatar(item.avatarUrl, item.username, 46.dp)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
@@ -757,9 +885,11 @@ private fun FeedActions(
             count = (item.likeCount + (if (liked) 1 else 0) - (if (item.isLiked) 1 else 0))
                 .coerceAtLeast(0).formatCompact(),
             description = "点赞",
+            actionLabel = if (liked) "取消点赞" else "点赞",
+            state = if (liked) "已点赞" else "未点赞",
             onClick = onLike,
         )
-        FeedAction(Icons.Rounded.ChatBubbleOutline, item.replyCount.formatCompact(), "评论", onReply)
+        FeedAction(Icons.Rounded.ChatBubbleOutline, item.replyCount.formatCompact(), "评论", onClick = onReply)
         FeedAction(Icons.Rounded.Share, null, "分享") { shareText(context, item) }
     }
 }
@@ -769,13 +899,19 @@ private fun FeedAction(
     icon: ImageVector,
     count: String?,
     description: String,
+    actionLabel: String = description,
+    state: String? = null,
     onClick: () -> Unit,
 ) {
     Surface(
         modifier = Modifier
             .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
             .clip(RoundedCornerShape(50))
-            .clickable(onClick = onClick),
+            .clickable(role = Role.Button, onClickLabel = actionLabel, onClick = onClick)
+            .semantics {
+                contentDescription = if (count.isNullOrBlank()) description else "$description，$count"
+                state?.let { stateDescription = it }
+            },
         color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.55f),
         shape = RoundedCornerShape(50),
     ) {
@@ -783,10 +919,10 @@ private fun FeedAction(
             modifier = Modifier.padding(horizontal = 18.dp, vertical = 9.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(icon, contentDescription = description, modifier = Modifier.size(19.dp))
+            Icon(icon, contentDescription = null, modifier = Modifier.size(19.dp))
             if (!count.isNullOrBlank()) {
                 Spacer(Modifier.width(6.dp))
-                Text(count, style = MaterialTheme.typography.labelLarge)
+                Text(count, modifier = Modifier.clearAndSetSemantics {}, style = MaterialTheme.typography.labelLarge)
             }
         }
     }

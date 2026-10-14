@@ -51,4 +51,13 @@ class AndroidUiLogicTest {
         assertEquals(null, ImageViewerSelection.create(emptyList(), 0))
         assertEquals(null, ImageViewerSelection.create(listOf("one.jpg"), 1))
     }
+
+    @Test
+    fun feedTitleHidesOnlyGeneratedActivityLabel() {
+        assertEquals(null, feedDisplayTitle("小明的动态", "小明"))
+        assertEquals(null, feedDisplayTitle("  小明的动态  ", "小明"))
+        assertEquals("数码新品体验", feedDisplayTitle("数码新品体验", "小明"))
+        assertEquals("别人的动态", feedDisplayTitle("别人的动态", "小明"))
+        assertEquals(null, feedDisplayTitle("<br>", "小明"))
+    }
 }

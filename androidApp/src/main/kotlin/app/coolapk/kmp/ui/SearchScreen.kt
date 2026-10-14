@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,6 +28,7 @@ import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Tag
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,14 +39,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,6 +58,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -62,6 +67,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -79,12 +86,19 @@ fun SearchScreen(
     viewModel: SearchViewModel = viewModel(factory = SearchViewModel.Factory),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
     var input by rememberSaveable { mutableStateOf(state.query) }
     val lists = remember(state.query) { mutableStateMapOf<SearchCategory, LazyListState>() }
     val listState = lists.getOrPut(state.category) { LazyListState() }
     val categories = SearchCategory.entries
     val active = state.activeTab
     val submit: () -> Unit = { if (input.isNotBlank()) viewModel.search(input) }
+    val openResult: (SearchResult) -> Unit = { result ->
+        focusManager.clearFocus()
+        keyboardController?.hide()
+        onOpenResult(result)
+    }
 
     BackHandler(onBack = onBack)
     LaunchedEffect(listState, state.query, state.category, active.items.size, active.hasMore) {
@@ -99,30 +113,40 @@ fun SearchScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
-            TopAppBar(
-                title = { Text("搜索", style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
-                    }
-                },
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth().statusBarsPadding()
+                    .padding(start = 4.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
+                }
+                TextField(
+                    value = input,
+                    onValueChange = { input = it },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    label = { Text("搜索酷安内容") },
+                    trailingIcon = {
+                        IconButton(onClick = submit, enabled = input.isNotBlank()) {
+                            Icon(Icons.Rounded.Search, contentDescription = "执行搜索")
+                        }
+                    },
+                    shape = RoundedCornerShape(28.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        focusedIndicatorColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    ),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { submit() }),
+                )
+            }
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            OutlinedTextField(
-                value = input,
-                onValueChange = { input = it },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                singleLine = true,
-                label = { Text("搜索应用、动态、用户、话题") },
-                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-                trailingIcon = {
-                    TextButton(onClick = submit, enabled = input.isNotBlank()) { Text("搜索") }
-                },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { submit() }),
-            )
             if (state.query.isNotBlank()) {
                 SecondaryScrollableTabRow(
                     selectedTabIndex = categories.indexOf(state.category),
@@ -171,12 +195,12 @@ fun SearchScreen(
                         else -> LazyColumn(
                             state = listState,
                             modifier = Modifier.widthIn(max = 900.dp).fillMaxWidth(),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                         ) {
                             items(active.items, key = { "${it.kind}:${it.id}" }) { item ->
-                                SearchResultRow(item, onOpenResult)
+                                SearchResultRow(item, openResult)
                                 HorizontalDivider(
-                                    modifier = Modifier.padding(start = 72.dp),
+                                    modifier = Modifier.padding(start = 88.dp),
                                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
                                 )
                             }
@@ -193,13 +217,15 @@ fun SearchScreen(
                     }
                 }
             } else {
-                SearchHotWords(
-                    words = state.hotWords,
-                    loading = state.hotLoading,
-                    error = state.hotError,
-                    onRefresh = { viewModel.loadHotWords(refresh = true) },
-                    onSelect = { word -> input = word; viewModel.search(word) },
-                )
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                    SearchHotWords(
+                        words = state.hotWords,
+                        loading = state.hotLoading,
+                        error = state.hotError,
+                        onRefresh = { viewModel.loadHotWords(refresh = true) },
+                        onSelect = { word -> input = word; viewModel.search(word) },
+                    )
+                }
             }
         }
     }
@@ -213,11 +239,16 @@ private fun SearchHotWords(
     onRefresh: () -> Unit,
     onSelect: (String) -> Unit,
 ) {
-    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
+    Column(Modifier.widthIn(max = 900.dp).fillMaxWidth().fillMaxHeight().padding(horizontal = 16.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("热门搜索", modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold)
-            TextButton(onClick = onRefresh, enabled = !loading) { Text("换一批") }
+            TextButton(onClick = onRefresh, enabled = !loading) {
+                if (loading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                else Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("换一批")
+            }
         }
         when {
             loading && words.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -230,14 +261,39 @@ private fun SearchHotWords(
                 onAction = onRefresh,
                 modifier = Modifier.fillMaxSize(),
             )
-            else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                items(words) { word ->
+            else -> LazyColumn(contentPadding = PaddingValues(bottom = 16.dp)) {
+                items(words.size) { index ->
+                    val word = words[index]
                     ListItem(
-                        modifier = Modifier.clickable(onClickLabel = "搜索$word") { onSelect(word) },
-                        headlineContent = { Text(word) },
-                        leadingContent = { Icon(Icons.Rounded.Search, contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary) },
-                    )
+                        modifier = Modifier.clickable(role = Role.Button, onClickLabel = "搜索$word") { onSelect(word) },
+                        leadingContent = {
+                            Surface(
+                                modifier = Modifier.size(36.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (index < 3) MaterialTheme.colorScheme.primaryContainer
+                                    else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        (index + 1).toString(),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = if (index < 3) MaterialTheme.colorScheme.onPrimaryContainer
+                                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                        },
+                        trailingContent = {
+                            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        },
+                    ) { Text(word, style = MaterialTheme.typography.bodyLarge) }
+                    if (index < words.lastIndex) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(start = 68.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
+                        )
+                    }
                 }
             }
         }
@@ -247,24 +303,28 @@ private fun SearchHotWords(
 @Composable
 private fun SearchResultRow(item: SearchResult, onOpenResult: (SearchResult) -> Unit) {
     val navigable = item.targetId != null && item.kind in setOf(
-        SearchResultKind.APP, SearchResultKind.FEED, SearchResultKind.PRODUCT,
+        SearchResultKind.APP, SearchResultKind.USER, SearchResultKind.FEED,
+        SearchResultKind.PRODUCT, SearchResultKind.TOPIC,
     )
     ListItem(
-        modifier = Modifier.then(if (navigable) Modifier.clickable(onClickLabel = "打开${item.title}") {
+        modifier = Modifier.then(if (navigable) Modifier.clickable(role = Role.Button, onClickLabel = "打开${item.title}") {
             onOpenResult(item)
         } else Modifier),
-        headlineContent = { Text(item.title, maxLines = 2, overflow = TextOverflow.Ellipsis) },
         supportingContent = {
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(item.kind.label, style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary)
-                item.subtitle?.let { Text(it.toPlainText(), maxLines = 2, overflow = TextOverflow.Ellipsis) }
+                item.subtitle?.let {
+                    Text(it.toPlainText(), maxLines = 2, overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         },
         leadingContent = {
             Surface(
-                modifier = Modifier.size(52.dp),
-                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.size(56.dp),
+                shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.primaryContainer,
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -273,7 +333,7 @@ private fun SearchResultRow(item: SearchResult, onOpenResult: (SearchResult) -> 
                         AsyncImage(
                             model = coolapkImageRequest(url),
                             contentDescription = null,
-                            modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
+                            modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)),
                             contentScale = ContentScale.Crop,
                         )
                     }
@@ -283,7 +343,10 @@ private fun SearchResultRow(item: SearchResult, onOpenResult: (SearchResult) -> 
         trailingContent = if (navigable) {{
             Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null)
         }} else null,
-    )
+    ) {
+        Text(item.title, maxLines = 2, overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.titleMedium)
+    }
 }
 
 private val SearchResultKind.label: String get() = when (this) {
@@ -317,7 +380,7 @@ private fun SearchMessage(
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         if (!detail.isNullOrBlank()) {
             Spacer(Modifier.height(8.dp))
-            Text(detail, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(detail, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         }
         if (action != null) TextButton(onClick = onAction) { Text(action) }
     }

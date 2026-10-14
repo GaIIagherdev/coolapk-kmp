@@ -1,6 +1,7 @@
 package app.coolapk.kmp.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,6 +56,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -72,6 +74,7 @@ fun FeedDetailScreen(
     preview: FeedItem?,
     focusComments: Boolean = false,
     onOpenImage: (List<String>, Int) -> Unit,
+    onOpenAuthor: (String) -> Unit = {},
     onBack: () -> Unit,
     onFeedChanged: () -> Unit,
     viewModel: FeedDetailViewModel = viewModel(factory = FeedDetailViewModel.Factory),
@@ -219,6 +222,7 @@ fun FeedDetailScreen(
                                     onLike = { viewModel.toggleFeedLike(onFeedChanged) },
                                     onReply = { replyTarget = null; composerOpen = true },
                                     onOpenImage = onOpenImage,
+                                    onOpenAuthor = onOpenAuthor,
                                 )
                                 state.detailLoading -> Box(
                                     Modifier.fillMaxWidth().height(220.dp),
@@ -282,6 +286,7 @@ fun FeedDetailScreen(
                             onReply = { replyTarget = reply; composerOpen = true },
                             onOpenThread = { viewModel.openThread(reply) },
                             onOpenImage = onOpenImage,
+                            onOpenAuthor = onOpenAuthor,
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     }
@@ -310,6 +315,7 @@ fun FeedDetailScreen(
                             onReply = { replyTarget = parent; composerOpen = true },
                             onOpenThread = null,
                             onOpenImage = onOpenImage,
+                            onOpenAuthor = onOpenAuthor,
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                         Text(
@@ -327,6 +333,7 @@ fun FeedDetailScreen(
                             onReply = { replyTarget = reply; composerOpen = true },
                             onOpenThread = null,
                             onOpenImage = onOpenImage,
+                            onOpenAuthor = onOpenAuthor,
                         )
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     }
@@ -377,9 +384,17 @@ private fun DetailBody(
     onLike: () -> Unit,
     onReply: () -> Unit,
     onOpenImage: (List<String>, Int) -> Unit,
+    onOpenAuthor: (String) -> Unit,
 ) {
     Column(Modifier.fillMaxWidth().padding(vertical = 20.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = item.uid?.let { uid ->
+                Modifier.clickable(role = Role.Button, onClickLabel = "查看${item.username}的主页") {
+                    onOpenAuthor(uid)
+                }
+            } ?: Modifier,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             UserAvatar(item.avatarUrl, item.username, 48.dp)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
@@ -437,9 +452,17 @@ private fun ReplyBody(
     onReply: () -> Unit,
     onOpenThread: (() -> Unit)?,
     onOpenImage: (List<String>, Int) -> Unit,
+    onOpenAuthor: (String) -> Unit,
 ) {
     Column(Modifier.fillMaxWidth().padding(vertical = 16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = reply.uid?.let { uid ->
+                Modifier.clickable(role = Role.Button, onClickLabel = "查看${reply.username}的主页") {
+                    onOpenAuthor(uid)
+                }
+            } ?: Modifier,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             UserAvatar(reply.avatarUrl, reply.username, 38.dp)
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
