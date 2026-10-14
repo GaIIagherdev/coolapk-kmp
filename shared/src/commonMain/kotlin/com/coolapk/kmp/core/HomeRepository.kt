@@ -64,6 +64,9 @@ class HomeRepository(
 
     suspend fun loadUserFeeds(uid: String, page: Int = 1): HomePage = gateway.getUserFeeds(uid, page)
 
+    suspend fun loadUserFeedsTyped(uid: String, feedType: String, page: Int = 1): HomePage =
+        gateway.getUserFeedsTyped(uid, feedType, page)
+
     suspend fun followUser(uid: String, follow: Boolean): Result<Unit> = gateway.followUser(uid, follow)
 
     suspend fun setSpecialFollow(uid: String, special: Boolean): Result<Unit> = gateway.setSpecialFollow(uid, special)

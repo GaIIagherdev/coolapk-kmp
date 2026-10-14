@@ -88,6 +88,10 @@ interface CoolapkGateway {
     suspend fun updateUserProfile(key: String, value: String): Result<Unit> =
         Result.failure(IllegalStateException("当前平台未提供资料编辑接口"))
 
+    /** 用户分类动态：feedType 取 feed、reply、rating、picture、ershou、fav。 */
+    suspend fun getUserFeedsTyped(uid: String, feedType: String, page: Int = 1): HomePage =
+        error("当前平台未提供用户分类动态接口")
+
     suspend fun getProductFeeds(productId: String, feedType: String = "feed", page: Int = 1): HomePage =
         error("当前平台未提供产品动态接口")
 

@@ -84,10 +84,14 @@ import com.coolapk.kmp.core.UserProfile
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.math.roundToInt
 
-internal enum class ProfileTab(val label: String) {
+internal enum class ProfileTab(val label: String, val feedType: String? = null) {
     FEEDS("动态"),
-    FAVORITES("收藏"),
     LIKED("赞过"),
+    REPLY("回复", "reply"),
+    RATING("评分", "rating"),
+    PICTURE("酷图", "picture"),
+    ERSHOU("二手", "ershou"),
+    FAVORITES("收藏"),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -129,9 +133,22 @@ fun UserProfileScreen(
     val tabState = remember(uid) { mutableStateOf(ProfileTab.FEEDS) }
     val activeTab = tabState.value
     val activeKind = when (activeTab) {
-        ProfileTab.FEEDS -> null
         ProfileTab.FAVORITES -> ProfileListKind.FAVORITES
         ProfileTab.LIKED -> ProfileListKind.LIKED
+        else -> null
+    }
+    val typedType = activeTab.feedType
+    LaunchedEffect(typedType, state.profile?.uid) {
+        typedType?.let(viewModel::openTyped)
+    }
+    LaunchedEffect(listState, typedType) {
+        if (typedType == null) return@LaunchedEffect
+        snapshotFlow {
+            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            lastVisible >= listState.layoutInfo.totalItemsCount - 3
+        }.distinctUntilChanged().collect { nearEnd ->
+            if (nearEnd) viewModel.loadMoreTyped(typedType)
+        }
     }
     val activeList = when (activeKind) {
         null -> null
@@ -185,7 +202,7 @@ fun UserProfileScreen(
                                 profile = profile,
                                 isOwnPage = isOwnPage,
                                 tabs = if (isOwnPage) ProfileTab.entries.toList()
-                                    else ProfileTab.entries.filterNot { it == ProfileTab.LIKED },
+                                    else ProfileTab.entries.filterNot { it == ProfileTab.LIKED || it == ProfileTab.REPLY },
                                 tab = tabState.value,
                                 onTabChange = { tabState.value = it },
                                 onOpenGoods = onOpenGoods,
@@ -259,6 +276,20 @@ fun UserProfileScreen(
                                 onOpenAuthor = onOpenAuthor,
                                 onRetry = { viewModel.retryList(ProfileListKind.FAVORITES) },
                             )
+                            ProfileTab.REPLY, ProfileTab.RATING, ProfileTab.PICTURE, ProfileTab.ERSHOU -> {
+                                val type = activeTab.feedType.orEmpty()
+                                profileListItems(
+                                    keyPrefix = type,
+                                    list = state.typed[type] ?: ProfileFeedList(),
+                                    emptyTitle = "还没有${activeTab.label}内容",
+                                    likeOverrides = likeOverrides,
+                                    onLike = onLike,
+                                    onOpenFeed = onOpenFeed,
+                                    onOpenImage = onOpenImage,
+                                    onOpenAuthor = onOpenAuthor,
+                                    onRetry = { viewModel.retryTyped(type) },
+                                )
+                            }
                             ProfileTab.LIKED -> profileListItems(
                                 keyPrefix = "liked",
                                 list = state.liked,

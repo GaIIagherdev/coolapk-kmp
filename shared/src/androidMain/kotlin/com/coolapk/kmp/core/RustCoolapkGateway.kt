@@ -203,6 +203,10 @@ class RustCoolapkGateway(
             ?: throw IllegalStateException("数码产品详情数据不完整")
     }
 
+    override suspend fun getUserFeedsTyped(uid: String, feedType: String, page: Int): HomePage = onCore {
+        parser.parseHomePage(core.getUserFeedsTyped(uid, page.coerceAtLeast(1).toUInt(), feedType))
+    }
+
     override suspend fun followUser(uid: String, follow: Boolean): Result<Unit> = runCatching {
         onCore<Unit> { if (follow) core.followUser(uid) else core.unfollowUser(uid) }
     }

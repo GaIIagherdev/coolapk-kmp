@@ -43,6 +43,8 @@ data class UserProfileUiState(
     val favorites: ProfileFeedList = ProfileFeedList(),
     val liked: ProfileFeedList = ProfileFeedList(),
     val actionError: String? = null,
+    /** 分类动态（回复、评分、酷图、二手），key 为接口的 feedType。 */
+    val typed: Map<String, ProfileFeedList> = emptyMap(),
     val qrImage: String? = null,
     val qrLoading: Boolean = false,
     val qrError: String? = null,
@@ -91,6 +93,7 @@ class UserProfileViewModel(
                 feedsRetryPage = null,
                 favorites = ProfileFeedList(),
                 liked = ProfileFeedList(),
+                typed = emptyMap(),
             )
         } else {
             UserProfileUiState(
@@ -295,6 +298,67 @@ class UserProfileViewModel(
                 .onFailure { failure ->
                     _state.update { it.copy(qrLoading = false, qrError = failure.message ?: "二维码加载失败") }
                 }
+        }
+    }
+
+    fun openTyped(feedType: String) {
+        val list = _state.value.typed[feedType]
+        if (list != null && (list.loading || list.page > 0)) return
+        loadTyped(feedType, page = 1)
+    }
+
+    fun loadMoreTyped(feedType: String) {
+        val list = _state.value.typed[feedType] ?: return
+        if (list.loading || list.page == 0 || !list.hasMore || list.retryPage != null) return
+        loadTyped(feedType, page = list.page + 1)
+    }
+
+    fun retryTyped(feedType: String) {
+        val list = _state.value.typed[feedType]
+        if (list?.loading == true) return
+        loadTyped(feedType, page = list?.retryPage ?: ((list?.page ?: 0) + 1).coerceAtLeast(1))
+    }
+
+    private fun loadTyped(feedType: String, page: Int) {
+        val uid = _state.value.profile?.uid ?: return
+        val source = repository ?: return
+        val request = requestId
+        _state.update { state ->
+            val previous = state.typed[feedType] ?: ProfileFeedList()
+            state.copy(typed = state.typed + (feedType to previous.copy(loading = true, error = null, retryPage = null)))
+        }
+        viewModelScope.launch {
+            try {
+                val result = source.loadUserFeedsTyped(uid, feedType, page)
+                if (request != requestId) return@launch
+                _state.update { state ->
+                    val previous = state.typed[feedType] ?: ProfileFeedList()
+                    val existing = if (page == 1) emptySet() else previous.items.map(FeedItem::id).toSet()
+                    val fresh = result.items.filterNot { it.id in existing }.distinctBy(FeedItem::id)
+                    state.copy(
+                        typed = state.typed + (feedType to previous.copy(
+                            items = if (page == 1) fresh else previous.items + fresh,
+                            loading = false,
+                            error = null,
+                            page = page,
+                            hasMore = result.hasMore && fresh.isNotEmpty(),
+                        )),
+                    )
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                if (request == requestId) {
+                    _state.update { state ->
+                        val previous = state.typed[feedType] ?: ProfileFeedList()
+                        state.copy(typed = state.typed + (feedType to previous.copy(
+                            loading = false,
+                            error = failure.message ?: "加载失败",
+                            retryPage = page,
+                        )))
+                    }
+                }
+            }
         }
     }
 
