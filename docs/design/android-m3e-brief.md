@@ -54,13 +54,13 @@ https://developer.android.com/develop/ui/compose/designsystems/material3
 
 | 编号 | 页面/状态 | 必須体现的内容与设计重点 |
 | --- | --- | --- |
-| 01 | 首页动态流 | 原创文字标识、搜索/通知入口、动态作者和设备信息、正文、单图/九宫格、点赞/评论/分享、分页与刷新反馈、五个主入口 |
+| 01 | 首页动态流 | 原创文字标识、搜索/通知入口、动态作者和设备信息、正文、智能媒体网格（1 张通栏 / 2·4 张两列 / 3 张以上九宫格 +N）、超长正文展开全文、点赞/评论/分享/更多、分页与刷新反馈、五个主入口 |
 | 02 | 数码内容首页 | 服务端栏目切换、产品或科技内容卡片、图片轮播、品牌/分类浏览入口；强调产品视觉但保留社区属性 |
 | 03 | 数码品牌/分类浏览 | 品牌/分类分组选择、当前筛选、产品列表与分页；选择品牌或分类后能看到对应产品 |
 | 04 | 发布编辑器 | 文本编辑、头像与账号、编辑/预览切换、0/1000 字计数、保存草稿、主发布按钮、键盘打开状态 |
 | 05 | 发布预览与草稿确认 | 保真动态预览、返回编辑、草稿保存反馈、离开编辑和清除草稿的确认弹层 |
 | 06 | 发现 | 栏目页签、栏目独立筛选、横向/纵向内容卡片、专题或资讯布局、站内详情与网页跳转说明 |
-| 07 | 我的（已登录） | 头像、用户名、简介，动态/关注/粉丝统计、退出账号确认；数值卡和分组容器形成清晰层级 |
+| 07 | 我的（已登录） | 顶部封面图 + 悬浮资料卡（头像压边、认证标识、用户名/UID/简介、动态/关注/粉丝统计、编辑资料/退出）、动态/收藏/赞过分段 Tab 与个人动态列表；退出账号确认 |
 | 08 | 我的（游客） | 友好的未登录说明、网页登录主按钮、Cookie 导入辅助入口；保留浏览应用的能力 |
 | 09 | 搜索入口 | 顶部可聚焦的胶囊搜索栏、清除与取消、搜索热词；不把未接入的持久搜索历史包装成已有能力 |
 | 10 | 搜索结果 | 综合/应用/游戏/用户/动态/问答/数码/话题八类；问答有全部/提问/回答二级筛选，不同实体采用不同结果样式 |
@@ -84,10 +84,11 @@ https://developer.android.com/develop/ui/compose/designsystems/material3
 2. 数码 → 品牌/分类 → 产品列表 → 产品详情 → 图片查看 → 返回原列表。
 3. 搜索 → 热词或输入 → 分类结果 → 动态/应用/产品详情 → 返回保持搜索状态。
 4. 发布 → 编辑 → 预览 → 保存草稿/离开确认 → 模拟发布成功返回首页。
-5. 我的游客 → 登录方式选择 → 模拟登录 → 我的已登录 → 退出确认。
-6. 消息入口 → 分类切换 → 带动态目标的通知 → 动态详情。
-7. 发现 → 栏目/筛选 → 内容 → 详情或可辨识的外链提示。
-8. 亮/暗主题、窄/宽布局和通用状态可从画布外的预览控制切换。
+5. 我的游客 → 登录方式选择 → 模拟登录 → 我的已登录 → 封面资料卡 → 动态/收藏/赞过 Tab 切换 → 退出确认。
+6. 酷友主页（他人）→ 封面资料卡 → 关注/私信 → 动态列表。
+7. 消息入口 → 分类切换 → 带动态目标的通知 → 动态详情。
+8. 发现 → 栏目/筛选 → 内容 → 详情或可辨识的外链提示。
+9. 亮/暗主题、窄/宽布局和通用状态可从画布外的预览控制切换。
 
 交互使用确定性的虚构数据。所有发布、登录、点赞与评论反馈均为原型演示，不调用真实酷安接口、不修改真实账号或发布真实内容。点击控件必须有合理反馈；画布内部不要出现 React、Kotlin、模拟接口等实现说明。
 
@@ -114,3 +115,38 @@ https://developer.android.com/develop/ui/compose/designsystems/material3
 - 文字清晰，内容不溢出，底部导航与键盘不遮挡主要操作；小屏、暗色和宽屏都有设计参考。
 - 使用真实语气的中文数码社区示例内容与虚构用户名，配图有明确主题，不用空白灰块填满全部设计。
 - 交付精致的网页设计原型和设计系统说明；不声称已经落地 Compose 或通过 Android 构建验收。
+
+## 代码落地进度
+
+- 主题令牌：`ui/theme/Color.kt` 补齐完整语义色（品牌/表面/描边/状态），`ui/theme/Type.kt` 新增 Expressive 类型层级（页面标题 24–30、重要数字 32–40、模块标题 22、正文 15/14、辅助 11–12），`ui/theme/Theme.kt` 统一装配色板、形状、MotionScheme 与 Typography。
+- 共用组件：从 `CoolapkApp.kt` 抽出动态卡片、头像、图片组、应用图标到 `ui/SharedComponents.kt`，并新增 `CoolapkCard`、`GroupedSurface`/`GroupedDivider`、`SectionHeader`、`InfoPill`、`StatColumn`、`ExpressiveLoadingIndicator`、`CoolapkEmptyState`、`CoolapkErrorState`；首页与应用的加载/空/错误态改用统一的共享状态组件。
+- 页面逐屏替换：首页信息流与动态详情的加载态改用 `ExpressiveLoadingIndicator`，详情评论标题改用 `SectionHeader`，详情底部点赞改为 `FilledTonalIconButton`；数码、发现、应用详情、产品详情、搜索、通知、话题、用户主页等主列表页的加载指示器一并统一为 Expressive 形状变化。
+- 详情页信息结构：产品详情的规格表改用 `GroupedSurface` + 分隔线，规格/图片改用 `SectionHeader`；应用详情的评分·下载·大小改用 `InfoPill`，截图/介绍/更新日志改用 `SectionHeader`；数码栏目标题 `DigitalHeading` 改用 `SectionHeader`（含“更多”动作）。
+- 分组容器：新增 `groupedItemShape(index, count)`（首尾大圆角、中间直角），动态详情评论/楼中楼与通知列表改为分段容器表面。
+- 已在 Pixel 9 Pro XL 模拟器安装运行：首页、数码、产品详情、动态详情均渲染正常、无崩溃；动态详情在游客态触发易盾人机验证，关闭后走网页版兜底成功加载。搜索结果的自动化点击不稳定，未逐页截图验收。
+- 令牌化：全屏图片查看器的背景/文字/强调色改用 `ViewerBackground`/`ViewerOnBackground`/`ViewerAccent` 令牌，移除页面内硬编码颜色。
+- 发布页：编辑/预览切换改用 `SegmentedButton` 分段控件，发布状态条改为带图标的单行条（未登录用错误色容器），加载改用 Expressive 指示器。
+- 宽屏：首页信息流在 ≥840dp（按内容区宽度）时切为两列卡片网格（分页逻辑随 `LazyGridState` 保留），顶部栏/底部导航切为 `NavigationRail`。
+  - **坑（已修）**：本项目 `material3 1.5.0-alpha28` 的 `NavigationRail` **不会自行约束宽度**（该版本已无常量 `NavigationRailWidth`，只有 item 尺寸与 `NavigationRailCollapsedTokens.ContainerWidth/NarrowContainerWidth`）。直接放进 `Row { NavigationRail(); Scaffold(Modifier.weight(1f)) }` 会让导航栏吃掉整行宽度，导致内容区宽度为 0——现象是「整屏被导航栏容器色铺满、图标居中、内容/顶栏全部消失」。修法：`CoolapkApp.kt` 中显式给导航栏 `Modifier.width(NavigationRailWidth)`（`NavigationRailWidth = 80.dp`，M3 紧凑导航栏标准宽度）。
+  - 验证方式：模拟器横屏会因窗口配置停留在 `w448dp port` 而呈现「假宽屏」，应改用 `adb shell wm size 2560x1200`（853dp，单列）与 `wm size 3400x1600`（1133dp，两列卡片）验证，用完 `wm size reset`。
+- 暗色：切换系统深色模式后启动无崩溃；无障碍沿用现有中文 `contentDescription`，主要控件为 Material 默认 ≥48dp 触控目标。
+- 尚未逐屏替换的：话题/用户/搜索/发现列表在宽屏仍为单列居中（不溢出）；发布预览未做成独立整页。
+
+### 原型改版（封面资料卡 · 智能媒体网格）
+
+按确认的视觉方向重做两处页面，原型已更新，Compose 已落地（本轮）：
+
+- 动态列表（`app.js: feedCard` / `mediaGrid`）：由独立大圆角卡片改为**分隔线式信息流**（`.feed-item`，宽屏 ≥840 仍为两列卡片）；媒体区改为**智能媒体网格**：1 张通栏 16/11、2 张与 4 张两列方图、3 张三列、5 张以上九宫格并在第 9 格叠加 `+N`；正文超过 120 字折叠为 4 行并显示「展开全文/收起」；操作行改为扁平（仅点赞态着错误色）、新增「关注」内联按钮与「更多」。
+- 个人主页（`app.js: profileBody`，我的 + 酷友主页共用）：改为**封面图 + 悬浮资料卡**——封面渐变图、头像压边并带描边、认证标识、用户名/UID/简介、三格统计（动态/关注/粉丝，可点）、编辑资料/退出（本人）或关注/私信（他人）；下方**动态/收藏/赞过**分段 Tab（收藏为两列图片网格）；本人主页动态使用 `MY_FEEDS` 自建内容。
+- Compose 对应改动目标：`ui/UserProfileScreen.kt`（封面+悬浮卡+Tab）与 `ui/SharedComponents.kt` 的 `FeedCard`/`FeedImages`（分隔线式列表、智能媒体网格、展开全文）；主题令牌无需新增，复用 `surfaceLowest`/`surfaceContainer`/`outlineVariant` 与现有形状层级。
+- 原型校验：Playwright 无脚本错误、全页面无横向溢出；已验证媒体网格 1/2/3/9(+N) 各分支、展开/收起、点赞态、资料卡三种 Tab 与关注/私信按钮、暗色与 840 宽屏两列。
+
+#### Compose 落地结果（本轮完成）
+
+- `ui/SharedComponents.kt`：`FeedCard` 新增 `card` / `dividerAbove` / `horizontalPadding` 三个参数——默认**扁平分隔线式**（分割线全宽、内边距 16dp），`card = true` 时回退为圆角卡片（数码/发现/话题等受限宽度列表仍用卡片）；正文 >120 字折叠 4 行 + 「展开全文/收起」（按 item id 记忆展开态）；`FeedImages` 改为**智能媒体网格**（1 张 16/11 通栏带 `1/1` 角标、2/4 张两列、其余三列、>4 张取前 9 张并在第 9 格叠 `+N`）；`FeedActions` 改扁平 `SpaceBetween` 三操作（点赞/评论/分享），仅点赞态使用 `errorContainer`+`error`，分享用文字标签，无障碍描述按 `标签，数值` 拼接。
+- `ui/UserProfileScreen.kt`：`ProfileHeaderCard` = 渐变封面（`primary → secondary → primaryContainer`，纯绿系）+ 悬浮资料卡（`Modifier.pullUp(54.dp)` 自定义 layout 上移并回收高度；头像 `-32dp` 压边、外圈 4dp `surfaceContainerLowest` 描边）+ 三格统计 + 本人「退出登录」；下方 `SingleChoiceSegmentedButtonRow` 分段 Tab：**动态**渲染信息流，**收藏/赞过**因无对应接口显示诚实的「即将上线」占位（不伪装成已有能力），进入主页默认回到「动态」。
+- 首页 `LazyVerticalGrid` 改为 `itemsIndexed`：窄屏单列扁平分隔线式、宽屏两列卡片；`CoolapkApp.kt` 顺带删除已废弃的 `ProfilePage`（被 `UserProfileScreen` 取代的死代码）。
+- 模拟器验收（Pixel 9 Pro XL，480dpi）：竖屏信息流扁平列表 + 分割线、媒体网格 1/2/3/9 各分支、展开/收起、深色模式资料卡、Tab 切换与「即将上线」、853dp 单列与 1133dp 两列卡片宽屏，均无崩溃；`点赞，112` 等中文无障碍标签正常。
+- 说明：原型里的「关注 / 私信 / 更多」按钮在本轮 **未落地**——`CoolapkGateway` 没有关注/私信写接口，先不放入口以免出现死按钮（与「不把未接入能力包装成已有能力」一致）。
+
+

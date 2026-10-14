@@ -22,7 +22,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -103,7 +102,7 @@ internal fun DiscoveryScreen(
 
     if (state.tabs.isEmpty()) {
         if (state.configLoading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { ExpressiveLoadingIndicator() }
         } else {
             fallbackContent()
         }
@@ -143,16 +142,18 @@ internal fun DiscoveryScreen(
         ) {
             when {
                 state.loading && state.cards.isEmpty() ->
-                    CircularProgressIndicator(Modifier.align(Alignment.Center))
-                state.cards.isEmpty() -> Column(
-                    Modifier.align(Alignment.Center).padding(28.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(state.error ?: "暂无内容", style = MaterialTheme.typography.titleMedium)
-                    TextButton(onClick = viewModel::retry, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text("重试")
-                    }
-                }
+                    ExpressiveLoadingIndicator(Modifier.align(Alignment.Center))
+                state.error != null && state.cards.isEmpty() -> CoolapkErrorState(
+                    message = state.error ?: "加载失败",
+                    onRetry = viewModel::retry,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+                state.cards.isEmpty() -> CoolapkEmptyState(
+                    title = "暂无内容",
+                    modifier = Modifier.align(Alignment.Center),
+                    actionLabel = "重试",
+                    onAction = viewModel::retry,
+                )
                 else -> LazyColumn(
                     state = listState,
                     modifier = Modifier.widthIn(max = 900.dp).fillMaxWidth(),
@@ -178,6 +179,7 @@ internal fun DiscoveryScreen(
                                     onOpenDetail = { onOpenFeed(feed.id, feed, false) },
                                     onReply = { onOpenFeed(feed.id, feed, true) },
                                     onOpenImage = onOpenImage,
+                                    card = true,
                                 )
                             } ?: DiscoveryItemCard(card) {
                                 openCard(card)
@@ -187,7 +189,7 @@ internal fun DiscoveryScreen(
                     if (state.loading) {
                         item(key = "loading") {
                             Box(Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator()
+                                ExpressiveLoadingIndicator()
                             }
                         }
                     }

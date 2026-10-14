@@ -32,13 +32,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.SubcomposeAsyncImage
-import app.coolapk.kmp.ui.theme.CoolapkGreenDark
+import app.coolapk.kmp.ui.theme.ViewerAccent
+import app.coolapk.kmp.ui.theme.ViewerBackground
+import app.coolapk.kmp.ui.theme.ViewerOnBackground
 import kotlinx.coroutines.launch
 
 internal class ImageViewerSelection private constructor(
@@ -66,7 +67,7 @@ internal fun ImageViewerDialog(selection: ImageViewerSelection, onDismiss: () ->
             decorFitsSystemWindows = false,
         ),
     ) {
-        Box(Modifier.fillMaxSize().background(Color(0xFF101512))) {
+        Box(Modifier.fillMaxSize().background(ViewerBackground)) {
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
@@ -85,7 +86,7 @@ internal fun ImageViewerDialog(selection: ImageViewerSelection, onDismiss: () ->
                 FilledTonalIconButton(onClick = onDismiss, modifier = Modifier.size(48.dp)) {
                     Icon(Icons.Rounded.Close, contentDescription = "关闭图片")
                 }
-                Text("图片", style = MaterialTheme.typography.titleMedium, color = Color.White)
+                Text("图片", style = MaterialTheme.typography.titleMedium, color = ViewerOnBackground)
             }
 
             Row(
@@ -105,7 +106,7 @@ internal fun ImageViewerDialog(selection: ImageViewerSelection, onDismiss: () ->
                 Text(
                     "${pagerState.currentPage + 1} / ${selection.urls.size}",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White,
+                    color = ViewerOnBackground,
                 )
                 FilledTonalIconButton(
                     onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } },
@@ -131,13 +132,13 @@ private fun ImageViewerPage(url: String, index: Int, count: Int) {
                 contentScale = ContentScale.Fit,
                 loading = {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = CoolapkGreenDark)
+                        CircularProgressIndicator(color = ViewerAccent)
                     }
                 },
                 error = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("图片加载失败", color = Color.White)
-                        TextButton(onClick = { retry++ }) { Text("重试", color = CoolapkGreenDark) }
+                        Text("图片加载失败", color = ViewerOnBackground)
+                        TextButton(onClick = { retry++ }) { Text("重试", color = ViewerAccent) }
                     }
                 },
             )

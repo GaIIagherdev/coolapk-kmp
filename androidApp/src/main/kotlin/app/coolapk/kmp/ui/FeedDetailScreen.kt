@@ -2,6 +2,8 @@ package app.coolapk.kmp.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -28,8 +31,8 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -186,7 +189,7 @@ fun FeedDetailScreen(
                         Spacer(Modifier.width(8.dp))
                         val detail = state.detail
                         val liked = state.feedLikeOverride ?: detail?.isLiked == true
-                        IconButton(
+                        FilledTonalIconButton(
                             onClick = { viewModel.toggleFeedLike(onFeedChanged) },
                             enabled = detail != null && !state.feedLiking,
                         ) {
@@ -227,7 +230,7 @@ fun FeedDetailScreen(
                                 state.detailLoading -> Box(
                                     Modifier.fillMaxWidth().height(220.dp),
                                     contentAlignment = Alignment.Center,
-                                ) { CircularProgressIndicator() }
+                                ) { ExpressiveLoadingIndicator() }
                             }
                             state.detailError?.let { error ->
                                 InlineLoadError(error, onRetry = viewModel::loadDetail)
@@ -238,17 +241,10 @@ fun FeedDetailScreen(
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     }
                     item(key = "comments-header") {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                "评论 ${state.detail?.replyCount?.formatCompact().orEmpty()}",
-                                modifier = Modifier.weight(1f),
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                        }
+                        SectionHeader(
+                            title = "评论 ${state.detail?.replyCount?.formatCompact().orEmpty()}",
+                            horizontalPadding = 0.dp,
+                        )
                     }
                     item(key = "comment-filters") {
                         androidx.compose.foundation.lazy.LazyRow(
@@ -278,17 +274,29 @@ fun FeedDetailScreen(
                             }
                         }
                     }
-                    items(state.replies, key = { "reply-${it.id}" }) { reply ->
-                        ReplyBody(
-                            reply = reply,
-                            liked = state.replyLikeOverrides[reply.id] ?: reply.isLiked,
-                            onLike = { viewModel.toggleReplyLike(reply) },
-                            onReply = { replyTarget = reply; composerOpen = true },
-                            onOpenThread = { viewModel.openThread(reply) },
-                            onOpenImage = onOpenImage,
-                            onOpenAuthor = onOpenAuthor,
-                        )
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    itemsIndexed(state.replies, key = { _, it -> "reply-${it.id}" }) { index, reply ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(groupedItemShape(index, state.replies.size))
+                                .background(MaterialTheme.colorScheme.surfaceContainerLowest),
+                        ) {
+                            ReplyBody(
+                                reply = reply,
+                                liked = state.replyLikeOverrides[reply.id] ?: reply.isLiked,
+                                onLike = { viewModel.toggleReplyLike(reply) },
+                                onReply = { replyTarget = reply; composerOpen = true },
+                                onOpenThread = { viewModel.openThread(reply) },
+                                onOpenImage = onOpenImage,
+                                onOpenAuthor = onOpenAuthor,
+                            )
+                            if (index < state.replies.size - 1) {
+                                HorizontalDivider(
+                                    modifier = Modifier.align(Alignment.BottomStart),
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                                )
+                            }
+                        }
                     }
                     item(key = "replies-footer") {
                         RepliesFooter(
@@ -325,17 +333,29 @@ fun FeedDetailScreen(
                             fontWeight = FontWeight.SemiBold,
                         )
                     }
-                    items(state.threadReplies, key = { "thread-${it.id}" }) { reply ->
-                        ReplyBody(
-                            reply = reply,
-                            liked = state.replyLikeOverrides[reply.id] ?: reply.isLiked,
-                            onLike = { viewModel.toggleReplyLike(reply) },
-                            onReply = { replyTarget = reply; composerOpen = true },
-                            onOpenThread = null,
-                            onOpenImage = onOpenImage,
-                            onOpenAuthor = onOpenAuthor,
-                        )
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    itemsIndexed(state.threadReplies, key = { _, it -> "thread-${it.id}" }) { index, reply ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(groupedItemShape(index, state.threadReplies.size))
+                                .background(MaterialTheme.colorScheme.surfaceContainerLowest),
+                        ) {
+                            ReplyBody(
+                                reply = reply,
+                                liked = state.replyLikeOverrides[reply.id] ?: reply.isLiked,
+                                onLike = { viewModel.toggleReplyLike(reply) },
+                                onReply = { replyTarget = reply; composerOpen = true },
+                                onOpenThread = null,
+                                onOpenImage = onOpenImage,
+                                onOpenAuthor = onOpenAuthor,
+                            )
+                            if (index < state.threadReplies.size - 1) {
+                                HorizontalDivider(
+                                    modifier = Modifier.align(Alignment.BottomStart),
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                                )
+                            }
+                        }
                     }
                     item(key = "thread-footer") {
                         RepliesFooter(
@@ -566,7 +586,7 @@ private fun RepliesFooter(
         isLoading -> Box(
             Modifier.fillMaxWidth().padding(24.dp),
             contentAlignment = Alignment.Center,
-        ) { CircularProgressIndicator(Modifier.size(28.dp)) }
+        ) { ExpressiveLoadingIndicator(Modifier.size(28.dp)) }
         error != null -> InlineLoadError(error, onRetry)
         isEmpty -> Text(
             "暂无评论",

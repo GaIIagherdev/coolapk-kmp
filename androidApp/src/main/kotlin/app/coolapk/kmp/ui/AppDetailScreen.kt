@@ -23,10 +23,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -95,7 +95,7 @@ internal fun AppDetailScreen(
             loading && detail == null -> Box(
                 Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.Center,
-            ) { CircularProgressIndicator() }
+            ) { ExpressiveLoadingIndicator() }
 
             detail == null -> Column(
                 Modifier.fillMaxSize().padding(padding).padding(24.dp),
@@ -134,14 +134,29 @@ internal fun AppDetailScreen(
                     }
                     item {
                         Column(Modifier.widthIn(max = 780.dp).fillMaxWidth()) {
-                            val stats = listOfNotNull(
-                                info.score?.let { "评分 $it" },
-                                info.downloadCount?.let { "下载 $it" },
-                                info.size,
-                            )
-                            if (stats.isNotEmpty()) {
-                                Text(stats.joinToString("  ·  "), style = MaterialTheme.typography.titleSmall)
-                                Spacer(Modifier.height(10.dp))
+                            val hasStats = info.score != null || info.downloadCount != null || info.size != null
+                            if (hasStats) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    info.score?.let {
+                                        InfoPill("评分 $it", icon = Icons.Rounded.Star)
+                                    }
+                                    info.downloadCount?.let {
+                                        InfoPill(
+                                            "下载 $it",
+                                            icon = Icons.Rounded.Download,
+                                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        )
+                                    }
+                                    info.size?.let {
+                                        InfoPill(
+                                            it,
+                                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
+                                Spacer(Modifier.height(14.dp))
                             }
                             val version = listOfNotNull(
                                 info.version?.let { "版本 $it" },
@@ -164,8 +179,7 @@ internal fun AppDetailScreen(
                     if (info.screenshots.isNotEmpty()) {
                         item {
                             Column(Modifier.widthIn(max = 780.dp).fillMaxWidth()) {
-                                Text("截图", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                                Spacer(Modifier.height(12.dp))
+                                SectionHeader("截图", horizontalPadding = 0.dp)
                                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                     itemsIndexed(info.screenshots) { index, url ->
                                         AsyncImage(
@@ -203,10 +217,8 @@ internal fun AppDetailScreen(
 @Composable
 private fun AppDetailTextSection(title: String, content: String) {
     Column(Modifier.widthIn(max = 780.dp).fillMaxWidth()) {
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Spacer(Modifier.height(16.dp))
-        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        Spacer(Modifier.height(10.dp))
+        SectionHeader(title, horizontalPadding = 0.dp)
+        Spacer(Modifier.height(4.dp))
         Text(content.toPlainText(), style = MaterialTheme.typography.bodyMedium)
     }
 }

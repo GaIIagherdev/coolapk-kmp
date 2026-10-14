@@ -18,39 +18,30 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Explore
-import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.NotificationsNone
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Whatshot
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
@@ -59,7 +50,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -92,22 +82,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
 import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
@@ -135,6 +118,10 @@ private sealed interface ContentRoute {
     data class Topic(val tag: String) : ContentRoute
     data class User(val uid: String) : ContentRoute
 }
+
+// material3 1.5.x 的 NavigationRail 不会自行约束宽度：放在 Row 里会吃掉整行，
+// 必须由调用方给出固定宽度（M3 紧凑导航栏标准宽度 80dp）。
+private val NavigationRailWidth = 80.dp
 
 private val destinations = listOf(
     Destination("首页", Icons.Rounded.Home),
@@ -230,6 +217,7 @@ internal fun CoolapkApp(
                     onSelect = { index ->
                         if (index == 2) publishOpen = true else selectedIndex = index
                     },
+                    modifier = Modifier.width(NavigationRailWidth),
                 )
             }
             Scaffold(
@@ -578,8 +566,12 @@ private fun PublishAction(onClick: () -> Unit) {
 private fun AppNavigationRail(
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    NavigationRail(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+    NavigationRail(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
         Spacer(Modifier.height(14.dp))
         destinations.forEachIndexed { index, destination ->
             if (index == 2) {
@@ -610,13 +602,14 @@ private fun HomeFeed(
     onClearSearch: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val listState = rememberLazyListState()
+    val gridState = rememberLazyGridState()
     val pullState = rememberPullToRefreshState()
 
-    LaunchedEffect(listState, state.items.size, state.searchQuery) {
+    LaunchedEffect(gridState, state.items.size, state.searchQuery) {
         snapshotFlow {
-            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            lastVisible >= state.items.lastIndex - 2
+            val total = gridState.layoutInfo.totalItemsCount
+            val lastVisible = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            total > 0 && lastVisible >= total - 3
         }
             .distinctUntilChanged()
             .collect { nearEnd ->
@@ -632,37 +625,44 @@ private fun HomeFeed(
     ) {
         when {
             state.items.isEmpty() && state.loading -> {
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
+                ExpressiveLoadingIndicator(Modifier.align(Alignment.Center))
             }
             state.items.isEmpty() && state.error != null -> {
-                ErrorState(
+                CoolapkErrorState(
                     message = state.error.orEmpty(),
                     onRetry = onRefresh,
                     modifier = Modifier.align(Alignment.Center),
                 )
             }
             state.items.isEmpty() -> {
-                EmptyState(
+                CoolapkEmptyState(
                     title = if (state.searchQuery == null) "暂无动态" else "没有找到相关动态",
                     detail = if (state.searchQuery == null) "下拉刷新试试" else "试试其他关键词",
-                    action = if (state.searchQuery == null) "刷新" else "返回首页",
+                    actionLabel = if (state.searchQuery == null) "刷新" else "返回首页",
                     onAction = if (state.searchQuery == null) onRefresh else onClearSearch,
                     modifier = Modifier.align(Alignment.Center),
                 )
             }
-            else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-                LazyColumn(
-                    state = listState,
+            else -> BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                val columns = if (maxWidth >= 840.dp) 2 else 1
+                val listHorizontalPadding = if (columns > 1) 12.dp else 16.dp
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(columns),
+                    state = gridState,
                     modifier = Modifier
-                        .widthIn(max = 900.dp)
+                        .widthIn(max = 1100.dp)
                         .fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(
+                        horizontal = if (columns > 1) 12.dp else 0.dp,
+                        vertical = 8.dp,
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = if (columns > 1) Arrangement.spacedBy(8.dp) else Arrangement.Top,
                 ) {
                     state.searchQuery?.let { query ->
-                        item(key = "searchHeader") {
+                        item(key = "searchHeader", span = { GridItemSpan(maxLineSpan) }) {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = listHorizontalPadding),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
@@ -679,7 +679,7 @@ private fun HomeFeed(
                             }
                         }
                     }
-                    items(state.items, key = FeedItem::id) { item ->
+                    itemsIndexed(state.items, key = { _, item -> item.id }) { index, item ->
                         FeedCard(
                             item = item,
                             liked = state.likeOverrides[item.id] ?: item.isLiked,
@@ -688,9 +688,11 @@ private fun HomeFeed(
                             onReply = { onOpenDetail(item, true) },
                             onOpenAuthor = onOpenAuthor,
                             onOpenImage = onOpenImage,
+                            card = columns > 1,
+                            dividerAbove = columns == 1 && index > 0,
                         )
                     }
-                    item(key = "loading") {
+                    item(key = "loading", span = { GridItemSpan(maxLineSpan) }) {
                         AnimatedVisibility(visible = state.loading) {
                             Box(
                                 modifier = Modifier
@@ -698,13 +700,14 @@ private fun HomeFeed(
                                     .padding(24.dp),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                CircularProgressIndicator(Modifier.size(28.dp))
+                                ExpressiveLoadingIndicator(Modifier.size(28.dp))
                             }
                         }
                     }
                     state.error?.let { error ->
-                        item(key = "error") {
+                        item(key = "error", span = { GridItemSpan(maxLineSpan) }) {
                             Surface(
+                                modifier = Modifier.padding(horizontal = listHorizontalPadding - 16.dp),
                                 color = MaterialTheme.colorScheme.errorContainer,
                                 shape = MaterialTheme.shapes.large,
                             ) {
@@ -727,261 +730,6 @@ private fun HomeFeed(
                 }
             }
         }
-    }
-}
-
-@Composable
-internal fun FeedCard(
-    item: FeedItem,
-    liked: Boolean,
-    onLike: () -> Unit,
-    onOpenDetail: () -> Unit,
-    onReply: () -> Unit,
-    onOpenAuthor: (String) -> Unit = {},
-    onOpenImage: (List<String>, Int) -> Unit,
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenDetail),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-        ),
-    ) {
-        Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
-            FeedHeader(item, onOpenAuthor)
-            val message = item.message.toPlainText()
-            val title = feedDisplayTitle(item.title, item.username)
-            title?.let {
-                Spacer(Modifier.height(10.dp))
-                Text(it, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            }
-            if (message.isNotBlank()) {
-                Spacer(Modifier.height(if (title == null) 10.dp else 6.dp))
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 8,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            if (item.imageUrls.isNotEmpty()) {
-                Spacer(Modifier.height(10.dp))
-                FeedImages(item.imageUrls, onOpenImage)
-            }
-            Spacer(Modifier.height(10.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
-            Spacer(Modifier.height(6.dp))
-            FeedActions(item = item, liked = liked, onLike = onLike, onReply = onReply)
-        }
-    }
-}
-
-internal fun feedDisplayTitle(title: String?, username: String): String? =
-    title?.toPlainText()?.trim()?.takeIf { it.isNotEmpty() && it != "${username.trim()}的动态" }
-
-@Composable
-private fun FeedHeader(item: FeedItem, onOpenAuthor: (String) -> Unit) {
-    Row(
-        modifier = item.uid?.let { uid ->
-            Modifier.clickable(role = Role.Button, onClickLabel = "查看${item.username}的主页") {
-                onOpenAuthor(uid)
-            }
-        } ?: Modifier,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        UserAvatar(item.avatarUrl, item.username, 46.dp)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                text = item.username,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-            val subtitle = listOfNotNull(item.device, item.createdAt?.toDisplayTime()).joinToString(" · ")
-            if (subtitle.isNotBlank()) {
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-internal fun UserAvatar(url: String?, name: String, size: androidx.compose.ui.unit.Dp) {
-    var failed by remember(url) { mutableStateOf(false) }
-    Surface(
-        modifier = Modifier.size(size),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.secondaryContainer,
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(name.take(1), style = MaterialTheme.typography.titleLarge)
-            if (!url.isNullOrBlank() && !failed) {
-                AsyncImage(
-                    model = coolapkImageRequest(url),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize().clip(CircleShape),
-                    contentScale = ContentScale.Crop,
-                    onError = { failed = true },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-internal fun FeedImages(urls: List<String>, onOpenImage: (List<String>, Int) -> Unit) {
-    if (urls.size == 1) {
-        AsyncImage(
-            model = coolapkImageRequest(urls.first()),
-            contentDescription = null,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(220.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .clickable(onClickLabel = "查看图片", onClick = { onOpenImage(urls, 0) }),
-            contentScale = ContentScale.Crop,
-        )
-    } else {
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(urls.size) { index ->
-                AsyncImage(
-                    model = coolapkImageRequest(urls[index]),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .width(236.dp)
-                        .height(176.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .clickable(onClickLabel = "查看第 ${index + 1} 张图片", onClick = {
-                            onOpenImage(urls, index)
-                        }),
-                    contentScale = ContentScale.Crop,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun FeedActions(
-    item: FeedItem,
-    liked: Boolean,
-    onLike: () -> Unit,
-    onReply: () -> Unit,
-) {
-    val context = LocalContext.current
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        FeedAction(
-            icon = if (liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-            count = (item.likeCount + (if (liked) 1 else 0) - (if (item.isLiked) 1 else 0))
-                .coerceAtLeast(0).formatCompact(),
-            description = "点赞",
-            actionLabel = if (liked) "取消点赞" else "点赞",
-            state = if (liked) "已点赞" else "未点赞",
-            onClick = onLike,
-        )
-        FeedAction(Icons.Rounded.ChatBubbleOutline, item.replyCount.formatCompact(), "评论", onClick = onReply)
-        FeedAction(Icons.Rounded.Share, null, "分享") { shareText(context, item) }
-    }
-}
-
-@Composable
-private fun FeedAction(
-    icon: ImageVector,
-    count: String?,
-    description: String,
-    actionLabel: String = description,
-    state: String? = null,
-    onClick: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier
-            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-            .clip(RoundedCornerShape(50))
-            .clickable(role = Role.Button, onClickLabel = actionLabel, onClick = onClick)
-            .semantics {
-                contentDescription = if (count.isNullOrBlank()) description else "$description，$count"
-                state?.let { stateDescription = it }
-            },
-        color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.55f),
-        shape = RoundedCornerShape(50),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 9.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(19.dp))
-            if (!count.isNullOrBlank()) {
-                Spacer(Modifier.width(6.dp))
-                Text(count, modifier = Modifier.clearAndSetSemantics {}, style = MaterialTheme.typography.labelLarge)
-            }
-        }
-    }
-}
-
-@Composable
-private fun ErrorState(
-    message: String,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            Icons.Rounded.CloudOff,
-            contentDescription = null,
-            modifier = Modifier.size(44.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(12.dp))
-        Text(message, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(18.dp))
-        Button(onClick = onRetry) { Text("重试") }
-    }
-}
-
-@Composable
-private fun EmptyState(
-    title: String,
-    detail: String,
-    action: String,
-    onAction: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            Icons.Rounded.Explore,
-            contentDescription = null,
-            modifier = Modifier.size(44.dp),
-            tint = MaterialTheme.colorScheme.primary,
-        )
-        Spacer(Modifier.height(12.dp))
-        Text(title, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(6.dp))
-        Text(
-            detail,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(14.dp))
-        TextButton(onClick = onAction) { Text(action) }
     }
 }
 
@@ -1144,17 +892,17 @@ private fun AppsPage(
             }
             when {
                 state.appsLoading && state.apps.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                    ExpressiveLoadingIndicator()
                 }
-                state.apps.isEmpty() && state.appsError != null -> ErrorState(
-                    state.appsError,
-                    { onCategory(state.appCategory) },
-                    Modifier.fillMaxSize(),
+                state.apps.isEmpty() && state.appsError != null -> CoolapkErrorState(
+                    message = state.appsError,
+                    onRetry = { onCategory(state.appCategory) },
+                    modifier = Modifier.fillMaxSize(),
                 )
-                state.apps.isEmpty() -> EmptyState(
+                state.apps.isEmpty() -> CoolapkEmptyState(
                     title = "暂无应用",
                     detail = "可以切换分类或稍后刷新",
-                    action = "刷新",
+                    actionLabel = "刷新",
                     onAction = { onCategory(state.appCategory) },
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -1170,16 +918,16 @@ private fun AppsPage(
                     if (state.appsLoading) {
                         item(key = "loading", span = { GridItemSpan(maxLineSpan) }) {
                             Box(Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(Modifier.size(28.dp))
+                                ExpressiveLoadingIndicator(Modifier.size(28.dp))
                             }
                         }
                     }
                     state.appsError?.let { error ->
                         item(key = "error", span = { GridItemSpan(maxLineSpan) }) {
-                            ErrorState(
-                                error,
-                                if (state.appPage > 0) onLoadMore else ({ onCategory(state.appCategory) }),
-                                Modifier.fillMaxWidth(),
+                            CoolapkErrorState(
+                                message = error,
+                                onRetry = if (state.appPage > 0) onLoadMore else ({ onCategory(state.appCategory) }),
+                                modifier = Modifier.fillMaxWidth(),
                             )
                         }
                     }
@@ -1215,89 +963,6 @@ private fun AppCard(app: AppItem, onOpenDetail: () -> Unit) {
                 if (meta.isNotBlank()) Text(meta, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-    }
-}
-
-@Composable
-internal fun AppIcon(app: AppItem) {
-    var failed by remember(app.iconUrl) { mutableStateOf(false) }
-    Surface(
-        modifier = Modifier.size(58.dp),
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.primaryContainer,
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(app.name.take(1), style = MaterialTheme.typography.titleLarge)
-            app.iconUrl?.takeIf { !failed }?.let { url ->
-                AsyncImage(
-                    model = coolapkImageRequest(url),
-                    contentDescription = "${app.name} 图标",
-                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(14.dp)),
-                    contentScale = ContentScale.Crop,
-                    onError = { failed = true },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ProfilePage(
-    state: HomeUiState,
-    onRefresh: () -> Unit,
-    onLogin: () -> Unit,
-    onImportCookie: () -> Unit,
-    onLogout: () -> Unit,
-) {
-    val profile = state.profile
-    if (state.profileLoading && profile == null) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-        return
-    }
-    if (profile == null) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Text(state.profileError ?: "请先登录酷安账号", style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(16.dp))
-            Button(onClick = onLogin) { Text("网页登录") }
-            TextButton(onClick = onImportCookie) { Text("导入 Cookie") }
-            TextButton(onClick = onRefresh) { Text("重新加载") }
-        }
-        return
-    }
-    Column(
-        modifier = Modifier
-            .widthIn(max = 900.dp)
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        UserAvatar(profile.avatarUrl, profile.username, 92.dp)
-        Spacer(Modifier.height(14.dp))
-        Text(profile.username, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        profile.bio?.takeIf(String::isNotBlank)?.let {
-            Spacer(Modifier.height(6.dp))
-            Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Spacer(Modifier.height(20.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
-            profile.feedCount?.let { ProfileStat("动态", it) }
-            ProfileStat("关注", profile.followingCount)
-            ProfileStat("粉丝", profile.followerCount)
-        }
-        Spacer(Modifier.height(28.dp))
-        TextButton(onClick = onLogout) { Text("退出登录") }
-    }
-}
-
-@Composable
-private fun ProfileStat(label: String, value: Int) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value.formatCompact(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

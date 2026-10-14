@@ -17,7 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -28,7 +28,6 @@ import androidx.compose.material.icons.rounded.NotificationsNone
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.WifiOff
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -127,7 +126,7 @@ fun NotificationScreen(
             ) {
                 when {
                     state.loggedIn == null && state.loading -> {
-                        CircularProgressIndicator(Modifier.align(Alignment.Center))
+                        ExpressiveLoadingIndicator(Modifier.align(Alignment.Center))
                     }
                     state.loggedIn == null -> {
                         NotificationStatus(
@@ -149,7 +148,7 @@ fun NotificationScreen(
                         )
                     }
                     state.items.isEmpty() && state.loading -> {
-                        CircularProgressIndicator(Modifier.align(Alignment.Center))
+                        ExpressiveLoadingIndicator(Modifier.align(Alignment.Center))
                     }
                     state.items.isEmpty() && state.error != null -> {
                         NotificationStatus(
@@ -174,21 +173,32 @@ fun NotificationScreen(
                         LazyColumn(
                             state = listState,
                             modifier = Modifier.widthIn(max = 840.dp).fillMaxWidth(),
-                            contentPadding = PaddingValues(bottom = 24.dp),
+                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
                         ) {
-                            items(state.items, key = NotificationItem::id) { item ->
-                                NotificationRow(item, onOpenFeed)
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(start = 76.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant,
-                                )
+                            itemsIndexed(state.items, key = { _, item -> item.id }) { index, item ->
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(groupedItemShape(index, state.items.size))
+                                        .background(MaterialTheme.colorScheme.surfaceContainerLowest),
+                                ) {
+                                    NotificationRow(item, onOpenFeed)
+                                    if (index < state.items.size - 1) {
+                                        HorizontalDivider(
+                                            modifier = Modifier
+                                                .align(Alignment.BottomStart)
+                                                .padding(start = 76.dp),
+                                            color = MaterialTheme.colorScheme.outlineVariant,
+                                        )
+                                    }
+                                }
                             }
                             if (state.loading) {
                                 item(key = "loading") {
                                     Box(
                                         Modifier.fillMaxWidth().height(72.dp),
                                         contentAlignment = Alignment.Center,
-                                    ) { CircularProgressIndicator(Modifier.size(26.dp)) }
+                                    ) { ExpressiveLoadingIndicator(Modifier.size(26.dp)) }
                                 }
                             }
                             state.error?.let { error ->

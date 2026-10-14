@@ -20,19 +20,23 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -104,7 +108,7 @@ internal fun PublishScreen(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
             if (state.loadingDraft) {
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
+                ExpressiveLoadingIndicator(Modifier.align(Alignment.Center))
             } else {
                 PublishBody(
                     state = state,
@@ -147,6 +151,7 @@ internal fun PublishScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PublishBody(
     state: PublishUiState,
@@ -166,16 +171,20 @@ private fun PublishBody(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            FilterChip(
-                selected = !state.preview,
-                onClick = { if (state.preview) onTogglePreview() },
-                label = { Text("编辑") },
-            )
-            FilterChip(
-                selected = state.preview,
-                onClick = { if (!state.preview) onTogglePreview() },
-                label = { Text("预览") },
-            )
+            SingleChoiceSegmentedButtonRow {
+                SegmentedButton(
+                    selected = !state.preview,
+                    onClick = { if (state.preview) onTogglePreview() },
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                    label = { Text("编辑") },
+                )
+                SegmentedButton(
+                    selected = state.preview,
+                    onClick = { if (!state.preview) onTogglePreview() },
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                    label = { Text("预览") },
+                )
+            }
             Spacer(Modifier.weight(1f))
             Text(
                 "${state.characterCount}/${PublishUiState.MAX_MESSAGE_LENGTH}",
@@ -204,18 +213,29 @@ private fun PublishBody(
 
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            color = if (state.loggedIn) MaterialTheme.colorScheme.surfaceContainerLow
+            else MaterialTheme.colorScheme.errorContainer,
             shape = MaterialTheme.shapes.medium,
         ) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("发布状态", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Icon(
+                    if (state.loggedIn) Icons.Rounded.CheckCircle else Icons.Rounded.Info,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = if (state.loggedIn) MaterialTheme.colorScheme.secondary
+                    else MaterialTheme.colorScheme.onErrorContainer,
+                )
                 Text(
                     when {
                         state.loggedIn -> "已登录 · ${state.accountKey.removePrefix("uid:").ifBlank { "当前账号" }}"
                         else -> "未登录，登录后才能发布动态"
                     },
                     color = if (state.loggedIn) MaterialTheme.colorScheme.onSurfaceVariant
-                    else MaterialTheme.colorScheme.error,
+                    else MaterialTheme.colorScheme.onErrorContainer,
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }

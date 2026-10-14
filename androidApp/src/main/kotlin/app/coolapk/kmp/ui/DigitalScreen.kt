@@ -32,7 +32,6 @@ import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -117,7 +116,7 @@ internal fun DigitalScreen(
 
     when {
         state.tabs.isEmpty() && state.configLoading ->
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { ExpressiveLoadingIndicator() }
         state.tabs.isEmpty() -> DigitalEmptyState(
             state.configError ?: "暂无数码栏目",
             onRetry = viewModel::loadConfig,
@@ -204,7 +203,7 @@ private fun DigitalLibrary(
                     when {
                         state.libraryLoading && state.libraryOptions.isEmpty() ->
                             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator()
+                                ExpressiveLoadingIndicator()
                             }
                         state.libraryOptions.isEmpty() -> DigitalEmptyState(
                             state.libraryError ?: "暂无数据", onRefresh,
@@ -283,7 +282,7 @@ private fun DigitalEntityList(
     ) {
         when {
             content.loading && content.items.isEmpty() ->
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
+                ExpressiveLoadingIndicator(Modifier.align(Alignment.Center))
             content.items.isEmpty() -> DigitalEmptyState(
                 content.error ?: "暂无内容", onRefresh,
                 Modifier.align(Alignment.Center),
@@ -299,7 +298,7 @@ private fun DigitalEntityList(
                 }
                 if (content.loading) item(key = "loading") {
                     Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+                        ExpressiveLoadingIndicator()
                     }
                 }
                 content.error?.let { error -> item(key = "error") {
@@ -339,6 +338,7 @@ private fun DigitalEntityCard(
                         onOpenDetail = { onOpenFeed(feed.id, feed, false) },
                         onReply = { onOpenFeed(feed.id, feed, true) },
                         onOpenImage = onOpenImage,
+                        card = true,
                     )
                 }
             }
@@ -351,6 +351,7 @@ private fun DigitalEntityCard(
                 onOpenDetail = { onOpenFeed(feed.id, feed, false) },
                 onReply = { onOpenFeed(feed.id, feed, true) },
                 onOpenImage = onOpenImage,
+                card = true,
             )
         }
         else -> Card(
@@ -472,17 +473,14 @@ private fun DigitalRows(entity: DigitalEntity, onOpen: (DigitalEntity) -> Unit) 
 
 @Composable
 private fun DigitalHeading(entity: DigitalEntity, onOpen: (DigitalEntity) -> Unit) {
-    if (entity.title.isNullOrBlank()) return
-    Row(Modifier.fillMaxWidth().height(44.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(entity.title!!, modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold)
-        if (!entity.url.isNullOrBlank()) {
-            TextButton(onClick = { onOpen(entity) }) {
-                Text(entity.subTitle ?: "更多")
-                Icon(Icons.Rounded.ChevronRight, contentDescription = null)
-            }
-        }
-    }
+    val title = entity.title?.takeIf(String::isNotBlank) ?: return
+    val hasAction = !entity.url.isNullOrBlank()
+    SectionHeader(
+        title = title,
+        horizontalPadding = 0.dp,
+        actionLabel = if (hasAction) (entity.subTitle ?: "更多") else null,
+        onAction = if (hasAction) ({ onOpen(entity) }) else null,
+    )
 }
 
 @Composable

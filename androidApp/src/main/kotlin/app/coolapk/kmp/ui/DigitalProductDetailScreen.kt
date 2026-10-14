@@ -21,13 +21,11 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -80,7 +78,7 @@ internal fun DigitalProductDetailScreen(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                CircularProgressIndicator()
+                ExpressiveLoadingIndicator()
             }
 
             state.detail == null -> ProductDetailError(
@@ -144,7 +142,7 @@ private fun ProductDetailBody(
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             if (loading) item(key = "loading") {
-                CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                ExpressiveLoadingIndicator(Modifier.size(24.dp))
             }
             if (error != null) item(key = "error") {
                 ProductDetailError(error, onRetry, Modifier.widthIn(max = 900.dp).fillMaxWidth())
@@ -178,19 +176,23 @@ private fun ProductDetailBody(
                 }
             }
             if (detail.specs.isNotEmpty()) item(key = "specs") {
-                ProductSection("产品规格", Modifier.widthIn(max = 900.dp).fillMaxWidth()) {
-                    detail.specs.forEachIndexed { index, spec ->
-                        if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                        Text(
-                            spec,
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
+                Column(Modifier.widthIn(max = 900.dp).fillMaxWidth()) {
+                    SectionHeader("产品规格", horizontalPadding = 0.dp)
+                    GroupedSurface {
+                        detail.specs.forEachIndexed { index, spec ->
+                            if (index > 0) GroupedDivider()
+                            Text(
+                                spec,
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                        }
                     }
                 }
             }
             if (detail.imageUrls.isNotEmpty()) item(key = "gallery") {
-                ProductSection("产品图片", Modifier.widthIn(max = 900.dp).fillMaxWidth()) {
+                Column(Modifier.widthIn(max = 900.dp).fillMaxWidth()) {
+                    SectionHeader("产品图片", horizontalPadding = 0.dp)
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         contentPadding = PaddingValues(vertical = 4.dp),
@@ -260,18 +262,6 @@ private fun ProductOverview(detail: DigitalProductDetail, modifier: Modifier = M
 }
 
 @Composable
-private fun ProductSection(
-    title: String,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-        content()
-    }
-}
-
-@Composable
 private fun ProductImage(
     url: String?,
     description: String,
@@ -280,7 +270,7 @@ private fun ProductImage(
 ) {
     Surface(
         modifier = modifier.then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         if (url == null) {
@@ -296,7 +286,7 @@ private fun ProductImage(
                 contentScale = ContentScale.Fit,
                 loading = {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                        ExpressiveLoadingIndicator(Modifier.size(24.dp))
                     }
                 },
                 error = {

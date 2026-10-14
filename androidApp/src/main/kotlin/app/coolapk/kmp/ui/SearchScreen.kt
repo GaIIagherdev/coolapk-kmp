@@ -31,7 +31,6 @@ import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Tag
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -179,7 +178,7 @@ fun SearchScreen(
                 }
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
                     when {
-                        active.loading && active.items.isEmpty() -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+                        active.loading && active.items.isEmpty() -> ExpressiveLoadingIndicator(Modifier.align(Alignment.Center))
                         active.error != null && active.items.isEmpty() -> SearchMessage(
                             title = "搜索失败",
                             detail = active.error,
@@ -207,7 +206,7 @@ fun SearchScreen(
                             item(key = "footer") {
                                 Box(Modifier.fillMaxWidth().padding(12.dp), contentAlignment = Alignment.Center) {
                                     when {
-                                        active.loading -> CircularProgressIndicator(Modifier.size(24.dp))
+                                        active.loading -> ExpressiveLoadingIndicator(Modifier.size(24.dp))
                                         active.error != null -> TextButton(onClick = viewModel::loadMore) { Text("加载失败，重试") }
                                         !active.hasMore -> Text("没有更多结果", color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
@@ -244,7 +243,7 @@ private fun SearchHotWords(
             Text("热门搜索", modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold)
             TextButton(onClick = onRefresh, enabled = !loading) {
-                if (loading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                if (loading) ExpressiveLoadingIndicator(size = 18.dp)
                 else Icon(Icons.Rounded.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text("换一批")
@@ -252,7 +251,7 @@ private fun SearchHotWords(
         }
         when {
             loading && words.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                ExpressiveLoadingIndicator()
             }
             words.isEmpty() -> SearchMessage(
                 title = "开始搜索",

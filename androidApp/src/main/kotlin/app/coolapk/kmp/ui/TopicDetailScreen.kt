@@ -22,7 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -147,26 +146,26 @@ internal fun TopicDetailScreen(
                             onReply = { onOpenFeed(feed, true) },
                             onOpenImage = onOpenImage,
                             onOpenAuthor = onOpenAuthor,
+                            card = true,
                         )
                     }
                 }
                 if (state.feedsLoading) {
                     item(key = "loading") {
                         Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(Modifier.size(28.dp))
+                            ExpressiveLoadingIndicator(Modifier.size(28.dp))
                         }
                     }
                 } else if (state.feedsError != null) {
                     item(key = "error") {
-                        TextButton(
-                            onClick = { if (state.page > 0) viewModel.loadMore() else viewModel.refresh() },
-                            modifier = Modifier.heightIn(min = 48.dp),
-                        ) { Text("${state.feedsError} · 重试") }
+                        CoolapkErrorState(
+                            message = state.feedsError.orEmpty(),
+                            onRetry = { if (state.page > 0) viewModel.loadMore() else viewModel.refresh() },
+                        )
                     }
                 } else if (state.feeds.isEmpty()) {
                     item(key = "empty") {
-                        Text("暂无相关话题动态", modifier = Modifier.padding(24.dp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        CoolapkEmptyState(title = "暂无相关话题动态")
                     }
                 } else if (!state.hasMore) {
                     item(key = "end") {
@@ -225,7 +224,7 @@ private fun TopicOverview(detail: TopicDetail?, tag: String, loading: Boolean) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (loading && detail == null) {
-            CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+            ExpressiveLoadingIndicator(size = 20.dp)
         }
     }
 }
