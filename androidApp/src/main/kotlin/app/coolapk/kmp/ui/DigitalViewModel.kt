@@ -40,6 +40,8 @@ internal data class DigitalUiState(
     val libraryError: String? = null,
     val selectedLibraryItem: DigitalEntity? = null,
     val libraryContent: DigitalContentState = DigitalContentState(),
+    /** 每个频道当前选中的子栏目（tab.key -> 子栏目 id），未选中时为空。 */
+    val subtabByTab: Map<String, String> = emptyMap(),
 ) {
     val selectedTab: DigitalTab? get() = tabs.firstOrNull { it.key == selectedKey }
     val content: DigitalContentState get() = if (selectedTab?.category == true) libraryContent
@@ -174,16 +176,30 @@ internal class DigitalViewModel(private val repositoryProvider: () -> HomeReposi
         }
     }
 
+    /** 选择频道的子栏目：内容按子栏目地址重新加载，频道本身的选中状态不变。 */
+    fun selectSubtab(tab: DigitalTab, subtab: DigitalEntity) {
+        val target = subtab.url?.takeIf(String::isNotBlank) ?: return
+        if (_state.value.subtabByTab[tab.key] == subtab.id) return
+        _state.update {
+            it.copy(
+                subtabByTab = it.subtabByTab + (tab.key to subtab.id),
+                contentByTab = it.contentByTab + (tab.key to DigitalContentState()),
+            )
+        }
+        loadTab(tab)
+    }
+
     private fun loadTab(tab: DigitalTab, more: Boolean = false) {
         val previous = _state.value.contentByTab[tab.key] ?: DigitalContentState()
         val request = ++pageRequest
         _state.update {
             it.copy(contentByTab = it.contentByTab + (tab.key to previous.copy(loading = true, error = null)))
         }
+        val requestTab = subtabRequestTab(tab)
         viewModelScope.launch {
             runCatching {
                 requireRepository().loadDigitalTab(
-                    tab, page = if (more) previous.page + 1 else 1,
+                    requestTab, page = if (more) previous.page + 1 else 1,
                     cursor = if (more) previous.cursor else null,
                     pageContext = if (more) previous.pageContext else null,
                 )
@@ -199,6 +215,12 @@ internal class DigitalViewModel(private val repositoryProvider: () -> HomeReposi
                 }
             }
         }
+    }
+
+    private fun subtabRequestTab(tab: DigitalTab): DigitalTab {
+        val selectedId = _state.value.subtabByTab[tab.key] ?: return tab
+        val subtab = tab.entities.firstOrNull { it.id == selectedId } ?: return tab
+        return tab.copy(url = subtab.url ?: tab.url)
     }
 
     private fun loadLibraryProducts(more: Boolean = false) {

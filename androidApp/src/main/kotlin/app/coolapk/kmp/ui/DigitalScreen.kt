@@ -151,6 +151,17 @@ internal fun DigitalScreen(
     }
 }
 
+/** 频道的子栏目：带地址且不指向其它频道的子项，与参考项目的筛选规则一致。 */
+private fun DigitalUiState.visibleSubtabs(tab: DigitalTab): List<DigitalEntity> {
+    val channelTargets = tabs.flatMap { listOfNotNull(it.key, it.url, it.pageName, it.webUrl) }
+        .map { it.removePrefix("#") }
+        .toSet()
+    return tab.entities.filter { entity ->
+        val target = entity.url.orEmpty().removePrefix("#")
+        target.isNotBlank() && target !in channelTargets
+    }
+}
+
 /** 数码频道：顶部可滚动频道栏 + 左右滑动翻页，每个频道独立保留列表与选中状态。 */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -234,17 +245,37 @@ private fun DigitalChannels(
                 } else {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { ExpressiveLoadingIndicator() }
                 }
-                else -> DigitalEntityList(
-                    content = state.contentByTab[tab.key]
-                        ?: if (selected) DigitalContentState() else DigitalContentState(loading = true),
-                    onRefresh = if (selected) viewModel::refresh else ({}),
-                    onLoadMore = if (selected) viewModel::loadMore else ({}),
-                    onOpen = onOpen,
-                    onLike = onLike,
-                    onOpenFeed = onOpenFeed,
-                    onOpenImage = onOpenImage,
-                    feedState = feedState,
-                )
+                else -> Column(Modifier.fillMaxSize()) {
+                    val subtabs = if (selected) state.visibleSubtabs(tab) else emptyList()
+                    if (subtabs.isNotEmpty()) {
+                        LazyRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            items(subtabs, key = DigitalEntity::id) { subtab ->
+                                FilterChip(
+                                    selected = state.subtabByTab[tab.key] == subtab.id,
+                                    onClick = { viewModel.selectSubtab(tab, subtab) },
+                                    label = { Text(subtab.title.orEmpty(), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                                    modifier = Modifier.heightIn(min = 48.dp),
+                                )
+                            }
+                        }
+                    }
+                    DigitalEntityList(
+                        content = state.contentByTab[tab.key]
+                            ?: if (selected) DigitalContentState() else DigitalContentState(loading = true),
+                        onRefresh = if (selected) viewModel::refresh else ({}),
+                        onLoadMore = if (selected) viewModel::loadMore else ({}),
+                        onOpen = onOpen,
+                        onLike = onLike,
+                        onOpenFeed = onOpenFeed,
+                        onOpenImage = onOpenImage,
+                        feedState = feedState,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
             }
         }
     }
