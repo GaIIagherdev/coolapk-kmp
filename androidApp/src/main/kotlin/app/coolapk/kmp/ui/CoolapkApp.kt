@@ -38,6 +38,7 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.NotificationsNone
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Compare
 import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.Settings
 import app.coolapk.kmp.ui.theme.ThemeMode
@@ -122,6 +123,7 @@ private sealed interface ContentRoute {
     data class User(val uid: String) : ContentRoute
     data object Settings : ContentRoute
     data object MyGoods : ContentRoute
+    data object ProductSelector : ContentRoute
 }
 
 // material3 1.5.x 的 NavigationRail 不会自行约束宽度：放在 Row 里会吃掉整行，
@@ -181,6 +183,7 @@ internal fun CoolapkApp(
     val closeContent: () -> Unit = { contentRoutes = contentRoutes.dropLast(1) }
     val openSettings: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Settings }
     val openMyGoods: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.MyGoods }
+    val openProductSelector: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.ProductSelector }
 
     BackHandler(openedApp != null) {
         openedApp = null
@@ -252,6 +255,7 @@ internal fun CoolapkApp(
                         notificationCount = state.notifications.total,
                         onSettings = if (selectedIndex == 4) openSettings else null,
                         onGoods = if (selectedIndex == 4) openMyGoods else null,
+                        onCompare = if (selectedIndex == 1) openProductSelector else null,
                     )
                 },
                 bottomBar = {
@@ -432,6 +436,7 @@ internal fun CoolapkApp(
                             factory = TopicDetailViewModel.Factory,
                         ),
                     )
+                    is ContentRoute.ProductSelector -> ProductSelectorScreen(onBack = closeContent)
                     is ContentRoute.MyGoods -> state.profile?.uid?.let { ownUid ->
                         MyGoodsScreen(
                             uid = ownUid,
@@ -518,6 +523,7 @@ private fun AppTopBar(
     notificationCount: Int,
     onSettings: (() -> Unit)? = null,
     onGoods: (() -> Unit)? = null,
+    onCompare: (() -> Unit)? = null,
 ) {
     TopAppBar(
         title = {
@@ -554,6 +560,11 @@ private fun AppTopBar(
             }
             IconButton(onClick = onRefresh, enabled = !refreshing) {
                 Icon(Icons.Rounded.Refresh, contentDescription = "刷新")
+            }
+            onCompare?.let {
+                IconButton(onClick = it) {
+                    Icon(Icons.Rounded.Compare, contentDescription = "选机对比")
+                }
             }
             onGoods?.let {
                 IconButton(onClick = it) {
