@@ -64,6 +64,20 @@ class HomeRepository(
 
     suspend fun loadUserFeeds(uid: String, page: Int = 1): HomePage = gateway.getUserFeeds(uid, page)
 
+    suspend fun loadProductFeeds(productId: String, page: Int = 1): HomePage = gateway.getProductFeeds(productId, "feed", page)
+
+    suspend fun loadProductRatings(productId: String, star: Int = 0, ownerOnly: Boolean = false, page: Int = 1): ProductRatingPage =
+        gateway.getProductRatings(productId, star, ownerOnly, page)
+
+    suspend fun loadProductRatingChart(productId: String): ProductRatingChart = gateway.getProductRatingChart(productId)
+
+    suspend fun setProductWish(productId: String, wish: Boolean): Result<Unit> = gateway.changeProductWishStatus(productId, wish)
+
+    suspend fun setProductFollow(productId: String, follow: Boolean): Result<Unit> = gateway.changeProductFollowStatus(productId, follow)
+
+    suspend fun submitProductRating(productId: String, score: Int, message: String, buyStatus: Boolean): Result<Unit> =
+        gateway.createProductRating(productId, score, message, buyStatus)
+
     suspend fun loadUserFavorites(uid: String, page: Int = 1): HomePage = gateway.getUserFavorites(uid, page)
 
     suspend fun loadUserLiked(uid: String, page: Int = 1): HomePage = gateway.getUserLiked(uid, page)

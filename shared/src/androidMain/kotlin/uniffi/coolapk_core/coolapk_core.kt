@@ -812,6 +812,30 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is
 // rather `InterfaceTooLargeException`, caused by too many methods
@@ -827,9 +851,15 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 // when the library is loaded.
 internal interface IntegrityCheckingUniffiLib : Library {
     // Integrity check functions only
-    fun uniffi_coolapk_core_checksum_method_coolapkcore_clear_notification_count(
+    fun uniffi_coolapk_core_checksum_method_coolapkcore_change_product_follow_status(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_change_product_wish_status(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_clear_notification_count(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_create_feed(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_create_product_rating(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_diagnostics(
 ): Short
@@ -863,6 +893,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_get_hot_topics(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_latest_feeds(
 ): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_my_product_list(
+): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_my_profile(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_notification_count(
@@ -873,11 +905,27 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_brand_list(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_brand_products(
 ): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_buy_list(
+): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_category_list(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_detail(
 ): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_feeds(
+): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_list(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_media_list(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_rating_chart(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_rating_list(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_subtab_feeds(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_versions(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_wish_list(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_session_cookie(
 ): Short
@@ -980,9 +1028,15 @@ fun uniffi_coolapk_core_fn_free_coolapkcore(`ptr`: Pointer,uniffi_out_err: Uniff
 ): Unit
 fun uniffi_coolapk_core_fn_constructor_coolapkcore_new(uniffi_out_err: UniffiRustCallStatus,
 ): Pointer
+fun uniffi_coolapk_core_fn_method_coolapkcore_change_product_follow_status(`ptr`: Pointer,`productId`: RustBuffer.ByValue,`status`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_change_product_wish_status(`ptr`: Pointer,`productId`: RustBuffer.ByValue,`status`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_clear_notification_count(`ptr`: Pointer,`notificationType`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_create_feed(`ptr`: Pointer,`message`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_create_product_rating(`ptr`: Pointer,`productId`: RustBuffer.ByValue,`score`: Int,`message`: RustBuffer.ByValue,`buyStatus`: Byte,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_diagnostics(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1016,6 +1070,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_get_hot_topics(`ptr`: Pointer,unif
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_latest_feeds(`ptr`: Pointer,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_my_product_list(`ptr`: Pointer,`uid`: RustBuffer.ByValue,`productType`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_my_profile(`ptr`: Pointer,`uid`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_notification_count(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus,
@@ -1026,11 +1082,27 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_brand_list(`ptr`: Poin
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_brand_products(`ptr`: Pointer,`brandId`: RustBuffer.ByValue,`brandType`: RustBuffer.ByValue,`page`: Int,`firstItem`: RustBuffer.ByValue,`lastItem`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_buy_list(`ptr`: Pointer,`productId`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_category_list(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_detail(`ptr`: Pointer,`productId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_feeds(`ptr`: Pointer,`productId`: RustBuffer.ByValue,`feedType`: RustBuffer.ByValue,`listType`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_list(`ptr`: Pointer,`url`: RustBuffer.ByValue,`title`: RustBuffer.ByValue,`subTitle`: RustBuffer.ByValue,`page`: Int,`firstItem`: RustBuffer.ByValue,`lastItem`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_media_list(`ptr`: Pointer,`productId`: RustBuffer.ByValue,`mediaType`: RustBuffer.ByValue,`isRecommend`: Int,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_rating_chart(`ptr`: Pointer,`productId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_rating_list(`ptr`: Pointer,`productId`: RustBuffer.ByValue,`star`: Int,`isOwner`: Int,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_subtab_feeds(`ptr`: Pointer,`productId`: RustBuffer.ByValue,`subId`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_versions(`ptr`: Pointer,`productId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_wish_list(`ptr`: Pointer,`productId`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_session_cookie(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1202,10 +1274,19 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
 }
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_change_product_follow_status() != 28655.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_change_product_wish_status() != 22678.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_clear_notification_count() != 50970.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_create_feed() != 50211.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_create_product_rating() != 54020.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_diagnostics() != 52388.toShort()) {
@@ -1256,6 +1337,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_latest_feeds() != 34845.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_my_product_list() != 2721.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_my_profile() != 25274.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1271,13 +1355,37 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_product_brand_products() != 14469.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_product_buy_list() != 21771.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_product_category_list() != 51644.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_product_detail() != 8213.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_product_feeds() != 41464.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_product_list() != 20520.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_product_media_list() != 18781.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_product_rating_chart() != 5428.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_product_rating_list() != 27091.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_product_subtab_feeds() != 37253.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_product_versions() != 44525.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_product_wish_list() != 36194.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_session_cookie() != 39393.toShort()) {
@@ -1518,6 +1626,29 @@ public object FfiConverterUInt: FfiConverter<UInt, Int> {
 /**
  * @suppress
  */
+public object FfiConverterInt: FfiConverter<Int, Int> {
+    override fun lift(value: Int): Int {
+        return value
+    }
+
+    override fun read(buf: ByteBuffer): Int {
+        return buf.getInt()
+    }
+
+    override fun lower(value: Int): Int {
+        return value
+    }
+
+    override fun allocationSize(value: Int) = 4UL
+
+    override fun write(value: Int, buf: ByteBuffer) {
+        buf.putInt(value)
+    }
+}
+
+/**
+ * @suppress
+ */
 public object FfiConverterBoolean: FfiConverter<Boolean, Byte> {
     override fun lift(value: Byte): Boolean {
         return value.toInt() != 0
@@ -1696,12 +1827,27 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
 
 public interface CoolapkCoreInterface {
 
+    /**
+     * 关注或取消关注产品。
+     */
+    fun `changeProductFollowStatus`(`productId`: kotlin.String, `status`: kotlin.Int): kotlin.String
+
+    /**
+     * 设置想要（status=1）或取消想要（status=0）。
+     */
+    fun `changeProductWishStatus`(`productId`: kotlin.String, `status`: kotlin.Int): kotlin.String
+
     fun `clearNotificationCount`(`notificationType`: kotlin.String): kotlin.String
 
     /**
      * 发布一条不带媒体的普通动态。验证码或风控失败直接返回服务端错误，交由界面提示。
      */
     fun `createFeed`(`message`: kotlin.String): kotlin.String
+
+    /**
+     * 发表产品点评（1–5 星）。
+     */
+    fun `createProductRating`(`productId`: kotlin.String, `score`: kotlin.Int, `message`: kotlin.String, `buyStatus`: kotlin.Boolean): kotlin.String
 
     /**
      * 返回不含凭据的运行时诊断信息。
@@ -1778,6 +1924,11 @@ public interface CoolapkCoreInterface {
     fun `getLatestFeeds`(`page`: kotlin.UInt): kotlin.String
 
     /**
+     * 当前用户的产品清单（想要/已拥有等）。
+     */
+    fun `getMyProductList`(`uid`: kotlin.String, `productType`: kotlin.String, `page`: kotlin.UInt): kotlin.String
+
+    /**
      * 当前登录用户资料。
      */
     fun `getMyProfile`(`uid`: kotlin.String): kotlin.String
@@ -1793,11 +1944,48 @@ public interface CoolapkCoreInterface {
 
     fun `getProductBrandProducts`(`brandId`: kotlin.String, `brandType`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String
 
+    fun `getProductBuyList`(`productId`: kotlin.String, `page`: kotlin.UInt): kotlin.String
+
     fun `getProductCategoryList`(): kotlin.String
 
     fun `getProductDetail`(`productId`: kotlin.String): kotlin.String
 
+    /**
+     * 产品下的动态（点评、讨论等）；list_type 为空时使用服务端默认排序。
+     */
+    fun `getProductFeeds`(`productId`: kotlin.String, `feedType`: kotlin.String, `listType`: kotlin.String, `page`: kotlin.UInt): kotlin.String
+
     fun `getProductList`(`url`: kotlin.String, `title`: kotlin.String, `subTitle`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String
+
+    /**
+     * 产品图片/视频列表。
+     */
+    fun `getProductMediaList`(`productId`: kotlin.String, `mediaType`: kotlin.String, `isRecommend`: kotlin.Int, `page`: kotlin.UInt): kotlin.String
+
+    /**
+     * 产品评分趋势图数据。
+     */
+    fun `getProductRatingChart`(`productId`: kotlin.String): kotlin.String
+
+    /**
+     * 产品点评列表；star=0 表示全部星级，is_owner=1 只看拥有者。
+     */
+    fun `getProductRatingList`(`productId`: kotlin.String, `star`: kotlin.Int, `isOwner`: kotlin.Int, `page`: kotlin.UInt): kotlin.String
+
+    /**
+     * 产品子标签下的动态。
+     */
+    fun `getProductSubtabFeeds`(`productId`: kotlin.String, `subId`: kotlin.String, `page`: kotlin.UInt): kotlin.String
+
+    /**
+     * 产品版本列表（型号/版本切换）。
+     */
+    fun `getProductVersions`(`productId`: kotlin.String): kotlin.String
+
+    /**
+     * 产品的想要名单（分页）。
+     */
+    fun `getProductWishList`(`productId`: kotlin.String, `page`: kotlin.UInt): kotlin.String
 
     fun `getSessionCookie`(): kotlin.String?
 
@@ -1969,6 +2157,38 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     }
 
 
+    /**
+     * 关注或取消关注产品。
+     */
+    @Throws(CoolapkException::class)override fun `changeProductFollowStatus`(`productId`: kotlin.String, `status`: kotlin.Int): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_change_product_follow_status(
+        it, FfiConverterString.lower(`productId`),FfiConverterInt.lower(`status`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 设置想要（status=1）或取消想要（status=0）。
+     */
+    @Throws(CoolapkException::class)override fun `changeProductWishStatus`(`productId`: kotlin.String, `status`: kotlin.Int): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_change_product_wish_status(
+        it, FfiConverterString.lower(`productId`),FfiConverterInt.lower(`status`),_status)
+}
+    }
+    )
+    }
+
+
+
     @Throws(CoolapkException::class)override fun `clearNotificationCount`(`notificationType`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     callWithPointer {
@@ -1991,6 +2211,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_create_feed(
         it, FfiConverterString.lower(`message`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 发表产品点评（1–5 星）。
+     */
+    @Throws(CoolapkException::class)override fun `createProductRating`(`productId`: kotlin.String, `score`: kotlin.Int, `message`: kotlin.String, `buyStatus`: kotlin.Boolean): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_create_product_rating(
+        it, FfiConverterString.lower(`productId`),FfiConverterInt.lower(`score`),FfiConverterString.lower(`message`),FfiConverterBoolean.lower(`buyStatus`),_status)
 }
     }
     )
@@ -2248,6 +2484,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
 
 
     /**
+     * 当前用户的产品清单（想要/已拥有等）。
+     */
+    @Throws(CoolapkException::class)override fun `getMyProductList`(`uid`: kotlin.String, `productType`: kotlin.String, `page`: kotlin.UInt): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_my_product_list(
+        it, FfiConverterString.lower(`uid`),FfiConverterString.lower(`productType`),FfiConverterUInt.lower(`page`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
      * 当前登录用户资料。
      */
     @Throws(CoolapkException::class)override fun `getMyProfile`(`uid`: kotlin.String): kotlin.String {
@@ -2318,6 +2570,19 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
 
 
 
+    @Throws(CoolapkException::class)override fun `getProductBuyList`(`productId`: kotlin.String, `page`: kotlin.UInt): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_product_buy_list(
+        it, FfiConverterString.lower(`productId`),FfiConverterUInt.lower(`page`),_status)
+}
+    }
+    )
+    }
+
+
+
     @Throws(CoolapkException::class)override fun `getProductCategoryList`(): kotlin.String {
             return FfiConverterString.lift(
     callWithPointer {
@@ -2344,12 +2609,124 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
 
 
 
+    /**
+     * 产品下的动态（点评、讨论等）；list_type 为空时使用服务端默认排序。
+     */
+    @Throws(CoolapkException::class)override fun `getProductFeeds`(`productId`: kotlin.String, `feedType`: kotlin.String, `listType`: kotlin.String, `page`: kotlin.UInt): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_product_feeds(
+        it, FfiConverterString.lower(`productId`),FfiConverterString.lower(`feedType`),FfiConverterString.lower(`listType`),FfiConverterUInt.lower(`page`),_status)
+}
+    }
+    )
+    }
+
+
+
     @Throws(CoolapkException::class)override fun `getProductList`(`url`: kotlin.String, `title`: kotlin.String, `subTitle`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     callWithPointer {
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_product_list(
         it, FfiConverterString.lower(`url`),FfiConverterString.lower(`title`),FfiConverterString.lower(`subTitle`),FfiConverterUInt.lower(`page`),FfiConverterString.lower(`firstItem`),FfiConverterString.lower(`lastItem`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 产品图片/视频列表。
+     */
+    @Throws(CoolapkException::class)override fun `getProductMediaList`(`productId`: kotlin.String, `mediaType`: kotlin.String, `isRecommend`: kotlin.Int, `page`: kotlin.UInt): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_product_media_list(
+        it, FfiConverterString.lower(`productId`),FfiConverterString.lower(`mediaType`),FfiConverterInt.lower(`isRecommend`),FfiConverterUInt.lower(`page`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 产品评分趋势图数据。
+     */
+    @Throws(CoolapkException::class)override fun `getProductRatingChart`(`productId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_product_rating_chart(
+        it, FfiConverterString.lower(`productId`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 产品点评列表；star=0 表示全部星级，is_owner=1 只看拥有者。
+     */
+    @Throws(CoolapkException::class)override fun `getProductRatingList`(`productId`: kotlin.String, `star`: kotlin.Int, `isOwner`: kotlin.Int, `page`: kotlin.UInt): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_product_rating_list(
+        it, FfiConverterString.lower(`productId`),FfiConverterInt.lower(`star`),FfiConverterInt.lower(`isOwner`),FfiConverterUInt.lower(`page`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 产品子标签下的动态。
+     */
+    @Throws(CoolapkException::class)override fun `getProductSubtabFeeds`(`productId`: kotlin.String, `subId`: kotlin.String, `page`: kotlin.UInt): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_product_subtab_feeds(
+        it, FfiConverterString.lower(`productId`),FfiConverterString.lower(`subId`),FfiConverterUInt.lower(`page`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 产品版本列表（型号/版本切换）。
+     */
+    @Throws(CoolapkException::class)override fun `getProductVersions`(`productId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_product_versions(
+        it, FfiConverterString.lower(`productId`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 产品的想要名单（分页）。
+     */
+    @Throws(CoolapkException::class)override fun `getProductWishList`(`productId`: kotlin.String, `page`: kotlin.UInt): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_product_wish_list(
+        it, FfiConverterString.lower(`productId`),FfiConverterUInt.lower(`page`),_status)
 }
     }
     )

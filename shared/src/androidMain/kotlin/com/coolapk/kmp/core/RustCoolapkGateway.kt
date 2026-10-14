@@ -27,6 +27,7 @@ class RustCoolapkGateway(
     private val discoveryParser: DiscoveryJsonParser = DiscoveryJsonParser(),
     private val digitalParser: DigitalJsonParser = DigitalJsonParser(),
     private val digitalProductParser: DigitalProductDetailJsonParser = DigitalProductDetailJsonParser(),
+    private val productInteractionParser: ProductInteractionJsonParser = ProductInteractionJsonParser(),
     private val searchParser: SearchJsonParser = SearchJsonParser(),
     private val topicParser: TopicJsonParser = TopicJsonParser(),
     private val notificationListParser: NotificationListJsonParser = NotificationListJsonParser(),
@@ -197,6 +198,32 @@ class RustCoolapkGateway(
     override suspend fun getDigitalProductDetail(productId: String): DigitalProductDetail = onCore {
         digitalProductParser.parse(core.getProductDetail(productId), productId)
             ?: throw IllegalStateException("数码产品详情数据不完整")
+    }
+
+    override suspend fun getProductFeeds(productId: String, feedType: String, page: Int): HomePage = onCore {
+        parser.parseHomePage(core.getProductFeeds(productId, feedType, "", page.coerceAtLeast(1).toUInt()))
+    }
+
+    override suspend fun getProductRatings(productId: String, star: Int, ownerOnly: Boolean, page: Int): ProductRatingPage = onCore {
+        productInteractionParser.parseRatings(
+            core.getProductRatingList(productId, star, if (ownerOnly) 1 else 0, page.coerceAtLeast(1).toUInt()),
+        )
+    }
+
+    override suspend fun getProductRatingChart(productId: String): ProductRatingChart = onCore {
+        productInteractionParser.parseChart(core.getProductRatingChart(productId))
+    }
+
+    override suspend fun changeProductWishStatus(productId: String, wish: Boolean): Result<Unit> = runCatching {
+        onCore<Unit> { core.changeProductWishStatus(productId, if (wish) 1 else 0) }
+    }
+
+    override suspend fun changeProductFollowStatus(productId: String, follow: Boolean): Result<Unit> = runCatching {
+        onCore<Unit> { core.changeProductFollowStatus(productId, if (follow) 1 else 0) }
+    }
+
+    override suspend fun createProductRating(productId: String, score: Int, message: String, buyStatus: Boolean): Result<Unit> = runCatching {
+        onCore<Unit> { core.createProductRating(productId, score, message.trim(), buyStatus) }
     }
 
     override suspend fun getAppPage(page: Int, category: String): AppPage = onCore {

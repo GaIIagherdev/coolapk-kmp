@@ -66,6 +66,24 @@ interface CoolapkGateway {
     suspend fun getDigitalProductDetail(productId: String): DigitalProductDetail =
         error("当前平台未提供数码产品详情接口")
 
+    suspend fun getProductFeeds(productId: String, feedType: String = "feed", page: Int = 1): HomePage =
+        error("当前平台未提供产品动态接口")
+
+    suspend fun getProductRatings(productId: String, star: Int = 0, ownerOnly: Boolean = false, page: Int = 1): ProductRatingPage =
+        error("当前平台未提供产品点评接口")
+
+    suspend fun getProductRatingChart(productId: String): ProductRatingChart =
+        error("当前平台未提供产品评分趋势接口")
+
+    suspend fun changeProductWishStatus(productId: String, wish: Boolean): Result<Unit> =
+        Result.failure(IllegalStateException("当前平台未提供想要接口"))
+
+    suspend fun changeProductFollowStatus(productId: String, follow: Boolean): Result<Unit> =
+        Result.failure(IllegalStateException("当前平台未提供关注接口"))
+
+    suspend fun createProductRating(productId: String, score: Int, message: String, buyStatus: Boolean): Result<Unit> =
+        Result.failure(IllegalStateException("当前平台未提供产品点评发布接口"))
+
     suspend fun getAppPage(page: Int = 1, category: String = "recommend"): AppPage =
         error("当前平台未提供应用数据接口")
 

@@ -203,6 +203,101 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    /// 产品版本列表（型号/版本切换）。
+    pub fn get_product_versions(&self, product_id: String) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_product_versions(&product_id))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 产品下的动态（点评、讨论等）；list_type 为空时使用服务端默认排序。
+    pub fn get_product_feeds(
+        &self,
+        product_id: String,
+        feed_type: String,
+        list_type: String,
+        page: u32,
+    ) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_product_feeds(&product_id, &feed_type, &list_type, page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 产品子标签下的动态。
+    pub fn get_product_subtab_feeds(&self, product_id: String, sub_id: String, page: u32) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_product_subtab_feeds(&product_id, &sub_id, page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 产品图片/视频列表。
+    pub fn get_product_media_list(
+        &self,
+        product_id: String,
+        media_type: String,
+        is_recommend: i32,
+        page: u32,
+    ) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_product_media_list(&product_id, &media_type, is_recommend, page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 产品点评列表；star=0 表示全部星级，is_owner=1 只看拥有者。
+    pub fn get_product_rating_list(
+        &self,
+        product_id: String,
+        star: i32,
+        is_owner: i32,
+        page: u32,
+    ) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_product_rating_list(&product_id, star, is_owner, page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 产品评分趋势图数据。
+    pub fn get_product_rating_chart(&self, product_id: String) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_product_rating_chart(&product_id))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 产品的想要名单（分页）。
+    pub fn get_product_wish_list(&self, product_id: String, page: u32) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_product_wish_list(&product_id, page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    pub fn get_product_buy_list(&self, product_id: String, page: u32) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_product_buy_list(&product_id, page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 当前用户的产品清单（想要/已拥有等）。
+    pub fn get_my_product_list(&self, uid: String, product_type: String, page: u32) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_my_product_list(&uid, &product_type, page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 设置想要（status=1）或取消想要（status=0）。
+    pub fn change_product_wish_status(&self, product_id: String, status: i32) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.change_product_wish_status(&product_id, status))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 关注或取消关注产品。
+    pub fn change_product_follow_status(&self, product_id: String, status: i32) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.change_product_follow_status(&product_id, status))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 发表产品点评（1–5 星）。
+    pub fn create_product_rating(
+        &self,
+        product_id: String,
+        score: i32,
+        message: String,
+        buy_status: bool,
+    ) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.create_product_rating(&product_id, score, &message, buy_status))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     /// 发布一条不带媒体的普通动态。验证码或风控失败直接返回服务端错误，交由界面提示。
     pub fn create_feed(&self, message: String) -> Result<String, CoolapkError> {
         let value = self.runtime.block_on(self.client.create_feed_with_options(
