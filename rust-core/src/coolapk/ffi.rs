@@ -257,6 +257,55 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    /// 更新个人资料字段（如 bio、gender、birthday、location）；key 为空时 value 为 JSON 对象。
+    pub fn update_user_profile(&self, key: String, value: String) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.update_user_profile(&key, &value))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 个人二维码名片图片。
+    pub fn get_user_qr_image(&self, uid: String) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_user_qr_image(&uid))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 关注某个用户。
+    pub fn follow_user(&self, uid: String) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.follow_user(&uid))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 取消关注某个用户。
+    pub fn unfollow_user(&self, uid: String) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.unfollow_user(&uid))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 设置或取消特别关注。
+    pub fn special_follow_user(&self, uid: String, special: bool) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.special_follow_user(&uid, special))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 移除粉丝。
+    pub fn cancel_follower(&self, uid: String) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.cancel_follower(&uid))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 关注列表：category 为 follow（全部）、special（特别关注）或 friend（互相关注）；空字符串视为全部。
+    pub fn get_follow_user_list(&self, uid: String, page: u32, category: String) -> Result<String, CoolapkError> {
+        let category = if category.is_empty() { None } else { Some(category.as_str()) };
+        let value = self.runtime.block_on(self.client.get_follow_user_list(&uid, page, category))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 粉丝列表。
+    pub fn get_fans_user_list(&self, uid: String, page: u32) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_fans_user_list(&uid, page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     /// 产品的想要名单（分页）。
     pub fn get_product_wish_list(&self, product_id: String, page: u32) -> Result<String, CoolapkError> {
         let value = self.runtime.block_on(self.client.get_product_wish_list(&product_id, page))?;
