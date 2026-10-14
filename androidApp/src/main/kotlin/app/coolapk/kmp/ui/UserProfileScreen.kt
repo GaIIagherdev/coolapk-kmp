@@ -2,6 +2,8 @@ package app.coolapk.kmp.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +25,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Devices
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -35,7 +40,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.Tab
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -83,6 +90,8 @@ fun UserProfileScreen(
     onLogin: () -> Unit,
     onImportCookie: () -> Unit,
     onLogout: () -> Unit,
+    onOpenGoods: () -> Unit = {},
+    selfUid: String? = null,
     onOpenAuthor: (String) -> Unit = {},
     ownProfile: UserProfile? = null,
     embedded: Boolean = false,
@@ -158,12 +167,15 @@ fun UserProfileScreen(
                     else -> {
                         val profile = state.profile!!
                         item(key = "header") {
+                            val isOwnPage = uid == null || uid == selfUid
                             ProfileHeaderCard(
                                 profile = profile,
-                                isOwnPage = uid == null,
+                                isOwnPage = isOwnPage,
+                                tabs = if (isOwnPage) ProfileTab.entries.toList()
+                                    else ProfileTab.entries.filterNot { it == ProfileTab.LIKED },
                                 tab = tabState.value,
                                 onTabChange = { tabState.value = it },
-                                onLogout = onLogout,
+                                onOpenGoods = onOpenGoods,
                             )
                         }
                         if (state.profileError != null) item(key = "profile-error") {
@@ -281,112 +293,122 @@ fun UserProfileScreen(
 private fun ProfileHeaderCard(
     profile: UserProfile,
     isOwnPage: Boolean,
+    tabs: List<ProfileTab>,
     tab: ProfileTab,
     onTabChange: (ProfileTab) -> Unit,
-    onLogout: () -> Unit,
+    onOpenGoods: () -> Unit,
 ) {
     Column(Modifier.fillMaxWidth()) {
-        // 封面为纯色块加几何装饰，本人用品牌主色，他人用次级色以作区分
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(176.dp)
-                .clipToBounds()
-                .background(
-                    if (isOwnPage) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
-                ),
-        ) {
+        // 封面与头像：头像压在封面底边上，与参考项目的个人主页一致
+        Box(Modifier.fillMaxWidth().height(184.dp)) {
             Box(
                 Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = 60.dp, y = (-70).dp)
-                    .size(220.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.22f)),
-            )
+                    .fillMaxSize()
+                    .clipToBounds()
+                    .background(if (isOwnPage) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary),
+            ) {
+                Box(
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = 60.dp, y = (-70).dp)
+                        .size(220.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.22f)),
+                )
+            }
             Box(
                 Modifier
                     .align(Alignment.BottomStart)
-                    .offset(x = 24.dp, y = 22.dp)
-                    .size(64.dp)
+                    .padding(start = 20.dp)
+                    .offset(y = 48.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)),
-            )
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(4.dp),
+            ) {
+                UserAvatar(profile.avatarUrl, profile.username, 96.dp)
+            }
         }
-        Box(Modifier.padding(horizontal = 16.dp).pullUp(54.dp)) {
-            Card(
+        Spacer(Modifier.height(56.dp))
+
+        Column(Modifier.padding(horizontal = 20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    profile.username,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                Spacer(Modifier.width(8.dp))
+                Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+                    Text(
+                        "UID ${profile.uid}",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            profile.bio?.toPlainText()?.takeIf(String::isNotBlank)?.let { bio ->
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.Top) {
+                    Icon(
+                        Icons.Rounded.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp).padding(top = 2.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(bio, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                ),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
             ) {
-                Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 74.dp, bottom = 18.dp)) {
+                Row(Modifier.fillMaxWidth().padding(vertical = 14.dp)) {
+                    ProfileStatCell("动态", profile.feedCount, Modifier.weight(1f))
+                    ProfileStatCell("关注", profile.followingCount, Modifier.weight(1f))
+                    ProfileStatCell("粉丝", profile.followerCount, Modifier.weight(1f))
+                }
+            }
+
+            if (isOwnPage) {
+                Spacer(Modifier.height(12.dp))
+                Surface(
+                    modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).clickable(onClick = onOpenGoods),
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.Top,
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                profile.username,
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Text(
-                                "UID ${profile.uid}",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        if (isOwnPage) {
-                            OutlinedButton(
-                                onClick = onLogout,
-                                modifier = Modifier.padding(start = 8.dp),
-                            ) {
-                                Text("退出")
-                            }
-                        }
-                    }
-                    profile.bio?.toPlainText()?.takeIf(String::isNotBlank)?.let { bio ->
-                        Spacer(Modifier.height(10.dp))
-                        Text(bio, style = MaterialTheme.typography.bodyMedium)
-                    }
-                    Spacer(Modifier.height(16.dp))
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.surfaceContainerLow,
-                    ) {
-                        Row(Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
-                            ProfileStatCell("动态", profile.feedCount, Modifier.weight(1f))
-                            ProfileStatCell("关注", profile.followingCount, Modifier.weight(1f))
-                            ProfileStatCell("粉丝", profile.followerCount, Modifier.weight(1f))
-                        }
+                        Icon(Icons.Rounded.Devices, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.width(12.dp))
+                        Text("我的装备", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                        Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .offset(x = 16.dp, y = (-32).dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-                    .padding(4.dp),
-            ) {
-                UserAvatar(profile.avatarUrl, profile.username, 92.dp)
-            }
         }
-        SingleChoiceSegmentedButtonRow(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+
+        // 动态 / 收藏 / 赞过：参考项目使用可滚动的标签栏
+        Spacer(Modifier.height(12.dp))
+        SecondaryScrollableTabRow(
+            selectedTabIndex = tabs.indexOf(tab).coerceAtLeast(0),
+            modifier = Modifier.fillMaxWidth(),
+            edgePadding = 16.dp,
         ) {
-            ProfileTab.entries.forEachIndexed { index, entry ->
-                SegmentedButton(
-                    selected = tab == entry,
+            tabs.forEach { entry ->
+                Tab(
+                    selected = entry == tab,
                     onClick = { onTabChange(entry) },
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = ProfileTab.entries.size),
-                    label = { Text(entry.label) },
+                    text = { Text(entry.label, maxLines = 1) },
                 )
             }
         }

@@ -461,6 +461,8 @@ internal fun CoolapkApp(
                         onLogin = { officialLoginOpen = true },
                         onImportCookie = { loginOpen = true },
                         onLogout = viewModel::logout,
+                        onOpenGoods = openMyGoods,
+                        selfUid = state.profile?.uid,
                         likeOverrides = state.likeOverrides,
                         viewModel = viewModel(
                             key = "user:$index:${route.uid}",
