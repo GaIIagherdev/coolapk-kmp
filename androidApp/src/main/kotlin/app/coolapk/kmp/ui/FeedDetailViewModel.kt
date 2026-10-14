@@ -1,5 +1,6 @@
 package app.coolapk.kmp.ui
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -7,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.coolapk.kmp.core.CaptchaChallenge
 import com.coolapk.kmp.core.FeedDetailFallback
 import com.coolapk.kmp.core.FeedItem
+import com.coolapk.kmp.core.FeedUnavailableException
 import com.coolapk.kmp.core.HomeRepository
 import com.coolapk.kmp.core.ReplyItem
 import com.coolapk.kmp.core.ReplySort
@@ -88,8 +90,10 @@ class FeedDetailViewModel(
                     val challenge = FeedDetailFallback.captchaChallengeFrom(error)
                     if (challenge != null) {
                         // 交给界面弹出人机验证；取消或失败时由 dismissCaptcha 走网页兜底。
+                        Log.i(TAG, "详情被验证码拦截 feedId=$feedId captchaId=${challenge.captchaId}")
                         _state.update { it.copy(detailLoading = false, captcha = challenge, detailError = null) }
                     } else {
+                        Log.w(TAG, "详情加载失败 feedId=$feedId", error)
                         _state.update { it.copy(detailLoading = false, detailError = error.displayMessage()) }
                     }
                 }
@@ -113,8 +117,9 @@ class FeedDetailViewModel(
                     if (generation != feedGeneration || request != detailRequest) return@onSuccess
                     _state.update { it.copy(detail = detail, detailLoading = false, detailError = null) }
                 }
-                .onFailure {
+                .onFailure { error ->
                     if (generation != feedGeneration || request != detailRequest) return@onFailure
+                    Log.w(TAG, "带令牌重试详情失败，转网页版兜底 feedId=$feedId", error)
                     loadWebFallback(feedId, generation)
                 }
         }
@@ -140,12 +145,14 @@ class FeedDetailViewModel(
                 }
                 .onFailure { error ->
                     if (generation != feedGeneration || request != detailRequest) return@onFailure
-                    _state.update {
-                        it.copy(
-                            detailLoading = false,
-                            detailError = "网页版动态也未能加载：${error.displayMessage()}",
-                        )
+                    Log.w(TAG, "网页版兜底失败 feedId=$feedId", error)
+                    // 服务端已说明动态不可见时，直接展示原话，不再套兜底失败的包装
+                    val message = if (error is FeedUnavailableException) {
+                        error.displayMessage()
+                    } else {
+                        "网页版动态也未能加载：${error.displayMessage()}"
                     }
+                    _state.update { it.copy(detailLoading = false, detailError = message) }
                 }
         }
     }
@@ -348,6 +355,8 @@ class FeedDetailViewModel(
         }
     }
 }
+
+private const val TAG = "FeedDetailViewModel"
 
 private fun Throwable.displayMessage(): String =
     message?.takeIf(String::isNotBlank) ?: "动态加载失败"

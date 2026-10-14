@@ -12,6 +12,13 @@ data class CaptchaChallenge(
 )
 
 /**
+ * 动态本身不可见（作者限制可见范围、已删除、权限不足等）。
+ *
+ * [message] 是服务端原话，可直接展示给用户，不需要再套「加载失败」之类的包装。
+ */
+class FeedUnavailableException(message: String) : IllegalStateException(message)
+
+/**
  * 动态详情被人机验证拦截时的兜底策略。
  *
  * 对应 coolapk-desktop 的三层处理：正常请求 → 用易盾滑块换令牌后重试一次 →
@@ -94,6 +101,20 @@ object FeedDetailFallback {
             ?: error("网页版动态响应缺少数据")
         return data.text("html")?.takeIf(String::isNotBlank)
             ?: error("网页版动态响应缺少正文")
+    }
+
+    /**
+     * 动态本身不可见时，网页版入口会返回 `status` + `message` 而没有 `data`
+     * （例如「作者设置为仅半年内动态可见，无法查看」）。
+     * 这种响应解析器只能报「缺少有效内容」，所以把服务端原话取出来交给界面。
+     */
+    fun webDetailServerMessage(raw: String): String? {
+        val root = runCatching { json.parseToJsonElement(raw) as? JsonObject }.getOrNull()
+            ?: return null
+        if (root["data"] is JsonObject) return null
+        val status = root.text("status")
+        if (status == null || status == "0") return null
+        return root.text("message")
     }
 
     private fun fromEnvelope(root: JsonObject): CaptchaChallenge? {

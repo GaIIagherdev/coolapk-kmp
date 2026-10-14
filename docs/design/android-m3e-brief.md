@@ -1,7 +1,9 @@
 # Coolapk KMP Android · Material 3 Expressive 全页面设计需求
 
-状态：全页面需求已确认；已选择 Local Codex，独立设计项目已创建；等待本机 Codex CLI 登录后生成，尚未生成视觉原型。
-核对日期：2026-10-13。
+状态：全页面需求已确认；视觉原型已生成，见 `docs/design/prototype/index.html`（HTML/CSS/JS，交互原型 + 设计系统面板）。
+核对日期：2026-10-14。
+
+> 交付物：`docs/design/prototype/`（`index.html` / `styles.css` / `app.js`）。画布内为确定性虚构数据，仅浏览器演示，不调用真实接口。原型在需求确认的 20 个页面/状态之外，补入了已入库的「话题详情」「酷友主页」，共 23 个目录页 + 设计系统面板。
 
 ## 交付目标
 

@@ -27,6 +27,13 @@ android {
         buildConfig = true
     }
 
+    testOptions {
+        unitTests {
+            // ViewModel 里的 android.util.Log 在 JVM 单测中默认会抛 not-mocked 异常
+            isReturnDefaultValues = true
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
@@ -96,4 +103,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     testImplementation("junit:junit:4.13.2")
     testImplementation(libs.kotlinx.coroutines.test)
+    // 测试里需要复刻 Rust fetch_external_page 的 JSON 信封
+    testImplementation(libs.kotlinx.serialization.json)
 }

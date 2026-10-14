@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coolapk KMP · Android 界面设计原型（Material 3 Expressive）</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-view="canvas">
+
+  <div class="shell">
+    <!-- 页面目录 -->
+    <aside class="catalog">
+      <h1><span class="brand-mark">酷</span>Coolapk KMP</h1>
+      <div class="sub">Android · Material 3 Expressive<br>高保真交互原型 · 全页面覆盖</div>
+      <div id="catalog-list"></div>
+      <div class="group-label">说明</div>
+      <div style="padding:0 8px;font:400 12px/1.7 var(--font);color:#66746B">
+        画布内为虚构演示数据，所有发布、登录、点赞均为原型反馈，不调用真实接口。
+      </div>
+    </aside>
+
+    <!-- 舞台 -->
+    <main class="stage">
+      <header class="toolbar">
+        <div class="title">
+          Android 界面设计原型
+          <small>Material 3 Expressive · Coolapk green · 412×915 逻辑画布</small>
+        </div>
+        <div class="ctl-group">
+          <span>主题</span>
+          <button class="ctl active" data-vtheme="light">亮色</button>
+          <button class="ctl" data-vtheme="dark">暗色</button>
+        </div>
+        <div class="ctl-group">
+          <span>宽度</span>
+          <button class="ctl" data-vwidth="360">360 窄屏</button>
+          <button class="ctl active" data-vwidth="412">412 标准</button>
+          <button class="ctl" data-vwidth="840">840 宽屏</button>
+        </div>
+        <div class="ctl-group">
+          <span>视图</span>
+          <button class="ctl active" data-vview="canvas">画布</button>
+          <button class="ctl" data-vview="overview">总览</button>
+        </div>
+      </header>
+
+      <div class="stage-body">
+        <div class="device-wrap">
+          <div class="device" id="device" data-width="412"></div>
+        </div>
+        <div class="stage-note">
+          <h3>可操作的流程</h3>
+          <ul>
+            <li>首页 → 动态详情 → 评论排序/只看楼主 → 楼中楼 → 回复编辑 → 返回</li>
+            <li>数码 → 品牌/分类 → 产品列表 → 产品详情 → 图片查看</li>
+            <li>搜索 → 热词/分类结果 → 动态/应用/产品/用户/话题</li>
+            <li>发布 → 编辑 → 预览 → 发布成功返回首页</li>
+            <li>我的游客 → 网页登录 / Cookie 导入 → 我的已登录 → 退出确认</li>
+            <li>消息 → 分类切换 → 带动态目标的通知 → 动态详情</li>
+            <li>发现 → 栏目/筛选 → 内容卡片 → 详情</li>
+          </ul>
+          <p>顶栏可切换 <code>亮/暗</code> 与 <code>窄/宽屏</code>；宽屏下画布切换为 NavigationRail 与两列动态。返回键与 <code>Esc</code> 均可关闭弹层/返回上一页。</p>
+        </div>
+      </div>
+
+      <div class="overview" id="overview"></div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

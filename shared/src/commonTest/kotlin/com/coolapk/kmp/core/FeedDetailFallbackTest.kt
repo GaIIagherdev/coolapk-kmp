@@ -85,4 +85,20 @@ class FeedDetailFallbackTest {
             FeedDetailFallback.extractWebDetailJson("不是 JSON")
         }
     }
+
+    @Test
+    fun surfacesServerReasonWhenFeedIsNotViewable() {
+        val body = """{"status":"400","messageStatus":-5,"message":"作者设置为仅半年内动态可见，无法查看"}"""
+        assertEquals(
+            "作者设置为仅半年内动态可见，无法查看",
+            FeedDetailFallback.webDetailServerMessage(body),
+        )
+    }
+
+    @Test
+    fun ignoresServerMessageWhenFeedDataIsPresent() {
+        assertNull(FeedDetailFallback.webDetailServerMessage("""{"status":0,"data":{"id":"1"}}"""))
+        assertNull(FeedDetailFallback.webDetailServerMessage("不是 JSON"))
+        assertNull(FeedDetailFallback.webDetailServerMessage("""{"status":"400"}"""))
+    }
 }

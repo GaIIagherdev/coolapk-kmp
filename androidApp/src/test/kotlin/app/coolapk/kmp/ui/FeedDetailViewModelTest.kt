@@ -3,6 +3,7 @@ package app.coolapk.kmp.ui
 import com.coolapk.kmp.core.CaptchaChallenge
 import com.coolapk.kmp.core.CoolapkGateway
 import com.coolapk.kmp.core.FeedItem
+import com.coolapk.kmp.core.FeedUnavailableException
 import com.coolapk.kmp.core.HomePage
 import com.coolapk.kmp.core.HomeRepository
 import com.coolapk.kmp.core.ReplyPage
@@ -134,8 +135,24 @@ class FeedDetailViewModelTest {
     }
 
     @Test
-    fun nonCaptchaFailureKeepsServerMessage() = runTest(dispatcher) {
+    fun unavailableFeedShowsServerReasonWithoutWrapper() = runTest(dispatcher) {
         val gateway = FakeFeedDetailGateway()
+        val viewModel = FeedDetailViewModel { HomeRepository(gateway) }
+        viewModel.open("100", null)
+        runCurrent()
+        gateway.failDetail(0, captchaError())
+        runCurrent()
+
+        viewModel.dismissCaptcha()
+        runCurrent()
+        gateway.failWeb(0, FeedUnavailableException("作者设置为仅半年内动态可见，无法查看"))
+        runCurrent()
+
+        assertEquals("作者设置为仅半年内动态可见，无法查看", viewModel.state.value.detailError)
+    }
+
+    @Test
+    fun nonCaptchaFailureKeepsServerMessage() = runTest(dispatcher) {        val gateway = FakeFeedDetailGateway()
         val viewModel = FeedDetailViewModel { HomeRepository(gateway) }
 
         viewModel.open("100", null)
