@@ -73,4 +73,14 @@ class DigitalJsonParserTest {
         assertEquals("end", page.lastItem)
         assertTrue(page.hasMore)
     }
+
+    @Test
+    fun productSpecsReadsArrayAndPipeSeparatedString() {
+        val page = parser.parsePage(
+            """{"data":[{"entityType":"product","id":1,"title":"A","product_specs":["高刷","快充"]},
+            {"entityType":"product","id":2,"title":"B","product_specs":"高刷|防水"}]}""",
+        )
+        assertEquals(listOf("高刷", "快充"), page.items[0].productSpecs())
+        assertEquals(listOf("高刷", "防水"), page.items[1].productSpecs())
+    }
 }

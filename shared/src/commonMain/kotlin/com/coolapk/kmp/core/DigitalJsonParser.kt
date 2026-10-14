@@ -255,3 +255,10 @@ internal fun String.digitalImageUrl(): String? = when {
     startsWith("//") -> "https:$this"
     else -> "https://image.coolapk.com/${trimStart('/')}"
 }
+
+/** 产品列表项上的规格摘要（服务端 product_specs，数组或 "|" 分隔字符串）。 */
+fun DigitalEntity.productSpecs(): List<String> = when (val value = raw["product_specs"] ?: raw["productSpecs"]) {
+    is JsonArray -> value.mapNotNull { (it as? JsonPrimitive)?.contentOrNull?.trim() }
+    is JsonPrimitive -> value.contentOrNull?.split('|')?.map(String::trim).orEmpty()
+    else -> emptyList()
+}.filter(String::isNotEmpty)
