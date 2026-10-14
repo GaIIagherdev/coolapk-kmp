@@ -273,3 +273,6 @@ fun DigitalEntity.listScore(): Double? {
 /** 列表项自带的热度文案（仅当服务端列表返回时）。 */
 fun DigitalEntity.listHeat(): String? =
     (raw["hot_num_txt"] ?: raw["hot_num"])?.let { (it as? JsonPrimitive)?.contentOrNull }?.takeIf(String::isNotBlank)
+
+/** 子栏目是否带请求参数（同一页面的不同筛选），与参考项目的判断一致。 */
+val DigitalEntity.hasRequestArgs: Boolean get() = requestArgs.isNotEmpty()

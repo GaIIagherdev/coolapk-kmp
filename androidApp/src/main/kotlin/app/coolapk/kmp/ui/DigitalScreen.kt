@@ -18,6 +18,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import com.coolapk.kmp.core.productSpecs
+import com.coolapk.kmp.core.hasRequestArgs
 import com.coolapk.kmp.core.listScore
 import com.coolapk.kmp.core.listHeat
 import kotlinx.coroutines.flow.filter
@@ -153,14 +154,15 @@ internal fun DigitalScreen(
     }
 }
 
-/** 频道的子栏目：带地址且不指向其它频道的子项，与参考项目的筛选规则一致。 */
+/** 频道的子栏目，筛选规则与参考项目一致。 */
 private fun DigitalUiState.visibleSubtabs(tab: DigitalTab): List<DigitalEntity> {
     val channelTargets = tabs.flatMap { listOfNotNull(it.key, it.url, it.pageName, it.webUrl) }
         .map { it.removePrefix("#") }
         .toSet()
+    // 与参考项目一致：地址不指向其它频道，或带有请求参数（同一页面的不同筛选）即为子栏目
     return tab.entities.filter { entity ->
         val target = entity.url.orEmpty().removePrefix("#")
-        target.isNotBlank() && target !in channelTargets
+        target.isNotBlank() && (target !in channelTargets || entity.hasRequestArgs)
     }
 }
 
