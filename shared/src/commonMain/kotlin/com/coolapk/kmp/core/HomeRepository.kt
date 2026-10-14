@@ -64,6 +64,8 @@ class HomeRepository(
 
     suspend fun loadUserFeeds(uid: String, page: Int = 1): HomePage = gateway.getUserFeeds(uid, page)
 
+    suspend fun loadMyGoods(uid: String, kind: String, page: Int = 1): DigitalPage = gateway.getMyGoodsPage(uid, kind, page)
+
     suspend fun loadProductFeeds(productId: String, page: Int = 1): HomePage = gateway.getProductFeeds(productId, "feed", page)
 
     suspend fun loadProductRatings(productId: String, star: Int = 0, ownerOnly: Boolean = false, page: Int = 1): ProductRatingPage =

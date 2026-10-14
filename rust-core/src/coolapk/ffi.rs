@@ -268,6 +268,24 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    /// 我的装备动态：goods_type 为 all / wish（想买）/ buy（买过）。
+    pub fn get_my_goods_feeds(&self, uid: String, goods_type: String, page: u32) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_my_goods_feeds(&uid, &goods_type, page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 我的商品店铺列表。
+    pub fn get_goods_store_items(&self, uid: String, page: u32) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_goods_store_items(&uid, page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 我的产品专辑列表。
+    pub fn get_product_albums(&self, uid: String, page: u32) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_product_albums(&uid, page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     /// 当前用户的产品清单（想要/已拥有等）。
     pub fn get_my_product_list(&self, uid: String, product_type: String, page: u32) -> Result<String, CoolapkError> {
         let value = self.runtime.block_on(self.client.get_my_product_list(&uid, &product_type, page))?;

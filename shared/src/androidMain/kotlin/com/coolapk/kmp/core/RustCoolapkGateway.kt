@@ -200,6 +200,16 @@ class RustCoolapkGateway(
             ?: throw IllegalStateException("数码产品详情数据不完整")
     }
 
+    override suspend fun getMyGoodsPage(uid: String, kind: String, page: Int): DigitalPage = onCore {
+        val safePage = page.coerceAtLeast(1).toUInt()
+        val raw = when (kind) {
+            "store" -> core.getGoodsStoreItems(uid, safePage)
+            "album" -> core.getProductAlbums(uid, safePage)
+            else -> core.getMyGoodsFeeds(uid, kind, safePage)
+        }
+        digitalParser.parsePage(raw)
+    }
+
     override suspend fun getProductFeeds(productId: String, feedType: String, page: Int): HomePage = onCore {
         parser.parseHomePage(core.getProductFeeds(productId, feedType, "", page.coerceAtLeast(1).toUInt()))
     }

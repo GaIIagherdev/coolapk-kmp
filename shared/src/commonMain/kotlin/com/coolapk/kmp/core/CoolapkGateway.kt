@@ -66,6 +66,10 @@ interface CoolapkGateway {
     suspend fun getDigitalProductDetail(productId: String): DigitalProductDetail =
         error("当前平台未提供数码产品详情接口")
 
+    /** 我的装备：kind 为 all / wish / buy（动态）、store（商品店铺）、album（产品专辑）。 */
+    suspend fun getMyGoodsPage(uid: String, kind: String, page: Int = 1): DigitalPage =
+        error("当前平台未提供我的装备接口")
+
     suspend fun getProductFeeds(productId: String, feedType: String = "feed", page: Int = 1): HomePage =
         error("当前平台未提供产品动态接口")
 
