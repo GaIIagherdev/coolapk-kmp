@@ -124,6 +124,8 @@ private sealed interface ContentRoute {
     data object Settings : ContentRoute
     data object MyGoods : ContentRoute
     data object ProductSelector : ContentRoute
+    data class Relations(val uid: String, val kind: RelationKind) : ContentRoute
+    data class ProfileEdit(val profile: com.coolapk.kmp.core.UserProfile) : ContentRoute
 }
 
 // material3 1.5.x 的 NavigationRail 不会自行约束宽度：放在 Row 里会吃掉整行，
@@ -433,6 +435,16 @@ internal fun CoolapkApp(
                         ),
                     )
                     is ContentRoute.ProductSelector -> ProductSelectorScreen(onBack = closeContent)
+                    is ContentRoute.Relations -> RelationsScreen(
+                        uid = route.uid,
+                        initialKind = route.kind,
+                        onBack = closeContent,
+                        onOpenUser = openUser,
+                    )
+                    is ContentRoute.ProfileEdit -> ProfileEditScreen(
+                        profile = route.profile,
+                        onBack = closeContent,
+                    )
                     is ContentRoute.MyGoods -> state.profile?.uid?.let { ownUid ->
                         MyGoodsScreen(
                             uid = ownUid,
@@ -462,6 +474,8 @@ internal fun CoolapkApp(
                         onImportCookie = { loginOpen = true },
                         onLogout = viewModel::logout,
                         onOpenGoods = openMyGoods,
+                        onOpenRelations = { relationUid, kind -> contentRoutes = contentRoutes + ContentRoute.Relations(relationUid, kind) },
+                        onOpenEdit = { profile -> contentRoutes = contentRoutes + ContentRoute.ProfileEdit(profile) },
                         selfUid = state.profile?.uid,
                         likeOverrides = state.likeOverrides,
                         viewModel = viewModel(

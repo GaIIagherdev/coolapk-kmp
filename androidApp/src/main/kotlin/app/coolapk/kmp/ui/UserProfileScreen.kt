@@ -26,6 +26,11 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material.icons.rounded.QrCode2
+import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Devices
@@ -97,6 +102,8 @@ fun UserProfileScreen(
     onImportCookie: () -> Unit,
     onLogout: () -> Unit,
     onOpenGoods: () -> Unit = {},
+    onOpenRelations: (String, RelationKind) -> Unit = { _, _ -> },
+    onOpenEdit: (UserProfile) -> Unit = {},
     selfUid: String? = null,
     onOpenAuthor: (String) -> Unit = {},
     ownProfile: UserProfile? = null,
@@ -182,6 +189,15 @@ fun UserProfileScreen(
                                 tab = tabState.value,
                                 onTabChange = { tabState.value = it },
                                 onOpenGoods = onOpenGoods,
+                                actionError = state.actionError,
+                                qrImage = state.qrImage,
+                                qrLoading = state.qrLoading,
+                                qrError = state.qrError,
+                                onToggleFollow = viewModel::toggleFollow,
+                                onToggleSpecial = viewModel::toggleSpecialFollow,
+                                onLoadQr = viewModel::loadQrImage,
+                                onEdit = { onOpenEdit(profile) },
+                                onOpenRelations = { kind -> onOpenRelations(profile.uid, kind) },
                             )
                         }
                         if (state.profileError != null) item(key = "profile-error") {
@@ -303,6 +319,15 @@ private fun ProfileHeaderCard(
     tab: ProfileTab,
     onTabChange: (ProfileTab) -> Unit,
     onOpenGoods: () -> Unit,
+    actionError: String?,
+    qrImage: String?,
+    qrLoading: Boolean,
+    qrError: String?,
+    onToggleFollow: () -> Unit,
+    onToggleSpecial: () -> Unit,
+    onLoadQr: () -> Unit,
+    onEdit: () -> Unit,
+    onOpenRelations: (RelationKind) -> Unit,
 ) {
     val now = System.currentTimeMillis() / 1000
     Column(Modifier.fillMaxWidth()) {
@@ -346,6 +371,57 @@ private fun ProfileHeaderCard(
         Spacer(Modifier.height(56.dp))
 
         Column(Modifier.padding(horizontal = 20.dp)) {
+            // 操作行：本人为编辑资料与二维码；他人为关注与特别关注（与参考项目一致）
+            var qrOpen by rememberSaveable { mutableStateOf(false) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                if (isOwnPage) {
+                    OutlinedButton(onClick = onEdit, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("编辑资料")
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    IconButton(onClick = { qrOpen = true; onLoadQr() }) {
+                        Icon(Icons.Rounded.QrCode2, contentDescription = "二维码名片")
+                    }
+                } else {
+                    if (profile.isFollow) {
+                        OutlinedButton(onClick = onToggleSpecial, modifier = Modifier.heightIn(min = 48.dp)) {
+                            Text(if (profile.isSpecialFollow) "特别关注中" else "特别关注")
+                        }
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Button(onClick = onToggleFollow, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(if (profile.isFollow) "已关注" else "关注")
+                    }
+                }
+            }
+            actionError?.let {
+                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
+            if (qrOpen) {
+                AlertDialog(
+                    onDismissRequest = { qrOpen = false },
+                    title = { Text("我的二维码名片") },
+                    text = {
+                        when {
+                            qrImage != null -> AsyncImage(
+                                model = coolapkImageRequest(qrImage),
+                                contentDescription = "我的二维码名片",
+                                modifier = Modifier.fillMaxWidth().aspectRatio(1f),
+                                contentScale = ContentScale.Fit,
+                            )
+                            qrLoading -> Box(Modifier.fillMaxWidth().height(160.dp), contentAlignment = Alignment.Center) {
+                                ExpressiveLoadingIndicator()
+                            }
+                            else -> Text(qrError ?: "二维码加载失败，请稍后重试")
+                        }
+                    },
+                    confirmButton = { TextButton(onClick = { qrOpen = false }) { Text("关闭") } },
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+
             // 名称行：名字、等级、认证
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -418,8 +494,8 @@ private fun ProfileHeaderCard(
             ) {
                 Row(Modifier.fillMaxWidth().padding(vertical = 14.dp)) {
                     ProfileStatCell("获赞", profile.likeCount, Modifier.weight(1f))
-                    ProfileStatCell("关注", profile.followingCount, Modifier.weight(1f))
-                    ProfileStatCell("粉丝", profile.followerCount, Modifier.weight(1f))
+                    ProfileStatCell("关注", profile.followingCount, Modifier.weight(1f), onClick = { onOpenRelations(RelationKind.FOLLOW) })
+                    ProfileStatCell("粉丝", profile.followerCount, Modifier.weight(1f), onClick = { onOpenRelations(RelationKind.FANS) })
                 }
             }
 
@@ -537,9 +613,9 @@ private fun registerDaysLabel(regDate: Long?, now: Long): String? {
 }
 
 @Composable
-private fun ProfileStatCell(label: String, value: Int?, modifier: Modifier = Modifier) {
+private fun ProfileStatCell(label: String, value: Int?, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
     Column(
-        modifier = modifier,
+        modifier = if (onClick != null) modifier.clickable(onClick = onClick) else modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(

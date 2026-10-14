@@ -263,7 +263,11 @@ class ProfileJsonParser(
             ageTag = ageTag,
             astro = astro,
             birthLabel = birthLabel,
-            city = text("city", "province", "location")?.takeUnless { it in UNKNOWN_PLACES },
+            city = text("city", "location")?.takeUnless { it in UNKNOWN_PLACES },
+            province = text("province")?.takeUnless { it in UNKNOWN_PLACES },
+            birthYear = birthYear,
+            birthMonth = birthMonth,
+            birthDay = birthDay,
             ipLocation = text("ip_location", "ipLocation", "ip_region", "ipRegion")
                 ?.takeUnless { it in UNKNOWN_PLACES },
             loginTime = number("logintime", "loginTime"),

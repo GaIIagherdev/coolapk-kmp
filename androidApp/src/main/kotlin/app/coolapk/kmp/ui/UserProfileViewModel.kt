@@ -42,6 +42,10 @@ data class UserProfileUiState(
     val hasMoreFeeds: Boolean = true,
     val favorites: ProfileFeedList = ProfileFeedList(),
     val liked: ProfileFeedList = ProfileFeedList(),
+    val actionError: String? = null,
+    val qrImage: String? = null,
+    val qrLoading: Boolean = false,
+    val qrError: String? = null,
 )
 
 private fun UserProfileUiState.listFor(kind: ProfileListKind): ProfileFeedList = when (kind) {
@@ -230,6 +234,72 @@ class UserProfileViewModel(
 
     private fun updateList(kind: ProfileListKind, transform: (ProfileFeedList) -> ProfileFeedList) {
         _state.update { it.withList(kind, transform(it.listFor(kind))) }
+    }
+
+    /** 关注或取消关注：先乐观更新，失败时回滚并提示。 */
+    fun toggleFollow() {
+        val snapshot = _state.value
+        val profile = snapshot.profile ?: return
+        val source = repository ?: return
+        val target = !profile.isFollow
+        _state.update { it.copy(profile = it.profile?.copy(isFollow = target), actionError = null) }
+        viewModelScope.launch {
+            source.followUser(profile.uid, target).onFailure { failure ->
+                _state.update {
+                    it.copy(
+                        profile = it.profile?.copy(isFollow = !target),
+                        actionError = failure.message ?: "操作失败",
+                    )
+                }
+            }
+        }
+    }
+
+    /** 设置或取消特别关注（仅在已关注时可用）。 */
+    fun toggleSpecialFollow() {
+        val snapshot = _state.value
+        val profile = snapshot.profile ?: return
+        if (!profile.isFollow) return
+        val source = repository ?: return
+        val target = !profile.isSpecialFollow
+        _state.update { it.copy(profile = it.profile?.copy(isSpecialFollow = target), actionError = null) }
+        viewModelScope.launch {
+            source.setSpecialFollow(profile.uid, target).onFailure { failure ->
+                _state.update {
+                    it.copy(
+                        profile = it.profile?.copy(isSpecialFollow = !target),
+                        actionError = failure.message ?: "操作失败",
+                    )
+                }
+            }
+        }
+    }
+
+    /** 加载个人二维码名片（仅本人主页使用）。 */
+    fun loadQrImage() {
+        val uid = _state.value.profile?.uid ?: return
+        val source = repository ?: return
+        if (_state.value.qrImage != null || _state.value.qrLoading) return
+        _state.update { it.copy(qrLoading = true, qrError = null) }
+        viewModelScope.launch {
+            runCatching { source.loadUserQrImage(uid) }
+                .onSuccess { image ->
+                    _state.update {
+                        it.copy(
+                            qrLoading = false,
+                            qrImage = image,
+                            qrError = if (image == null) "接口未返回二维码图片" else null,
+                        )
+                    }
+                }
+                .onFailure { failure ->
+                    _state.update { it.copy(qrLoading = false, qrError = failure.message ?: "二维码加载失败") }
+                }
+        }
+    }
+
+    fun dismissActionError() {
+        _state.update { it.copy(actionError = null) }
     }
 
     fun retryFeeds() {

@@ -66,6 +66,10 @@ data class UserProfile(
     /** 生日展示文案，如 “1995年3月2日 (31岁)”。 */
     val birthLabel: String? = null,
     val city: String? = null,
+    val province: String? = null,
+    val birthYear: Int? = null,
+    val birthMonth: Int? = null,
+    val birthDay: Int? = null,
     val ipLocation: String? = null,
     /** 最近活跃时间（Unix 秒）。 */
     val loginTime: Long? = null,
