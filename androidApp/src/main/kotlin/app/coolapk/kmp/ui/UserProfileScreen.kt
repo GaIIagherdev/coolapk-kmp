@@ -1,6 +1,8 @@
 package app.coolapk.kmp.ui
 
 import androidx.activity.compose.BackHandler
+import android.net.Uri
+import android.content.Intent
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.FlowRow
@@ -72,6 +74,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -100,7 +103,8 @@ internal enum class ProfileTab(val label: String, val feedType: String? = null, 
     ERSHOU("二手", "ershou"),
     GOODS("好物", entityTab = "goods"),
     GOODS_RANK("好物榜", entityTab = "goods_rank"),
-    FAVORITES("收藏"),
+    GOODS_STORE("商品店铺", entityTab = "goods_store"),
+    FAVORITES("收藏", entityTab = "collection"),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -125,6 +129,7 @@ fun UserProfileScreen(
     viewModel: UserProfileViewModel = viewModel(factory = UserProfileViewModel.Factory),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     val listState = rememberLazyListState()
     LaunchedEffect(uid, ownProfile) {
         listState.scrollToItem(0)
@@ -142,7 +147,6 @@ fun UserProfileScreen(
     val tabState = remember(uid) { mutableStateOf(ProfileTab.FEEDS) }
     val activeTab = tabState.value
     val activeKind = when (activeTab) {
-        ProfileTab.FAVORITES -> ProfileListKind.FAVORITES
         ProfileTab.LIKED -> ProfileListKind.LIKED
         else -> null
     }
@@ -223,8 +227,11 @@ fun UserProfileScreen(
                             ProfileHeaderCard(
                                 profile = profile,
                                 isOwnPage = isOwnPage,
-                                tabs = if (isOwnPage) ProfileTab.entries.toList()
-                                    else ProfileTab.entries.filterNot { it == ProfileTab.LIKED || it == ProfileTab.REPLY },
+                                tabs = ProfileTab.entries.filter { entry ->
+                                    val ownOnly = entry == ProfileTab.LIKED || entry == ProfileTab.REPLY
+                                    val needsGoods = entry == ProfileTab.GOODS_STORE
+                                    (isOwnPage || !ownOnly) && (!needsGoods || (state.profile?.goodsCount ?: 0) > 0)
+                                },
                                 tab = tabState.value,
                                 onTabChange = { tabState.value = it },
                                 onOpenGoods = onOpenGoods,
@@ -239,6 +246,13 @@ fun UserProfileScreen(
                                 onLoadQr = viewModel::loadQrImage,
                                 onEdit = { onOpenEdit(profile) },
                                 onOpenRelations = { kind -> onOpenRelations(profile.uid, kind) },
+                                onOpenEquipmentPage = { equipmentUid ->
+                                    runCatching {
+                                        context.startActivity(
+                                            Intent(Intent.ACTION_VIEW, Uri.parse("https://m.coolapk.com/myDevice/$equipmentUid")),
+                                        )
+                                    }
+                                },
                             )
                         }
                         if (state.profileError != null) item(key = "profile-error") {
@@ -289,18 +303,8 @@ fun UserProfileScreen(
                                     }
                                 }
                             }
-                            ProfileTab.FAVORITES -> profileListItems(
-                                keyPrefix = "favorites",
-                                list = state.favorites,
-                                emptyTitle = "还没有收藏的动态",
-                                likeOverrides = likeOverrides,
-                                onLike = onLike,
-                                onOpenFeed = onOpenFeed,
-                                onOpenImage = onOpenImage,
-                                onOpenAuthor = onOpenAuthor,
-                                onRetry = { viewModel.retryList(ProfileListKind.FAVORITES) },
-                            )
-                            ProfileTab.ARTICLE, ProfileTab.QA, ProfileTab.GOODS, ProfileTab.GOODS_RANK -> {
+                            ProfileTab.ARTICLE, ProfileTab.QA, ProfileTab.GOODS, ProfileTab.GOODS_RANK,
+                            ProfileTab.GOODS_STORE, ProfileTab.FAVORITES -> {
                                 val key = activeTab.entityTab.orEmpty()
                                 profileEntityItems(
                                     keyPrefix = key,
@@ -395,8 +399,10 @@ private fun ProfileHeaderCard(
     onLoadQr: () -> Unit,
     onEdit: () -> Unit,
     onOpenRelations: (RelationKind) -> Unit,
+    onOpenEquipmentPage: (String) -> Unit,
 ) {
     val now = System.currentTimeMillis() / 1000
+    val context = LocalContext.current
     Column(Modifier.fillMaxWidth()) {
         // 封面：有封面图时使用图片，否则用品牌色块；头像压在封面底边
         Box(Modifier.fillMaxWidth().height(184.dp)) {
@@ -617,7 +623,9 @@ private fun ProfileHeaderCard(
             val equipmentCount = profile.productOwnerCount ?: 0
             Spacer(Modifier.height(12.dp))
             Surface(
-                modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).clickable(enabled = isOwnPage, onClick = onOpenGoods),
+                modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).clickable(onClick = {
+                    if (isOwnPage) onOpenGoods() else onOpenEquipmentPage(profile.uid)
+                }),
                 shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.surfaceContainerLowest,
             ) {
@@ -643,7 +651,7 @@ private fun ProfileHeaderCard(
             if ((profile.goodsCount ?: 0) > 0) {
                 Spacer(Modifier.height(8.dp))
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).clickable { onTabChange(ProfileTab.GOODS_STORE) },
                     shape = MaterialTheme.shapes.large,
                     color = MaterialTheme.colorScheme.surfaceContainerLowest,
                 ) {
