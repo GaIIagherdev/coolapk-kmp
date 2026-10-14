@@ -30,7 +30,7 @@ Android 界面必须遵循 M3E，这是不可妥协的基准。
 
 ## 功能参考
 
-`/Users/pwxiao/development/githubrepo/coolapk-desktop` 是功能与交互的参考实现（Vue/Tauri，只读，不要修改）。
+参考实现为独立仓库 `coolapk-desktop`（Vue/Tauri，只读，不要修改），请在本机自行指定其路径，不要把本机路径写入仓库。
 
 - 参考它的**功能范围、信息结构、数据字段和交互流程**。
 - **视觉样式以 M3E 为准**，不照搬桌面端的布局、圆角、颜色或组件形态。
