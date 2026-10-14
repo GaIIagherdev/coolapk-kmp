@@ -860,6 +860,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is
 // rather `InterfaceTooLargeException`, caused by too many methods
@@ -986,6 +988,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_get_user_liked(
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_user_profile(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_user_qr_image(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_user_tab_data(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_is_logged_in(
 ): Short
@@ -1187,6 +1191,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_get_user_liked(`ptr`: Pointer,`uid
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_user_profile(`ptr`: Pointer,`uid`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_user_qr_image(`ptr`: Pointer,`uid`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_user_tab_data(`ptr`: Pointer,`uid`: RustBuffer.ByValue,`tab`: RustBuffer.ByValue,`page`: Int,`firstItem`: RustBuffer.ByValue,`lastItem`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_is_logged_in(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus,
 ): Byte
@@ -1512,6 +1518,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_user_qr_image() != 50438.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_user_tab_data() != 26804.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_is_logged_in() != 55558.toShort()) {
@@ -2166,6 +2175,11 @@ public interface CoolapkCoreInterface {
      * 个人二维码名片图片。
      */
     fun `getUserQrImage`(`uid`: kotlin.String): kotlin.String
+
+    /**
+     * 用户标签页数据（图文 article、问答 qa、好物榜 goods_rank、收藏单 collection 等）。
+     */
+    fun `getUserTabData`(`uid`: kotlin.String, `tab`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String
 
     fun `isLoggedIn`(): kotlin.Boolean
 
@@ -3164,6 +3178,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_user_qr_image(
         it, FfiConverterString.lower(`uid`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 用户标签页数据（图文 article、问答 qa、好物榜 goods_rank、收藏单 collection 等）。
+     */
+    @Throws(CoolapkException::class)override fun `getUserTabData`(`uid`: kotlin.String, `tab`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_user_tab_data(
+        it, FfiConverterString.lower(`uid`),FfiConverterString.lower(`tab`),FfiConverterUInt.lower(`page`),FfiConverterString.lower(`firstItem`),FfiConverterString.lower(`lastItem`),_status)
 }
     }
     )

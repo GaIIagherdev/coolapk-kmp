@@ -468,6 +468,19 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    /// 用户标签页数据（图文 article、问答 qa、好物榜 goods_rank、收藏单 collection 等）。
+    pub fn get_user_tab_data(
+        &self,
+        uid: String,
+        tab: String,
+        page: u32,
+        first_item: String,
+        last_item: String,
+    ) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_user_tab_data(&uid, &tab, page, &first_item, &last_item, "all"))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     /// 用户的分类动态：feed_type 为 feed（动态）、reply（回复）、rating（评分）、picture/coolpic（酷图）、ershou（二手）、fav（收藏）。
     pub fn get_user_feeds_typed(&self, uid: String, page: u32, feed_type: String) -> Result<String, CoolapkError> {
         let value = self.runtime.block_on(self.client.get_user_feeds(&uid, page, &feed_type))?;
