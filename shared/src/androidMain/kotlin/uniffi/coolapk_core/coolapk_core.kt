@@ -858,6 +858,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is
 // rather `InterfaceTooLargeException`, caused by too many methods
@@ -976,6 +978,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_get_topic_feeds(
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_user_favorites(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_user_feeds(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_user_feeds_typed(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_user_liked(
 ): Short
@@ -1175,6 +1179,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_get_topic_feeds(`ptr`: Pointer,`ta
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_user_favorites(`ptr`: Pointer,`uid`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_user_feeds(`ptr`: Pointer,`uid`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_user_feeds_typed(`ptr`: Pointer,`uid`: RustBuffer.ByValue,`page`: Int,`feedType`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_user_liked(`ptr`: Pointer,`uid`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1494,6 +1500,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_user_feeds() != 61869.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_user_feeds_typed() != 14769.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_user_liked() != 13721.toShort()) {
@@ -2140,6 +2149,11 @@ public interface CoolapkCoreInterface {
     fun `getUserFavorites`(`uid`: kotlin.String, `page`: kotlin.UInt): kotlin.String
 
     fun `getUserFeeds`(`uid`: kotlin.String, `page`: kotlin.UInt): kotlin.String
+
+    /**
+     * 用户的分类动态：feed_type 为 feed（动态）、reply（回复）、rating（评分）、picture/coolpic（酷图）、ershou（二手）、fav（收藏）。
+     */
+    fun `getUserFeedsTyped`(`uid`: kotlin.String, `page`: kotlin.UInt, `feedType`: kotlin.String): kotlin.String
 
     /**
      * 用户赞过的内容。
@@ -3089,6 +3103,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_user_feeds(
         it, FfiConverterString.lower(`uid`),FfiConverterUInt.lower(`page`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 用户的分类动态：feed_type 为 feed（动态）、reply（回复）、rating（评分）、picture/coolpic（酷图）、ershou（二手）、fav（收藏）。
+     */
+    @Throws(CoolapkException::class)override fun `getUserFeedsTyped`(`uid`: kotlin.String, `page`: kotlin.UInt, `feedType`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_user_feeds_typed(
+        it, FfiConverterString.lower(`uid`),FfiConverterUInt.lower(`page`),FfiConverterString.lower(`feedType`),_status)
 }
     }
     )
