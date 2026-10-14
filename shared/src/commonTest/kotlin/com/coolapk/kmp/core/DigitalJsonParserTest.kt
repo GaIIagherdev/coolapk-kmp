@@ -83,4 +83,16 @@ class DigitalJsonParserTest {
         assertEquals(listOf("高刷", "快充"), page.items[0].productSpecs())
         assertEquals(listOf("高刷", "防水"), page.items[1].productSpecs())
     }
+
+    @Test
+    fun listScoreAndHeatAreReadOnlyWhenPresent() {
+        val page = parser.parsePage(
+            """{"data":[{"entityType":"product","id":1,"title":"A","owner_star_average_score":"9.5","hot_num_txt":"12.3万"},
+            {"entityType":"product","id":2,"title":"B"}]}""",
+        )
+        assertEquals(9.5, page.items[0].listScore())
+        assertEquals("12.3万", page.items[0].listHeat())
+        assertEquals(null, page.items[1].listScore())
+        assertEquals(null, page.items[1].listHeat())
+    }
 }

@@ -18,6 +18,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import com.coolapk.kmp.core.productSpecs
+import com.coolapk.kmp.core.listScore
+import com.coolapk.kmp.core.listHeat
 import kotlinx.coroutines.flow.filter
 import android.net.Uri
 import androidx.compose.foundation.clickable
@@ -616,6 +618,7 @@ private fun DigitalProductCard(
             ProductImageBox(product, Modifier.fillMaxWidth().aspectRatio(4f / 3f))
             Column(Modifier.padding(12.dp)) {
                 ProductTitle(product)
+                ProductMetrics(product)
                 ProductSpecChips(specs)
             }
         } else {
@@ -624,6 +627,7 @@ private fun DigitalProductCard(
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
                     ProductTitle(product)
+                    ProductMetrics(product)
                     ProductSpecChips(specs)
                 }
             }
@@ -659,6 +663,30 @@ private fun ProductTitle(product: DigitalEntity) {
         maxLines = 2,
         overflow = TextOverflow.Ellipsis,
     )
+}
+
+/** 酷友评分与热度：只在列表数据里已有时显示，不为卡片额外请求详情。 */
+@Composable
+private fun ProductMetrics(product: DigitalEntity) {
+    val score = product.listScore()
+    val heat = product.listHeat()
+    if (score == null && heat == null) return
+    Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        score?.let {
+            Text(
+                "酷友评分 ${"%.1f".format(it)}",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.tertiary,
+            )
+        }
+        heat?.let {
+            Text(
+                "热度 $it",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }
 
 @Composable

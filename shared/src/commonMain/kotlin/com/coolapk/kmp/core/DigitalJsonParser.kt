@@ -262,3 +262,14 @@ fun DigitalEntity.productSpecs(): List<String> = when (val value = raw["product_
     is JsonPrimitive -> value.contentOrNull?.split('|')?.map(String::trim).orEmpty()
     else -> emptyList()
 }.filter(String::isNotEmpty)
+
+/** 列表项自带的酷友评分（仅当服务端列表返回时），不额外请求详情。 */
+fun DigitalEntity.listScore(): Double? {
+    val text = (raw["owner_star_average_score"] ?: raw["rating_average_score"] ?: raw["score"])
+        .let { (it as? JsonPrimitive)?.contentOrNull }
+    return text?.toDoubleOrNull()?.takeIf { it > 0 }
+}
+
+/** 列表项自带的热度文案（仅当服务端列表返回时）。 */
+fun DigitalEntity.listHeat(): String? =
+    (raw["hot_num_txt"] ?: raw["hot_num"])?.let { (it as? JsonPrimitive)?.contentOrNull }?.takeIf(String::isNotBlank)
