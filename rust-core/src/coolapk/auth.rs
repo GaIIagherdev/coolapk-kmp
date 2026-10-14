@@ -128,6 +128,7 @@ fn shift_last_base64_char(value: &str, shift: i32) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::CoolapkAuth;
+    use base64::{Engine as _, engine::general_purpose::STANDARD};
 
     #[test]
     fn token_is_deterministic_for_a_synthetic_device_and_timestamp() {
@@ -137,5 +138,16 @@ mod tests {
         assert_eq!(first, second);
         assert!(first.starts_with("v3"));
         assert!(first.len() > 70);
+    }
+
+    #[test]
+    fn token_keeps_the_server_compatible_bcrypt_cost() {
+        let auth = CoolapkAuth::new("synthetic-test-device");
+        let token = auth.generate_token_at(1_770_000_000).unwrap();
+        let hash = STANDARD
+            .decode(token.trim_start_matches("v3"))
+            .expect("token payload must be base64");
+        let hash = String::from_utf8(hash).expect("bcrypt hash must be utf-8");
+        assert!(hash.starts_with("$2y$04$"), "unexpected hash: {hash}");
     }
 }

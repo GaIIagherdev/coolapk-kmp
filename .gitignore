@@ -1,4 +1,5 @@
 .gradle/
+.kotlin/
 .idea/
 **/build/
 local.properties
@@ -6,3 +7,4 @@ local.properties
 .DS_Store
 rust-core/target/
 androidApp/src/main/jniLibs/
+iosApp/CoolapkKMP.xcodeproj/

@@ -1858,18 +1858,26 @@ impl CoolapkClient {
         self.request_api(Method::GET, path, query, None).await
     }
 
+    async fn api_get_checked(&self, path: &str, query: &[(&str, String)]) -> Result<Value, String> {
+        let response = self.api_get(path, query).await?;
+        ensure_api_success(&response)?;
+        Ok(response)
+    }
+
     async fn api_get_for_list(
         &self,
         path: &str,
         query: &[(&str, String)],
         guest: bool,
     ) -> Result<Value, String> {
-        if guest {
+        let response = if guest {
             self.public_api_get_from("https://api.coolapk.com", path, query)
                 .await
         } else {
             self.api_get(path, query).await
-        }
+        }?;
+        ensure_api_success(&response)?;
+        Ok(response)
     }
 
     async fn public_api_get_from(
@@ -2821,7 +2829,7 @@ impl CoolapkClient {
     // 1. 首页推荐
     pub async fn get_index_v8_feeds(&self, page: u32) -> Result<Value, String> {
         let raw = self
-            .api_get("/v6/main/indexV8", &[("page", page.to_string())])
+            .api_get_checked("/v6/main/indexV8", &[("page", page.to_string())])
             .await?;
         Ok(json!({ "code": 200, "data": Self::extract_cleaned_list(&raw) }))
     }
@@ -2836,7 +2844,7 @@ impl CoolapkClient {
         last_item: &str,
     ) -> Result<Value, String> {
         let raw = self
-            .api_get(
+            .api_get_checked(
                 "/v6/main/indexV8",
                 &[
                     ("page", page.to_string()),
@@ -2872,11 +2880,7 @@ impl CoolapkClient {
                 ],
             )
             .await?;
-        let response = wrap_api_data(raw)?;
-        Ok(json!({
-            "code": 200,
-            "data": response.get("data").cloned().unwrap_or_else(|| json!([])),
-        }))
+        wrap_page_data_response(raw)
     }
 
     // 2. 热榜
@@ -2961,7 +2965,7 @@ impl CoolapkClient {
     // 3. 科技快讯 (对接官方快讯页 V11_HOME_TAB_NEWS，含平滑降级)
     pub async fn get_latest_feeds(&self, page: u32) -> Result<Value, String> {
         let res = self
-            .api_get(
+            .api_get_checked(
                 "/v6/page/dataList",
                 &[
                     ("url", "V11_HOME_TAB_NEWS".to_string()),
@@ -2982,7 +2986,7 @@ impl CoolapkClient {
 
         // 备用快讯 API: /v6/page/dataList?url=%23%2Ffeed%2FdigestList%3Ftype%3D1
         let fallback = self
-            .api_get(
+            .api_get_checked(
                 "/v6/page/dataList",
                 &[
                     ("url", "#/feed/digestList?type=1".to_string()),
@@ -3003,7 +3007,7 @@ impl CoolapkClient {
 
         // 备用最新动态 API: /v6/page/dataList?url=%23%2Ffeed%2FnewestList
         let fallback2 = self
-            .api_get(
+            .api_get_checked(
                 "/v6/page/dataList",
                 &[
                     ("url", "#/feed/newestList".to_string()),
@@ -3017,7 +3021,7 @@ impl CoolapkClient {
     // 右侧栏：热门话题 (话题广场 V9_HOME_TAB_TOPIC)
     pub async fn get_hot_topics(&self) -> Result<Value, String> {
         let raw = self
-            .api_get(
+            .api_get_checked(
                 "/v6/page/dataList",
                 &[
                     ("url", "V9_HOME_TAB_TOPIC".to_string()),
@@ -3098,7 +3102,7 @@ impl CoolapkClient {
     // 7. 全站搜索
     pub async fn search_all(&self, query: &str, page: u32) -> Result<Value, String> {
         let raw = self
-            .api_get(
+            .api_get_checked(
                 "/v6/search",
                 &[
                     ("type", "all".to_string()),
@@ -3679,7 +3683,7 @@ impl CoolapkClient {
 
         if !page_url.is_empty() {
             let raw = self
-                .api_get(
+                .api_get_checked(
                     "/v6/page/dataList",
                     &[("url", page_url.to_string()), ("page", page.to_string())],
                 )
@@ -3705,7 +3709,7 @@ impl CoolapkClient {
         };
 
         let search_raw = self
-            .api_get(
+            .api_get_checked(
                 "/v6/search",
                 &[
                     ("type", "apk".to_string()),
@@ -4450,7 +4454,7 @@ impl CoolapkClient {
         sort_type: &str,
     ) -> Result<Value, String> {
         let raw = self
-            .api_get(
+            .api_get_checked(
                 "/v6/search",
                 &[
                     ("type", "feed".to_string()),
@@ -7489,31 +7493,53 @@ impl CoolapkClient {
         if !Self::has_valid_session_cookie(&cookie) {
             return Err("官方登录 WebView 没有返回有效的 SESSID".to_string());
         }
+        let previous_cookie = self
+            .user_cookie
+            .read()
+            .map_err(|_| "failed to read login state".to_string())?
+            .clone();
         self.set_user_cookie(cookie.clone())?;
         log::info!("login.cookie_validation_started");
-        let result = self.check_login_info().await?;
-        log::info!("login.cookie_validation_succeeded");
-        let data = result.get("data").unwrap_or(&result);
-        let uid = data
-            .get("uid")
-            .or_else(|| data.get("id"))
-            .map(value_to_string)
-            .unwrap_or_default();
-        let username = data
-            .get("username")
-            .or_else(|| data.get("userName"))
-            .map(value_to_string)
-            .unwrap_or_default();
-        let avatar = data
-            .get("userAvatar")
-            .or_else(|| data.get("avatar"))
-            .map(value_to_string)
-            .unwrap_or_default();
-        if uid.is_empty() || uid == "0" || uid == "10000" {
-            return Err("官方登录 WebView Cookie 未通过账号校验".to_string());
+        let verified = async {
+            let result = self.check_login_info().await?;
+            log::info!("login.cookie_validation_succeeded");
+            let data = result.get("data").unwrap_or(&result);
+            let uid = data
+                .get("uid")
+                .or_else(|| data.get("id"))
+                .map(value_to_string)
+                .unwrap_or_default();
+            let username = data
+                .get("username")
+                .or_else(|| data.get("userName"))
+                .map(value_to_string)
+                .unwrap_or_default();
+            let avatar = data
+                .get("userAvatar")
+                .or_else(|| data.get("avatar"))
+                .map(value_to_string)
+                .unwrap_or_default();
+            if uid.is_empty() || uid == "0" || uid == "10000" {
+                return Err("官方登录 WebView Cookie 未通过账号校验".to_string());
+            }
+            let verified_cookie = merge_cookie_value(&cookie, "uid", &encode_login_cookie_value(&uid));
+            let verified_cookie = if username.is_empty() {
+                remove_cookie_values(&verified_cookie, &["username"])
+            } else {
+                merge_cookie_value(&verified_cookie, "username", &encode_login_cookie_value(&username))
+            };
+            self.save_account(&uid, &username, &avatar, &verified_cookie).await?;
+            Ok(result)
         }
-        self.save_account(&uid, &username, &avatar, &cookie).await?;
-        Ok(result)
+        .await;
+        match verified {
+            Ok(result) => Ok(result),
+            Err(error) => {
+                self.set_user_cookie(previous_cookie.unwrap_or_default())
+                    .map_err(|restore_error| format!("{error}; 恢复上一登录会话失败: {restore_error}"))?;
+                Err(error)
+            }
+        }
     }
 
     /// 按 APK 登录页的回调流程，用一次性授权码换取 LoginInfo。
@@ -7530,7 +7556,8 @@ impl CoolapkClient {
 
         let raw_cookie = match callback_cookie {
             Some(value) if !value.trim().is_empty() => Self::sanitize_cookie(value),
-            _ => self
+            Some(_) => return Err("授权回调没有带回登录 Cookie".to_string()),
+            None => self
                 .get_user_cookie()
                 .ok_or_else(|| "授权回调没有带回登录 Cookie".to_string())?,
         };
@@ -7539,60 +7566,89 @@ impl CoolapkClient {
             return Err("授权回调没有带回有效的 SESSID".to_string());
         }
 
+        let previous_cookie = self.get_user_cookie();
+        let previous_uid = self
+            .load_accounts_root()
+            .get("lastLoginUid")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string();
+
         // accessToken 只应使用本次 WebView 回调的会话，避免把旧账号的 uid/token 带给一次性授权码。
         self.set_user_cookie(cookie.clone())?;
-        log::info!("login.access_token_request_started");
-        let result = wrap_api_data(
-            self.api_get(
-                "/v6/account/accessToken",
-                &[("code", code.to_string())],
-            )
-            .await?,
-        )?;
-        log::info!("login.access_token_response_accepted");
-        let data = result.get("data").unwrap_or(&result);
-        let uid = data
-            .get("uid")
-            .or_else(|| data.get("id"))
-            .map(value_to_string)
-            .unwrap_or_default();
-        let username = data
-            .get("username")
-            .or_else(|| data.get("userName"))
-            .map(value_to_string)
-            .unwrap_or_default();
-        // APK 会优先使用 refreshToken 作为后续请求的 token。
-        let token = data
-            .get("refreshToken")
-            .map(value_to_string)
-            .filter(|value| !value.is_empty())
-            .or_else(|| data.get("token").map(value_to_string))
-            .unwrap_or_default();
-        let avatar = data
-            .get("userAvatar")
-            .or_else(|| data.get("avatar"))
-            .map(value_to_string)
-            .unwrap_or_default();
-        if uid.is_empty() || uid == "0" || uid == "10000" || username.is_empty() || token.is_empty()
-        {
-            return Err("酷安授权接口未返回完整登录信息".to_string());
-        }
-        log::info!("login.access_token_identity_complete");
+        let verified = async {
+            log::info!("login.access_token_request_started");
+            let result = wrap_api_data(
+                self.api_get(
+                    "/v6/account/accessToken",
+                    &[("code", code.to_string())],
+                )
+                .await?,
+            )?;
+            log::info!("login.access_token_response_accepted");
+            let data = result.get("data").unwrap_or(&result);
+            let uid = data
+                .get("uid")
+                .or_else(|| data.get("id"))
+                .map(value_to_string)
+                .unwrap_or_default();
+            let username = data
+                .get("username")
+                .or_else(|| data.get("userName"))
+                .map(value_to_string)
+                .unwrap_or_default();
+            // APK 会优先使用 refreshToken 作为后续请求的 token。
+            let token = data
+                .get("refreshToken")
+                .map(value_to_string)
+                .filter(|value| !value.is_empty())
+                .or_else(|| data.get("token").map(value_to_string))
+                .unwrap_or_default();
+            let avatar = data
+                .get("userAvatar")
+                .or_else(|| data.get("avatar"))
+                .map(value_to_string)
+                .unwrap_or_default();
+            if uid.is_empty() || uid == "0" || uid == "10000" || username.is_empty() || token.is_empty()
+            {
+                return Err("酷安授权接口未返回完整登录信息".to_string());
+            }
+            log::info!("login.access_token_identity_complete");
 
-        let stored_cookie = merge_cookie_value(&cookie, "uid", &encode_login_cookie_value(&uid));
-        let stored_cookie = merge_cookie_value(
-            &stored_cookie,
-            "username",
-            &encode_login_cookie_value(&username),
-        );
-        let stored_cookie = merge_cookie_value(
-            &stored_cookie,
-            "token",
-            &encode_login_cookie_value(&token),
-        );
-        self.save_account(&uid, &username, &avatar, &stored_cookie)
-            .await?;
-        Ok(result)
+            let stored_cookie = merge_cookie_value(&cookie, "uid", &encode_login_cookie_value(&uid));
+            let stored_cookie = merge_cookie_value(
+                &stored_cookie,
+                "username",
+                &encode_login_cookie_value(&username),
+            );
+            let stored_cookie = merge_cookie_value(
+                &stored_cookie,
+                "token",
+                &encode_login_cookie_value(&token),
+            );
+            self.set_user_cookie(stored_cookie.clone())?;
+            let login_info = self.check_login_info().await?;
+            let verified_data = login_info.get("data").unwrap_or(&login_info);
+            let verified_uid = verified_data
+                .get("uid")
+                .or_else(|| verified_data.get("id"))
+                .map(value_to_string)
+                .unwrap_or_default();
+            if verified_uid != uid {
+                return Err("酷安授权账号与服务端登录会话不一致".to_string());
+            }
+            self.save_account(&uid, &username, &avatar, &stored_cookie).await?;
+            Ok(result)
+        }
+        .await;
+        match verified {
+            Ok(result) => Ok(result),
+            Err(error) => {
+                self.restore_login_state(previous_cookie, &previous_uid)
+                    .map_err(|restore_error| format!("{error}; 恢复上一登录会话失败: {restore_error}"))?;
+                Err(error)
+            }
+        }
     }
 
     fn extract_and_set_session(&self, response: &Value) {
@@ -9216,52 +9272,58 @@ fn rank_feed_url(rank_type: &str) -> Option<&'static str> {
     }
 }
 
-fn wrap_api_data(response: Value) -> Result<Value, String> {
+fn ensure_api_success(response: &Value) -> Result<(), String> {
     if let Some(err_msg) = response.get("error").and_then(Value::as_str) {
         if !err_msg.is_empty() && err_msg != "0" {
             return Err(err_msg.to_string());
         }
     }
 
-    if let Some(message) = response.get("message").and_then(Value::as_str) {
-        let code = response
-            .get("code")
-            .and_then(|v| {
-                v.as_i64()
-                    .or_else(|| v.as_str().and_then(|s| s.parse().ok()))
-            })
-            .unwrap_or(200);
-        let status = response.get("status").and_then(|v| v.as_i64()).unwrap_or(1);
-        let msg_status = response
-            .get("messageStatus")
-            .and_then(Value::as_str)
-            .unwrap_or("");
+    let number = |key: &str| {
+        response.get(key).and_then(|value| {
+            value.as_i64().or_else(|| value.as_str().and_then(|text| text.parse().ok()))
+        })
+    };
+    let code = number("code");
+    let status = number("status");
+    let message = response
+        .get("message")
+        .and_then(Value::as_str)
+        .filter(|text| !text.trim().is_empty());
+    let message_status = response
+        .get("messageStatus")
+        .and_then(Value::as_str)
+        .unwrap_or("");
 
-        if msg_status == "err_request_captcha_v2" || response.get("messageExtra").is_some() {
-            return Err(serde_json::to_string(&response).unwrap_or_else(|_| message.to_string()));
-        }
-
-        // 酷安成功信封：code 为 200/0/1 且 status 为 0/1（status=1004/500 等均属失败，
-        // 例如"网络环境异常"会以 HTTP 200 + status=1004/500 的形式返回）
-        if (code != 200 && code != 0 && code != 1)
-            || !(status == 0 || status == 1)
-            || msg_status.starts_with("err_")
-        {
-            return Err(message.to_string());
-        }
+    if message_status == "err_request_captcha_v2" || response.get("messageExtra").is_some() {
+        return Err(serde_json::to_string(response).unwrap_or_else(|_| "酷安验证码校验失败".to_string()));
     }
 
-    if let Some(status) = response.get("status").and_then(|v| v.as_i64()) {
-        if status < 0 {
-            let msg = response
-                .get("message")
-                .or_else(|| response.get("error"))
-                .and_then(Value::as_str)
-                .unwrap_or("酷安服务端拒绝请求");
-            return Err(msg.to_string());
-        }
+    // 酷安成功信封：code 为 200/0/1 且 status 为 0/1；字段缺省的数据响应也有效。
+    if code.is_some_and(|value| !matches!(value, 200 | 0 | 1))
+        || status.is_some_and(|value| !matches!(value, 0 | 1))
+        || message_status.starts_with("err_")
+    {
+        let detail = message
+            .map(str::to_owned)
+            .or_else(|| (!message_status.is_empty()).then(|| message_status.to_string()))
+            .unwrap_or_else(|| {
+                let mut indicators = Vec::new();
+                if let Some(value) = code {
+                    indicators.push(format!("code={value}"));
+                }
+                if let Some(value) = status {
+                    indicators.push(format!("status={value}"));
+                }
+                format!("酷安服务端拒绝请求（{}）", indicators.join(", "))
+            });
+        return Err(detail);
     }
+    Ok(())
+}
 
+fn wrap_api_data(response: Value) -> Result<Value, String> {
+    ensure_api_success(&response)?;
     let data = response.get("data").cloned().unwrap_or(response);
     Ok(json!({ "code": 200, "data": data }))
 }
@@ -9341,6 +9403,99 @@ fn is_safe_discovery_page_url(value: &str) -> bool {
         && !lower.starts_with("javascript:")
         && !lower.starts_with("file:")
         && !lower.starts_with("data:")
+}
+
+#[cfg(test)]
+mod login_cookie_tests {
+    use super::{CoolapkClient, encode_login_cookie_value, merge_cookie_value};
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+
+    #[tokio::test]
+    async fn failed_validation_restores_previous_cookie() {
+        let client = CoolapkClient::new();
+        let previous = "SESSID=previous; uid=42";
+        client.set_user_cookie(previous.to_string()).unwrap();
+
+        let _ = catch_unwind(AssertUnwindSafe(|| {
+            let _guard = client.auth.write().unwrap();
+            panic!("force local token failure before the API request");
+        }));
+
+        assert!(client.login_by_webview_cookie("SESSID=candidate").await.is_err());
+        assert_eq!(client.get_user_cookie().as_deref(), Some(previous));
+    }
+
+    #[tokio::test]
+    async fn failed_access_code_request_restores_previous_cookie() {
+        let client = CoolapkClient::new();
+        let previous = "SESSID=previous; uid=42; token=previous-token";
+        client.set_user_cookie(previous.to_string()).unwrap();
+
+        let _ = catch_unwind(AssertUnwindSafe(|| {
+            let _guard = client.auth.write().unwrap();
+            panic!("force local token failure before the API request");
+        }));
+
+        assert!(client
+            .login_by_access_code("invalid-code", Some("SESSID=candidate; uid=stale"))
+            .await
+            .is_err());
+        assert_eq!(client.get_user_cookie().as_deref(), Some(previous));
+    }
+
+    #[tokio::test]
+    async fn missing_access_code_keeps_previous_cookie() {
+        let client = CoolapkClient::new();
+        let previous = "SESSID=previous; uid=42";
+        client.set_user_cookie(previous.to_string()).unwrap();
+        assert!(client.login_by_access_code("  ", Some("SESSID=candidate")).await.is_err());
+        assert_eq!(client.get_user_cookie().as_deref(), Some(previous));
+    }
+
+    #[tokio::test]
+    async fn empty_callback_cookie_does_not_reuse_previous_account() {
+        let client = CoolapkClient::new();
+        let previous = "SESSID=previous; uid=42";
+        client.set_user_cookie(previous.to_string()).unwrap();
+        let error = client.login_by_access_code("new-code", Some("  ")).await.unwrap_err();
+        assert!(error.contains("Cookie"));
+        assert_eq!(client.get_user_cookie().as_deref(), Some(previous));
+    }
+
+    #[test]
+    fn verified_identity_replaces_stale_cookie_fields() {
+        let cookie = "SESSID=valid; UID=stale; uid=duplicate; USERNAME=stale; ddid=keep";
+        let cookie = merge_cookie_value(cookie, "uid", "42");
+        let cookie = merge_cookie_value(&cookie, "username", &encode_login_cookie_value("酷友 A"));
+        assert_eq!(
+            cookie,
+            "SESSID=valid; uid=42; username=%E9%85%B7%E5%8F%8B+A; ddid=keep"
+        );
+    }
+}
+
+#[cfg(test)]
+mod page_response_tests {
+    use super::wrap_page_data_response;
+    use serde_json::json;
+
+    #[test]
+    fn keeps_cursor_metadata_alongside_entities() {
+        let raw = json!({
+            "code": 200,
+            "data": [{"entityId": "feed-1", "entityType": "feed"}],
+            "firstItem": "first",
+            "lastItem": "last",
+            "hasMore": false,
+            "pageContext": "next",
+        });
+        let wrapped = wrap_page_data_response(raw.clone()).unwrap();
+        assert_eq!(wrapped["data"], raw["data"]);
+        assert_eq!(wrapped["firstItem"], "first");
+        assert_eq!(wrapped["lastItem"], "last");
+        assert_eq!(wrapped["hasMore"], false);
+        assert_eq!(wrapped["pageContext"], "next");
+    }
 }
 
 #[cfg(test)]
@@ -9439,6 +9594,46 @@ async fn response_json(response: reqwest::Response) -> Result<Value, String> {
     }
 
     serde_json::from_str(&body).map_err(|e| format!("invalid Coolapk JSON response: {e}"))
+}
+
+#[cfg(test)]
+mod api_envelope_tests {
+    use super::{ensure_api_success, wrap_api_data};
+    use serde_json::json;
+
+    #[test]
+    fn rejects_business_errors_without_message() {
+        for raw in [
+            json!({"code": 403, "data": []}),
+            json!({"code": "403", "data": []}),
+            json!({"status": 1004, "data": []}),
+            json!({"status": "500", "data": []}),
+            json!({"messageStatus": "err_request_denied", "data": []}),
+        ] {
+            assert!(ensure_api_success(&raw).is_err(), "{raw}");
+            assert!(wrap_api_data(raw).is_err());
+        }
+    }
+
+    #[test]
+    fn accepts_documented_success_envelopes_and_data_only_responses() {
+        for raw in [
+            json!({"code": 200, "message": "", "data": [1]}),
+            json!({"code": 0, "status": 0, "data": [1]}),
+            json!({"code": 1, "status": 1, "data": [1]}),
+            json!({"data": [1]}),
+            json!([1]),
+        ] {
+            assert!(ensure_api_success(&raw).is_ok(), "{raw}");
+            assert_eq!(wrap_api_data(raw).unwrap()["data"], json!([1]));
+        }
+    }
+
+    #[test]
+    fn preserves_captcha_details_without_message() {
+        let raw = json!({"code": 403, "messageStatus": "err_request_captcha_v2", "messageExtra": {"captcha": true}});
+        assert_eq!(ensure_api_success(&raw).unwrap_err(), raw.to_string());
+    }
 }
 
 #[cfg(test)]

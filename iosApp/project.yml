@@ -1,0 +1,23 @@
+name: CoolapkKMP
+options:
+  bundleIdPrefix: app.coolapk.kmp
+  minimumXcodeGenVersion: 2.40.0
+targets:
+  CoolapkKMP:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Sources
+      - path: Generated/coolapk_core.swift
+    dependencies:
+      - framework: build/CoolapkCore.xcframework
+        embed: false
+    settings:
+      base:
+        SWIFT_VERSION: "5.9"
+        PRODUCT_BUNDLE_IDENTIFIER: app.coolapk.kmp
+        TARGETED_DEVICE_FAMILY: "1,2"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: 酷安
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES

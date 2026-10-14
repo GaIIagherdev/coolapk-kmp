@@ -1,0 +1,427 @@
+package com.coolapk.kmp.core
+
+import android.content.Context
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import android.util.Base64
+import java.security.KeyStore
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
+import uniffi.coolapk_core.CoolapkCore
+import uniffi.coolapk_core.CoolapkException
+
+class RustCoolapkGateway(
+    context: Context? = null,
+    private val parser: FeedJsonParser = FeedJsonParser(),
+    private val appParser: AppJsonParser = AppJsonParser(),
+    private val profileParser: ProfileJsonParser = ProfileJsonParser(),
+    private val notificationParser: NotificationJsonParser = NotificationJsonParser(),
+    private val discoveryParser: DiscoveryJsonParser = DiscoveryJsonParser(),
+    private val digitalParser: DigitalJsonParser = DigitalJsonParser(),
+    private val digitalProductParser: DigitalProductDetailJsonParser = DigitalProductDetailJsonParser(),
+    private val searchParser: SearchJsonParser = SearchJsonParser(),
+    private val notificationListParser: NotificationListJsonParser = NotificationListJsonParser(),
+    private val detailParser: FeedDetailJsonParser = FeedDetailJsonParser(),
+) : CoolapkGateway {
+    private val sessionStore = context?.let(::SecureSessionStore)
+    private val core: CoolapkCore by lazy {
+        CoolapkCore().also { createdCore ->
+            sessionStore?.read()?.takeIf(String::isNotBlank)?.let(createdCore::setSessionCookie)
+        }
+    }
+
+    private suspend fun <T> onCore(block: suspend () -> T): T = withContext(Dispatchers.IO) {
+        try {
+            block()
+        } catch (error: CoolapkException.Api) {
+            throw IllegalStateException(error.detail, error)
+        }
+    }
+
+    override suspend fun getHomePage(
+        page: Int,
+        firstItem: String?,
+        lastItem: String?,
+    ): HomePage = onCore {
+        val safePage = page.coerceAtLeast(1).toUInt()
+        val raw = core.getHomePage(safePage, firstItem.orEmpty(), lastItem.orEmpty())
+        parser.parseHomePage(raw)
+    }
+
+    override suspend fun getSessionState(): SessionState = onCore {
+        val cookie = core.getSessionCookie()
+        SessionState(
+            loggedIn = core.isLoggedIn(),
+            uid = cookie.cookieValue("uid"),
+            username = cookie.cookieValue("username")?.decodeCookieValue(),
+        )
+    }
+
+    override fun setSessionCookie(cookie: String) {
+        val previousCookie = core.getSessionCookie()
+        core.setSessionCookie(cookie)
+        try {
+            if (cookie.isBlank()) sessionStore?.clear() else sessionStore?.write(cookie)
+        } catch (error: Exception) {
+            core.setSessionCookie(previousCookie.orEmpty())
+            throw error
+        }
+    }
+
+    override fun clearSessionCookie() {
+        setSessionCookie("")
+    }
+
+    override suspend fun getFeedPage(
+        channel: FeedChannel,
+        page: Int,
+        cursor: HomeCursor?,
+    ): HomePage = onCore {
+        val safePage = page.coerceAtLeast(1).toUInt()
+        val raw = when (channel) {
+            FeedChannel.HOME -> core.getHomePage(
+                safePage,
+                cursor?.firstItem.orEmpty(),
+                cursor?.lastItem.orEmpty(),
+            )
+            FeedChannel.HOT -> core.getHotFeeds(safePage)
+            FeedChannel.DISCOVERY -> core.getLatestFeeds(safePage)
+        }
+        parser.parseHomePage(raw)
+    }
+
+    override suspend fun getDiscoveryPage(page: Int, cursor: HomeCursor?): HomePage =
+        getFeedPage(FeedChannel.DISCOVERY, page, cursor)
+
+    override suspend fun getDiscoveryConfig(): DiscoveryConfig = onCore {
+        discoveryParser.parseConfig(core.getDiscoveryConfig())
+    }
+
+    override suspend fun getDiscoverySectionPage(
+        tab: DiscoveryTab,
+        page: Int,
+        cursor: HomeCursor?,
+        pageContext: String?,
+    ): DiscoveryPage = onCore {
+        discoveryParser.parsePage(
+            core.getDiscoveryPageData(
+                tab.url,
+                tab.title,
+                tab.subTitle.orEmpty(),
+                page.coerceAtLeast(1).toUInt(),
+                cursor?.firstItem.orEmpty(),
+                cursor?.lastItem.orEmpty(),
+                pageContext.orEmpty(),
+                "{}",
+            ),
+        )
+    }
+
+    override suspend fun getDigitalConfig(): DigitalConfig = onCore {
+        digitalParser.parseConfig(core.getTabConfig())
+    }
+
+    override suspend fun getDigitalTabPage(
+        tab: DigitalTab,
+        page: Int,
+        cursor: HomeCursor?,
+        pageContext: String?,
+    ): DigitalPage = onCore {
+        digitalParser.parsePage(
+            core.getDiscoveryPageData(
+                tab.url,
+                tab.title,
+                tab.subTitle.orEmpty(),
+                page.coerceAtLeast(1).toUInt(),
+                cursor?.firstItem.orEmpty(),
+                cursor?.lastItem.orEmpty(),
+                pageContext.orEmpty(),
+                tab.requestArgs.toString(),
+            ),
+        )
+    }
+
+    override suspend fun getDigitalBrands(): DigitalPage = onCore {
+        digitalParser.parsePage(core.getProductBrandList())
+    }
+
+    override suspend fun getDigitalCategories(): DigitalPage = onCore {
+        digitalParser.parsePage(core.getProductCategoryList())
+    }
+
+    override suspend fun getDigitalBrandProducts(
+        brand: DigitalEntity,
+        page: Int,
+        cursor: HomeCursor?,
+    ): DigitalPage = onCore {
+        val brandType = (brand.raw["type"] as? JsonPrimitive)?.contentOrNull ?: "recommend"
+        digitalParser.parsePage(
+            core.getProductBrandProducts(
+                brand.id,
+                brandType,
+                page.coerceAtLeast(1).toUInt(),
+                cursor?.firstItem.orEmpty(),
+                cursor?.lastItem.orEmpty(),
+            ),
+        )
+    }
+
+    override suspend fun getDigitalCategoryProducts(
+        category: DigitalEntity,
+        page: Int,
+        cursor: HomeCursor?,
+    ): DigitalPage = onCore {
+        val url = category.url?.takeIf(String::isNotBlank)
+            ?: throw IllegalArgumentException("数码分类缺少服务端地址")
+        digitalParser.parsePage(
+            core.getProductList(
+                url,
+                category.title.orEmpty(),
+                category.subTitle.orEmpty(),
+                page.coerceAtLeast(1).toUInt(),
+                cursor?.firstItem.orEmpty(),
+                cursor?.lastItem.orEmpty(),
+            ),
+        )
+    }
+
+    override suspend fun getDigitalProductDetail(productId: String): DigitalProductDetail = onCore {
+        digitalProductParser.parse(core.getProductDetail(productId), productId)
+            ?: throw IllegalStateException("数码产品详情数据不完整")
+    }
+
+    override suspend fun getAppPage(page: Int, category: String): AppPage = onCore {
+        appParser.parsePage(core.getAppList(page.coerceAtLeast(1).toUInt(), category))
+    }
+
+    override suspend fun getAppDetailRaw(packageName: String): String = onCore {
+        core.getAppDetail(packageName)
+    }
+
+    override suspend fun getProfile(): UserProfile? = onCore {
+        val uid = core.getSessionCookie()?.cookieValue("uid")?.takeIf(String::isNotBlank)
+            ?: return@onCore null
+        profileParser.parse(core.getMyProfile(uid))
+    }
+
+    override suspend fun getNotificationSummary(): NotificationSummary = onCore {
+        notificationParser.parse(core.getNotificationCount())
+    }
+
+    override suspend fun getNotificationPage(
+        category: NotificationCategory,
+        page: Int,
+    ): NotificationPage = onCore {
+        notificationListParser.parsePage(
+            core.getNotifications(category.apiValue, page.coerceAtLeast(1).toUInt()),
+            category,
+        )
+    }
+
+    override suspend fun searchFeeds(query: String, page: Int): HomePage = onCore {
+        parser.parseHomePage(core.searchFeeds(query.trim(), page.coerceAtLeast(1).toUInt()))
+    }
+
+    override suspend fun searchByType(
+        query: String,
+        category: SearchCategory,
+        page: Int,
+        cursor: HomeCursor?,
+        askFeedType: String,
+    ): SearchPage = onCore {
+        searchParser.parsePage(
+            core.searchByType(
+                category.apiValue,
+                query.trim(),
+                page.coerceAtLeast(1).toUInt(),
+                cursor?.firstItem.orEmpty(),
+                cursor?.lastItem.orEmpty(),
+                askFeedType,
+            ),
+            category,
+        )
+    }
+
+    override suspend fun getHotSearchWords(refresh: Boolean): List<String> = onCore {
+        searchParser.parseHotWords(core.getHotSearches(refresh))
+    }
+
+    override suspend fun likeFeed(feedId: String, liked: Boolean): Result<Unit> = runCatching {
+        onCore<Unit> {
+            if (liked) core.likeFeed(feedId) else core.unlikeFeed(feedId)
+        }
+    }
+
+    override suspend fun replyFeed(feedId: String, message: String): Result<Unit> = runCatching {
+        onCore<Unit> {
+            core.replyFeed(feedId, message)
+        }
+    }
+
+    override suspend fun createFeed(message: String): Result<String> = runCatching {
+        onCore {
+            val trimmed = message.trim()
+            require(trimmed.isNotEmpty()) { "动态内容不能为空" }
+            val root = Json.parseToJsonElement(core.createFeed(trimmed)) as? JsonObject
+                ?: error("发布接口返回格式无效")
+            val data = root["data"] as? JsonObject
+                ?: error("发布接口未返回动态数据")
+            data["id"]?.let { value ->
+                (value as? JsonPrimitive)?.contentOrNull?.takeIf(String::isNotBlank)
+            } ?: error("发布接口未返回动态 ID")
+        }
+    }
+
+    override suspend fun getFeedDetail(feedId: String): FeedItem = onCore {
+        detailParser.parseDetail(core.getFeedDetail(feedId))
+    }
+
+    override suspend fun getFeedReplies(
+        feedId: String,
+        page: Int,
+        sort: ReplySort,
+        authorOnly: Boolean,
+    ): ReplyPage = onCore {
+        detailParser.parseReplies(
+            core.getFeedReplies(
+                feedId,
+                page.coerceAtLeast(1).toUInt(),
+                if (authorOnly) "" else sort.apiValue,
+                authorOnly,
+            ),
+        )
+    }
+
+    override suspend fun getSubReplies(
+        feedId: String,
+        replyId: String,
+        page: Int,
+        lastItem: String?,
+    ): ReplyPage = onCore {
+        detailParser.parseReplies(
+            core.getSubReplies(feedId, replyId, page.coerceAtLeast(1).toUInt(), lastItem.orEmpty()),
+        )
+    }
+
+    override suspend fun replyToComment(
+        feedId: String,
+        replyId: String,
+        message: String,
+    ): Result<Unit> = runCatching {
+        onCore<Unit> { core.replyToComment(feedId, replyId, message) }
+    }
+
+    override suspend fun likeReply(replyId: String, liked: Boolean): Result<Unit> = runCatching {
+        onCore<Unit> {
+            if (liked) core.likeReply(replyId) else core.unlikeReply(replyId)
+        }
+    }
+
+    override suspend fun loginWithCookie(cookie: String): SessionState = onCore {
+        val previousCookie = core.getSessionCookie()
+        core.loginByWebviewCookie(cookie.trim())
+        persistVerifiedSession(previousCookie)
+        getSessionState()
+    }
+
+    override suspend fun loginWithAccessCode(code: String, cookie: String): SessionState = onCore {
+        val previousCookie = core.getSessionCookie()
+        core.loginByAccessCode(code.trim(), cookie.trim())
+        persistVerifiedSession(previousCookie)
+        getSessionState()
+    }
+
+    private fun persistVerifiedSession(previousCookie: String?) {
+        try {
+            val verifiedCookie = core.getSessionCookie()
+                ?: error("已验证登录缺少会话凭据")
+            sessionStore?.write(verifiedCookie)
+        } catch (error: Exception) {
+            core.setSessionCookie(previousCookie.orEmpty())
+            throw error
+        }
+    }
+}
+
+private class SecureSessionStore(context: Context) {
+    private val preferences = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+    private val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
+
+    fun write(value: String) {
+        if (value.isBlank()) {
+            clear()
+            return
+        }
+        val cipher = Cipher.getInstance(TRANSFORMATION)
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey())
+        val encrypted = cipher.iv + cipher.doFinal(value.toByteArray(Charsets.UTF_8))
+        check(preferences.edit().putString(KEY_COOKIE, Base64.encodeToString(encrypted, Base64.NO_WRAP)).commit()) {
+            "无法保存加密登录凭据"
+        }
+    }
+
+    fun read(): String? = runCatching {
+        val encoded = preferences.getString(KEY_COOKIE, null) ?: return null
+        val encrypted = Base64.decode(encoded, Base64.NO_WRAP)
+        val iv = encrypted.copyOfRange(0, GCM_IV_LENGTH)
+        val payload = encrypted.copyOfRange(GCM_IV_LENGTH, encrypted.size)
+        val cipher = Cipher.getInstance(TRANSFORMATION)
+        cipher.init(Cipher.DECRYPT_MODE, secretKey(), GCMParameterSpec(GCM_TAG_LENGTH, iv))
+        String(cipher.doFinal(payload), Charsets.UTF_8)
+    }.getOrNull()
+
+    fun clear() {
+        check(preferences.edit().remove(KEY_COOKIE).commit()) {
+            "无法清除加密登录凭据"
+        }
+    }
+
+    private fun secretKey(): SecretKey {
+        (keyStore.getKey(KEY_ALIAS, null) as? SecretKey)?.let { return it }
+        val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
+        generator.init(
+            KeyGenParameterSpec.Builder(
+                KEY_ALIAS,
+                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
+            )
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setRandomizedEncryptionRequired(true)
+                .build(),
+        )
+        return generator.generateKey()
+    }
+
+    private companion object {
+        const val ANDROID_KEYSTORE = "AndroidKeyStore"
+        const val KEY_ALIAS = "coolapk_kmp_session"
+        const val PREFERENCES = "coolapk_kmp_secure_session"
+        const val KEY_COOKIE = "encrypted_cookie"
+        const val TRANSFORMATION = "AES/GCM/NoPadding"
+        const val GCM_IV_LENGTH = 12
+        const val GCM_TAG_LENGTH = 128
+    }
+}
+
+private fun String?.cookieValue(name: String): String? = this
+    ?.split(';')
+    ?.asSequence()
+    ?.map(String::trim)
+    ?.mapNotNull { part ->
+        val separator = part.indexOf('=')
+        if (separator <= 0) null else part.substring(0, separator) to part.substring(separator + 1)
+    }
+    ?.firstOrNull { (key, _) -> key.equals(name, ignoreCase = true) }
+    ?.second
+
+private fun String.decodeCookieValue(): String = runCatching {
+    java.net.URLDecoder.decode(this, Charsets.UTF_8.name())
+}.getOrDefault(this)

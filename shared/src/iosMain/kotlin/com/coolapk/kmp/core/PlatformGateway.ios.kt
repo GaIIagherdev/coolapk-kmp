@@ -6,3 +6,5 @@ actual fun createPlatformGateway(): CoolapkGateway = object : CoolapkGateway {
     override suspend fun getSessionState(): SessionState = SessionState(loggedIn = false)
     override fun setSessionCookie(cookie: String) = Unit
 }
+
+actual fun initializePlatformGateway(context: Any) = Unit

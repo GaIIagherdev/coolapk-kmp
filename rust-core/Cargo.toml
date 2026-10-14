@@ -7,7 +7,7 @@ description = "Coolapk API core and UniFFI bindings for coolapk-kmp"
 
 [lib]
 name = "coolapk_core"
-crate-type = ["cdylib", "lib"]
+crate-type = ["cdylib", "staticlib", "lib"]
 
 [dependencies]
 anyhow = "1.0"
@@ -47,3 +47,11 @@ lto = "thin"
 codegen-units = 1
 panic = "abort"
 strip = true
+
+[target.'cfg(target_vendor = "apple")'.dependencies]
+rustls = { version = "0.23", default-features = false }
+rustls-platform-verifier = "0.7"
+
+[target.'cfg(target_os = "ios")'.dependencies]
+objc2 = "0.6.5"
+objc2-foundation = "0.3.2"
