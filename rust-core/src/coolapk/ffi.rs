@@ -474,6 +474,12 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    /// 用户空间数据（含主页卡片 homeTabCardRows）。
+    pub fn get_user_space(&self, uid: String) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_user_space(&uid))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     /// 用户标签页数据（图文 article、问答 qa、好物榜 goods_rank、收藏单 collection 等）。
     pub fn get_user_tab_data(
         &self,
