@@ -80,6 +80,12 @@ interface CoolapkGateway {
     suspend fun getUserFeeds(uid: String, page: Int = 1): HomePage =
         error("当前平台未提供用户动态接口")
 
+    suspend fun getUserFavorites(uid: String, page: Int = 1): HomePage =
+        error("当前平台未提供用户收藏接口")
+
+    suspend fun getUserLiked(uid: String, page: Int = 1): HomePage =
+        error("当前平台未提供用户赞过接口")
+
     suspend fun getTopicDetail(tag: String): TopicDetail =
         error("当前平台未提供话题详情接口")
 

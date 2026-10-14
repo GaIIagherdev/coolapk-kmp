@@ -306,6 +306,18 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    /// 用户收藏的动态（收藏列表，无需额外 id）。
+    pub fn get_user_favorites(&self, uid: String, page: u32) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_user_feeds(&uid, page, "fav"))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 用户赞过的内容。
+    pub fn get_user_liked(&self, uid: String, page: u32) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_user_like_list(&uid, page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     /// 当前用户的通知数量。
     pub fn get_notification_count(&self) -> Result<String, CoolapkError> {
         let value = self

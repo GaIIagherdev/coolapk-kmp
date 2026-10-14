@@ -64,6 +64,10 @@ class HomeRepository(
 
     suspend fun loadUserFeeds(uid: String, page: Int = 1): HomePage = gateway.getUserFeeds(uid, page)
 
+    suspend fun loadUserFavorites(uid: String, page: Int = 1): HomePage = gateway.getUserFavorites(uid, page)
+
+    suspend fun loadUserLiked(uid: String, page: Int = 1): HomePage = gateway.getUserLiked(uid, page)
+
     suspend fun loadTopicDetail(tag: String): TopicDetail = gateway.getTopicDetail(tag)
 
     suspend fun loadTopicFeeds(
