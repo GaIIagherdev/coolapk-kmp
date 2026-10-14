@@ -29,6 +29,19 @@ function avatarImg(hue) {
   <path d='M17 97c4-23 18-33 33-33s29 10 33 33z' fill='rgba(255,255,255,.86)'/></svg>`;
   return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
 }
+function coverImg(hue, label) {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 960 400'>
+  <defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>
+  <stop offset='0' stop-color='hsl(${hue},56%,52%)'/>
+  <stop offset='0.55' stop-color='hsl(${(hue + 26) % 360},60%,38%)'/>
+  <stop offset='1' stop-color='hsl(${(hue + 58) % 360},52%,26%)'/></linearGradient></defs>
+  <rect width='960' height='400' fill='url(#g)'/>
+  <circle cx='768' cy='74' r='196' fill='rgba(255,255,255,0.10)'/>
+  <circle cx='128' cy='344' r='150' fill='rgba(255,255,255,0.07)'/>
+  <text x='48' y='354' font-family='sans-serif' font-size='30' font-weight='700' fill='rgba(255,255,255,0.30)'>${label}</text>
+  </svg>`;
+  return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+}
 function compact(n) {
   if (n >= 10000) return (n / 10000).toFixed(1) + "万";
   if (n >= 1000) return (n / 1000).toFixed(1) + "k";
@@ -59,7 +72,7 @@ const FEEDS = [
     id: "5101", user: "极客小张", uid: "u1001", hue: 150, device: "Pixel 9 Pro", time: "12分钟前",
     title: "用 Pixel 9 Pro 拍了组夜景，HDR 依然是强项",
     message: "周末在江边随手拍了一组，几乎没怎么修图。手持长曝光也很稳，算法压高光很克制，暗部细节保留得不错。\n\n色彩比上一代更中性，不再一味加饱和；夜景模式出片速度也快了不少。",
-    images: [photo("夜景 · 江边", "#0E3B2E", "#1E8F63"), photo("长曝光 · 车流", "#123A4A", "#2E8CA8")],
+    images: [photo("夜景 · 江边", "#0E3B2E", "#1E8F63"), photo("长曝光 · 车流", "#123A4A", "#2E8CA8"), photo("街拍 · 霓虹", "#241033", "#7B3FA8")],
     likes: 328, replies: 46, liked: false,
   },
   {
@@ -73,20 +86,20 @@ const FEEDS = [
     id: "5103", user: "阿岚", uid: "u1003", hue: 32, device: "Fujifilm X-T5", time: "2小时前",
     title: null,
     message: "落日时分的城市天际线，等了半个小时才等到云被点亮的瞬间。",
-    images: [photo("落日 · 天际线", "#4A2B10", "#D98E3A"), photo("云 · 丁达尔", "#5A3A12", "#E8B45C"), photo("剪影 · 塔吊", "#3A2410", "#B4742E")],
+    images: [photo("落日 · 天际线", "#4A2B10", "#D98E3A"), photo("云 · 丁达尔", "#5A3A12", "#E8B45C"), photo("剪影 · 塔吊", "#3A2410", "#B4742E"), photo("江面 · 倒影", "#123A4A", "#3E8CA8"), photo("街角 · 路灯", "#3A2410", "#C08A3E"), photo("天台 · 晚霞", "#3A1030", "#B04E8C"), photo("车流 · 光轨", "#101A3A", "#4E6EC8"), photo("桥梁 · 轮廓", "#1A1A2E", "#5E5EA8"), photo("星空 · 微光", "#0E1030", "#5A5AC8")],
     likes: 156, replies: 12, liked: false,
   },
   {
     id: "5104", user: "无线小站", uid: "u1004", hue: 268, device: "iBasso DX320", time: "3小时前",
     title: "入门价位的人声塞，这枚值得一听",
     message: "换线之后中频密度上来了，齿音控制得比预想好。搭配小尾巴推得动，手机直推也能听个大概。\n\n整体走向偏流行，适合人声和小编制，不适合追求极低频的下潜力。",
-    images: [photo("耳机 · 特写", "#2A1B3A", "#7B4FB0")],
+    images: [photo("耳机 · 特写", "#2A1B3A", "#7B4FB0"), photo("线材 · 细节", "#1E2B3A", "#4E7BA8")],
     likes: 98, replies: 27, liked: false,
   },
   {
     id: "5105", user: "老周说机", uid: "u1005", hue: 12, device: "iPhone 16 Pro", time: "5小时前",
     title: "用了两周，聊聊这代芯片的真实体验",
-    message: "跑分看看就好，真正影响体验的是持续负载下的发热和降频曲线。这一代改进主要体现在能效，长时间游戏帧率更稳。\n\n影像依旧是长板，视频防抖和电影模式是很多人买它的理由。",
+    message: "跑分看看就好，真正影响体验的是持续负载下的发热和降频曲线。这一代改进主要体现在能效，长时间游戏帧率更稳，机身温度也比上一代更容易控制。\n\n影像依旧是长板，视频防抖和电影模式是很多人买它的理由。日常拍照的成片率很高，直出发社交平台基本不用后期。\n\n续航方面，中度使用一天没问题，但重度拍摄和游戏建议随身带个充电宝。总体来说，这一代属于稳中有进的迭代。",
     images: [],
     likes: 512, replies: 88, liked: false,
   },
@@ -94,8 +107,32 @@ const FEEDS = [
     id: "5106", user: "数码小灵通", uid: "u1006", hue: 190, device: "Web", time: "昨天",
     title: "下周新品发布汇总，先把时间记下来",
     message: "手机、平板、笔电都有，重点看两家旗舰的影像方案。具体参数以发布会为准。",
-    images: [photo("新品 · 预告", "#0E2E3A", "#2E9CB0")],
+    images: [photo("新品 · 预告", "#0E2E3A", "#2E9CB0"), photo("手机 · 渲染", "#12283A", "#3E78A8"), photo("平板 · 渲染", "#1A2A3A", "#4A6E9C"), photo("笔电 · 渲染", "#102030", "#3E5E88"), photo("手表 · 渲染", "#0E3028", "#2E9C7A"), photo("耳机 · 渲染", "#2A1A38", "#7B4FB0"), photo("相机 · 渲染", "#3A2410", "#B4742E"), photo("主机 · 渲染", "#1A1A2E", "#5E5EA8"), photo("配件 · 渲染", "#203020", "#4E8A4E"), photo("参数 · 海报", "#0E2E3A", "#2E9CB0")],
     likes: 76, replies: 9, liked: false,
+  },
+];
+
+const MY_FEEDS = [
+  {
+    id: "me01", user: ME.name, uid: ME.uid, hue: ME.hue, device: "小米 15 Ultra", time: "昨天 21:40",
+    title: "给书房换了套桌面灯，氛围感刚刚好",
+    message: "把主灯换成显色指数高的灯带，配合一盏可调色温的台灯，晚上写东西不刺眼。线材全部走了理线槽，桌面终于看不到乱七八糟的线了。",
+    images: [photo("书房 · 夜景", "#12261E", "#2E8F63"), photo("桌面 · 特写", "#132A3A", "#3E7CA8"), photo("灯光 · 氛围", "#2A1A38", "#7B4FB0"), photo("理线 · 细节", "#1A2A2A", "#4E8A7A")],
+    likes: 64, replies: 11, liked: false,
+  },
+  {
+    id: "me02", user: ME.name, uid: ME.uid, hue: ME.hue, device: "Pixel 9 Pro", time: "3天前",
+    title: "随手拍的通勤路，手机直出",
+    message: "早高峰的地铁站光比很大，HDR 压得还算自然，暗部没有糊成一团。",
+    images: [photo("地铁 · 通勤", "#101A2A", "#3E6EA8")],
+    likes: 41, replies: 5, liked: true,
+  },
+  {
+    id: "me03", user: ME.name, uid: ME.uid, hue: ME.hue, device: "本机", time: "上周",
+    title: null,
+    message: "入了一枚入门价位的人声塞，听了一周，中频密度比预期好，手机直推也能听出大概。图回头补。",
+    images: [],
+    likes: 28, replies: 7, liked: false,
   },
 ];
 
@@ -195,36 +232,51 @@ const BRANDS = [
 const CATEGORIES = ["旗舰手机", "折叠屏", "平板电脑", "笔记本", "智能手表", "耳机音箱"];
 
 /* ---------------------------- 通用组件 ---------------------------- */
+function mediaGrid(images) {
+  const n = images && images.length ? images.length : 0;
+  if (!n) return "";
+  if (n === 1)
+    return `<div class="mg mg-1"><span class="mg-cell"><img src="${images[0]}" alt=""><span class="badge-count">1/1</span></span></div>`;
+  const cols = n === 2 || n === 4 ? 2 : 3;
+  const show = n > 4 ? images.slice(0, 9) : images;
+  const extra = n - 9;
+  const cells = show.map((u, i) => {
+    const more = i === 8 && extra > 0 ? `<span class="mg-more">+${extra}</span>` : "";
+    return `<span class="mg-cell"><img src="${u}" alt="">${more}</span>`;
+  }).join("");
+  return `<div class="mg mg-c${cols}">${cells}</div>`;
+}
+
 function feedCard(f, opts = {}) {
-  const liked = opts.liked ?? f.liked;
-  const images = f.images && f.images.length
-    ? f.images.length === 1
-      ? `<div class="feed-media"><img src="${f.images[0]}" alt=""><span class="badge-count">1/1</span></div>`
-      : `<div class="feed-gallery">${f.images.map((u, i) => `<img class="gi" src="${u}" alt="">`).join("")}</div>`
-    : "";
+  const liked = state.liked[f.id] ?? f.liked;
+  const expanded = !!state.expanded[f.id];
   const title = f.title ? `<div class="feed-title">${esc(f.title)}</div>` : "";
   const meta = [f.device, f.time].filter(Boolean).join(" · ");
   const click = opts.clickable === false ? "" : `data-go="${opts.go || "feedDetail"}" data-id="${f.id}"`;
-  return `<button class="feed-card press" ${click} style="text-align:left">
-    <span class="fc-inner" style="display:block">
-      <span class="feed-head">
-        ${avatar(f.user, "a46", avatarImg(f.hue))}
-        <span class="fh-main">
-          <span class="fh-name">${esc(f.user)}</span>
-          <span class="fh-meta">${esc(meta)}</span>
-        </span>
-      </span>
-      ${title}
-      <span class="feed-body clamp8">${esc(f.message)}</span>
-      ${images}
-      <span class="feed-divider"></span>
-      <span class="feed-actions">
-        <span class="feed-action ${liked ? "liked" : ""}" data-like="${f.id}">${ic(liked ? "favorite" : "favorite_border", liked ? "ms-fill" : "")}${compact(f.likes + (liked ? 1 : 0))}</span>
-        <span class="feed-action" data-go="feedDetail" data-id="${f.id}" data-focus="1">${ic("chat_bubble")}${compact(f.replies)}</span>
-        <span class="feed-action">${ic("share")}</span>
-      </span>
-    </span>
-  </button>`;
+  const longMsg = !opts.noExpand && f.message.length > 120;
+  const bodyCls = longMsg && !expanded ? " clamp" : "";
+  const moreBtn = longMsg ? `<button class="feed-more" data-expand="${f.id}">${expanded ? "收起" : "展开全文"}</button>` : "";
+  const follow = opts.hideFollow || f.user === ME.name || f.user === opts.hideFollowFor ? "" : `<button class="fh-follow" data-toast="已关注 ${esc(f.user)}（演示）">${ic("add")}关注</button>`;
+  return `<article class="feed-item press" ${click} style="text-align:left">
+    <div class="feed-head">
+      ${avatar(f.user, "a46", avatarImg(f.hue))}
+      <div class="fh-main">
+        <div class="fh-name">${esc(f.user)}</div>
+        <div class="fh-meta">${esc(meta)}</div>
+      </div>
+      ${follow}
+    </div>
+    ${title}
+    <div class="feed-body${bodyCls}">${esc(f.message)}</div>
+    ${moreBtn}
+    ${mediaGrid(f.images)}
+    <div class="feed-actions">
+      <button class="feed-action ${liked ? "liked" : ""}" data-like="${f.id}">${ic(liked ? "favorite" : "favorite_border", liked ? "ms-fill" : "")}<span>${compact(f.likes + (liked ? 1 : 0))}</span></button>
+      <button class="feed-action" data-go="feedDetail" data-id="${f.id}" data-focus="1">${ic("chat_bubble")}<span>${compact(f.replies)}</span></button>
+      <button class="feed-action" data-toast="已打开系统分享">${ic("share")}<span>分享</span></button>
+      <button class="feed-action" data-toast="更多操作（演示）">${ic("more_horiz")}</button>
+    </div>
+  </article>`;
 }
 
 function appbar({ title, brand = false, sub = "", actions = [], back = false, immersive = false }) {
@@ -296,9 +348,12 @@ const state = {
   notifTab: "评论回复",
   publishMode: "编辑",
   publishText: "",
+  profileTab: "动态",
+  expanded: {},
 };
 
 function go(screen, params = {}, push = true) {
+  if (screen === "profileOwn" || screen === "userProfile") state.profileTab = "动态";
   if (push && (state.screen !== screen || JSON.stringify(params) !== JSON.stringify(state.params)))
     state.history.push({ screen: state.screen, params: state.params });
   state.screen = screen;
@@ -333,7 +388,7 @@ SCREENS.home = () => ({
         ${["关注", "推荐", "热榜", "数码"].map((t, i) => chip(t, i === 1, `data-toast="切换到「${t}」信息流（演示）"`)).join("")}
       </div>
     </div>
-    <div class="pad-x feed-list mt10" style="padding-bottom:24px">
+    <div class="feed-list mt10" style="padding-bottom:24px">
       ${FEEDS.map((f) => feedCard(f)).join("")}
       <div class="loading-inline"><span class="spinner sm"></span></div>
     </div>`,
@@ -372,7 +427,7 @@ SCREENS.digital = () => ({
         </button>`).join("")}
       </div>
       <div class="section"><span class="s-title">数码社区</span></div>
-      <div class="pad-x feed-list">
+      <div class="feed-list">
         ${FEEDS.slice(1, 3).map((f) => feedCard(f)).join("")}
       </div>
     </div>`,
@@ -469,7 +524,7 @@ SCREENS.publishPreview = () => ({
           id: "preview", user: ME.name, hue: ME.hue, device: "本机", time: "刚刚",
           title: null, message: state.publishText || "输入内容后这里会显示动态预览",
           images: [], likes: 0, replies: 0, liked: false,
-        }, { clickable: false })}
+        }, { clickable: false, hideFollow: true, noExpand: true })}
       </div>
     </div>`,
   bottom: `<div class="pad-x" style="display:flex;gap:10px;padding-top:10px;padding-bottom:12px;border-top:1px solid var(--outline-variant)">
@@ -509,35 +564,54 @@ SCREENS.discovery = () => ({
 /* 07 我的（已登录） */
 function profileBody(own) {
   const u = own ? ME : { name: SEARCH.USER[0].title, hue: 150, uid: "u_1001", bio: USERS.u1001.bio, feeds: 96, following: 128, followers: 2033 };
-  return `
-    <div class="pad-x" style="padding-top:20px">
-      <div style="display:flex;flex-direction:column;align-items:center;text-align:center">
-        ${avatar(u.name, "a92", avatarImg(u.hue))}
-        <div class="mt10" style="font:var(--t-headline-sm);font-weight:800">${esc(u.name)}</div>
-        <div class="muted small mt6">UID ${esc(u.uid)}</div>
-        <div class="muted mt10" style="max-width:280px">${esc(u.bio)}</div>
-      </div>
-      <div class="mt24" style="display:flex;justify-content:center">
-        <div class="stats">
-          <div class="stat"><div class="v">${compact(u.feeds)}</div><div class="l">动态</div></div>
-          <div class="stat"><div class="v">${compact(u.following)}</div><div class="l">关注</div></div>
-          <div class="stat"><div class="v">${compact(u.followers)}</div><div class="l">粉丝</div></div>
-        </div>
-      </div>
-      ${own
-        ? `<div class="mt24" style="display:flex;gap:10px">
-             <button class="btn btn-tonal grow" data-toast="编辑资料（演示）">${ic("edit")}编辑资料</button>
-             <button class="btn btn-outlined grow" data-overlay="logout">${ic("logout")}退出登录</button>
-           </div>`
-        : `<div class="mt24" style="display:flex;gap:10px">
-             <button class="btn btn-filled grow" data-toast="已关注（演示）">${ic("person_add")}关注</button>
-             <button class="btn btn-outlined grow" data-toast="已发送私信入口（演示）">${ic("mail")}私信</button>
-           </div>`}
-      <div class="section plain mt16"><span class="s-title" style="font:var(--t-title-lg);font-weight:700">动态</span><span class="muted small">${compact(u.feeds)}</span></div>
-      <div class="feed-list" style="padding-bottom:24px">
-        ${FEEDS.slice(0, own ? 3 : 2).map((f) => feedCard(f)).join("")}
-      </div>
+  const tab = state.profileTab || "动态";
+  const counts = { "动态": u.feeds, "收藏": own ? 86 : 42, "赞过": own ? 341 : 128 };
+  const stats = [["动态", u.feeds, "查看动态"], ["关注", u.following, "查看关注"], ["粉丝", u.followers, "查看粉丝"]];
+
+  let content;
+  if (tab === "收藏") {
+    content = `<div class="grid2" style="padding:14px 16px 28px">
+      ${FEEDS.slice(0, 4).map((f) => `<button class="card press" data-go="feedDetail" data-id="${f.id}" style="text-align:left">
+        <img src="${(f.images && f.images[0]) || avatarImg(f.hue)}" style="width:100%;height:118px;object-fit:cover">
+        <span style="display:block;padding:10px 12px">
+          <span class="feed-title" style="margin:0;font-size:14px;line-height:1.45">${esc(f.title || f.message.slice(0, 16) + "…")}</span>
+          <span class="lr-meta" style="display:block;margin-top:5px">${esc(f.user)} · ${compact(f.likes)} 赞</span>
+        </span>
+      </button>`).join("")}
     </div>`;
+  } else {
+    const list = tab === "赞过" ? FEEDS.slice(1, own ? 4 : 3) : own ? MY_FEEDS : FEEDS.slice(0, 2);
+    content = `<div class="feed-list">${list.map((f) => feedCard(f, { hideFollowFor: u.name })).join("")}</div>`;
+  }
+
+  return `
+    <div class="pf-cover">
+      <img src="${coverImg(u.hue, own ? "我的主页" : u.name + " 的主页")}" alt="">
+      <button class="pf-cover-btn" data-toast="${own ? "更换封面（演示）" : "查看主页封面（演示）"}">${ic(own ? "add_photo_alternate" : "image")}${own ? "更换封面" : "封面"}</button>
+    </div>
+    <div class="pf-card">
+      ${avatar(u.name, "a92", avatarImg(u.hue), "pf-avatar")}
+      <div class="pf-name-row">
+        <span class="pf-name">${esc(u.name)}</span>
+        ${own ? `<span class="pf-verified">${ic("verified")}</span>` : ""}
+      </div>
+      <div class="pf-uid">UID ${esc(u.uid)}</div>
+      <div class="pf-bio">${esc(u.bio)}</div>
+      <div class="pf-stats">
+        ${stats.map(([label, value, tip]) => `<button class="pf-stat" data-toast="${tip}（演示）"><span class="v">${compact(value)}</span><span class="l">${label}</span></button>`).join("")}
+      </div>
+      <div class="pf-actions">
+        ${own
+          ? `<button class="btn btn-tonal grow" data-toast="编辑资料（演示）">${ic("edit")}编辑资料</button>
+             <button class="btn btn-outlined grow" data-overlay="logout">${ic("logout")}退出登录</button>`
+          : `<button class="btn btn-filled grow" data-toast="已关注（演示）">${ic("person_add")}关注</button>
+             <button class="btn btn-outlined grow" data-toast="已发送私信入口（演示）">${ic("mail")}私信</button>`}
+      </div>
+    </div>
+    <div class="pf-tabs">
+      ${["动态", "收藏", "赞过"].map((t) => `<button class="pf-tab ${t === tab ? "active" : ""}" data-profile-tab="${t}">${t}<span class="c">${compact(counts[t])}</span></button>`).join("")}
+    </div>
+    <div class="pf-content">${content}</div>`;
 }
 SCREENS.profileOwn = () => ({
   nav: 4,
@@ -990,7 +1064,7 @@ SCREENS.topicDetail = () => ({
     </div>
     <div class="hr mt16"></div>
     <div class="chips mt16">${["默认", "最新", "热度"].map((c) => chip(c, c === "最新", `data-toast="按「${c}」排序（演示）"`)).join("")}</div>
-    <div class="pad-x feed-list mt10" style="padding-bottom:24px">
+    <div class="feed-list mt10" style="padding-bottom:24px">
       ${FEEDS.slice(0, 4).map((f) => feedCard(f)).join("")}
       <div class="center-box muted small" style="padding:12px">没有更多动态了</div>
     </div>`,
@@ -1202,13 +1276,13 @@ function bindEditor() {
 
 /* ---------------------------- 目录 ---------------------------- */
 const CATALOG = [
-  ["01", "首页动态流", "home", "信息流、九宫格、点赞评论与分页"],
+  ["01", "首页动态流", "home", "智能媒体网格、展开全文与点赞评论"],
   ["02", "数码内容首页", "digital", "栏目切换、精选轮播、品牌快选"],
   ["03", "数码品牌/分类", "digitalLibrary", "左右分栏、筛选与产品列表"],
   ["04", "发布编辑器", "publish", "编辑/预览、字数、草稿"],
   ["05", "发布预览确认", "publishPreview", "保真预览与发布反馈"],
   ["06", "发现", "discovery", "栏目页签、筛选与站内/网页卡片"],
-  ["07", "我的（已登录）", "profileOwn", "资料、统计与个人动态"],
+  ["07", "我的（已登录）", "profileOwn", "封面、悬浮资料卡与分段 Tab"],
   ["08", "我的（游客）", "profileGuest", "登录说明与网页登录入口"],
   ["09", "搜索入口", "searchHome", "胶囊搜索栏与热门搜索"],
   ["10", "搜索结果", "searchResults", "八类结果与问答子筛选"],
@@ -1223,7 +1297,7 @@ const CATALOG = [
   ["19", "应用列表（辅助）", "appsList", "保留的列表样式入口"],
   ["20", "通用状态展示", "states", "加载/空/错误/提交/对话框"],
   ["21", "话题详情", "topicDetail", "话题头图、统计与动态流"],
-  ["22", "酷友主页", "userProfile", "他人主页与关注入口"],
+  ["22", "酷友主页", "userProfile", "封面资料卡与关注/私信入口"],
   ["23", "设计系统面板", "designSystem", "色彩/字体/形状/组件总览"],
 ];
 
@@ -1250,7 +1324,7 @@ function renderCatalog() {
 /* ---------------------------- 事件 ---------------------------- */
 function bind() {
   document.addEventListener("click", (e) => {
-    const t = e.target.closest("[data-cat],[data-go],[data-back],[data-tab],[data-like],[data-overlay],[data-overlay-close],[data-toast],[data-digital-tab],[data-digital-mode],[data-digital-pick],[data-discovery-tab],[data-discovery-filter],[data-comment-sort],[data-search-cat],[data-search-ask],[data-notif-tab],[data-publish-mode],[data-publish-done],[data-publish-done-ok],[data-clear-draft],[data-send-reply],[data-logout],[data-comment-like],[data-vwidth],[data-vtheme],[data-vview],.tab,.chip");
+    const t = e.target.closest("[data-cat],[data-go],[data-back],[data-tab],[data-like],[data-overlay],[data-overlay-close],[data-toast],[data-digital-tab],[data-digital-mode],[data-digital-pick],[data-discovery-tab],[data-discovery-filter],[data-comment-sort],[data-expand],[data-profile-tab],[data-search-cat],[data-search-ask],[data-notif-tab],[data-publish-mode],[data-publish-done],[data-publish-done-ok],[data-clear-draft],[data-send-reply],[data-logout],[data-comment-like],[data-vwidth],[data-vtheme],[data-vview],.tab,.chip");
     if (!t) return;
 
     if (t.dataset.vwidth !== undefined) { state.width = t.dataset.vwidth; render(); return; }
@@ -1288,6 +1362,8 @@ function bind() {
     if (t.dataset.digitalPick) { state.digitalBrand = t.dataset.digitalPick; render(); return; }
     if (t.dataset.discoveryTab) { state.discoveryTab = t.dataset.discoveryTab; render(); return; }
     if (t.dataset.discoveryFilter) { state.discoveryFilter = t.dataset.discoveryFilter; render(); return; }
+    if (t.dataset.expand !== undefined) { const id = t.dataset.expand; state.expanded[id] = !state.expanded[id]; render(); return; }
+    if (t.dataset.profileTab) { state.profileTab = t.dataset.profileTab; render(); return; }
     if (t.dataset.commentSort) { state.commentSort = t.dataset.commentSort; render(); return; }
     if (t.dataset.searchCat) { state.searchCat = t.dataset.searchCat; render(); return; }
     if (t.dataset.searchAsk) { state.searchAsk = t.dataset.searchAsk; render(); return; }
