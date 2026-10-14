@@ -253,8 +253,6 @@ internal fun CoolapkApp(
                         onSearch = { searchOpen = true },
                         onNotifications = { notificationsOpen = true },
                         notificationCount = state.notifications.total,
-                        onSettings = if (selectedIndex == 4) openSettings else null,
-                        onGoods = if (selectedIndex == 4) openMyGoods else null,
                         onCompare = if (selectedIndex == 1) openProductSelector else null,
                     )
                 },
@@ -333,20 +331,18 @@ internal fun CoolapkApp(
                                 }
                             },
                         )
-                        4 -> UserProfileScreen(
-                            uid = null,
-                            onBack = { selectedIndex = 0 },
-                            onOpenFeed = { item, comments -> openFeed(FeedRoute(item.id, item, comments)) },
-                            onOpenImage = openImages,
-                            onLike = viewModel::toggleLike,
-                            onOpenAuthor = openUser,
+                        4 -> MyHubScreen(
+                            profile = state.profile,
+                            notificationCount = state.notifications.total,
+                            themeMode = themeMode,
+                            onThemeModeChange = onThemeModeChange,
                             onLogin = { officialLoginOpen = true },
-                            onImportCookie = { loginOpen = true },
+                            onOpenProfile = openUser,
+                            onOpenGoods = openMyGoods,
+                            onOpenSelector = openProductSelector,
+                            onOpenSettings = openSettings,
+                            onOpenNotifications = { notificationsOpen = true },
                             onLogout = viewModel::logout,
-                            ownProfile = state.profile,
-                            embedded = true,
-                            likeOverrides = state.likeOverrides,
-                            viewModel = viewModel(key = "own-profile", factory = UserProfileViewModel.Factory),
                         )
                     }
                 }
