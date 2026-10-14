@@ -3,6 +3,7 @@ package com.coolapk.kmp.core
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
@@ -208,11 +209,36 @@ class AppJsonParser(
 
 class ProfileJsonParser(
     private val json: Json = Json { ignoreUnknownKeys = true; isLenient = true },
+    /** 当前公历年份，用于计算生日年龄；返回 0 时不显示年龄。 */
+    private val currentYear: () -> Int = { 0 },
 ) {
     fun parse(raw: String): UserProfile? {
         val root = json.parseToJsonElement(raw) as? JsonObject ?: return null
         val obj = root["data"] as? JsonObject ?: return null
         val uid = obj.string("uid") ?: obj.string("id") ?: return null
+        val info = obj["userInfo"] as? JsonObject ?: JsonObject(emptyMap())
+        fun field(vararg keys: String): JsonElement? = keys.firstNotNullOfOrNull { key ->
+            obj[key]?.takeIf { it !is JsonNull } ?: info[key]?.takeIf { it !is JsonNull }
+        }
+        fun text(vararg keys: String): String? = field(*keys)?.primitiveOrNull()?.trim()?.takeIf(String::isNotEmpty)
+        fun number(vararg keys: String): Long? = text(*keys)?.toDoubleOrNull()?.toLong()?.takeIf { it > 0 }
+        val gender = text("gender")?.toIntOrNull()
+        val birthYear = number("birthyear", "birthYear", "birth_year")?.toInt()
+        val birthMonth = number("birthmonth", "birthMonth", "birth_month")?.toInt()
+        val birthDay = number("birthday", "birthDay", "birth_day")?.toInt()
+        val year = currentYear()
+        val ageTag = text("age_group", "ageGroup", "age_tag", "ageTag", "age_group_tag")
+            ?: birthYear?.let { year -> "${((year - year % 5) % 100).toString().padStart(2, '0')}后" }
+        val astro = text("astro", "constellation", "zodiacSign", "zodiac_sign")
+            ?: if (birthMonth != null && birthDay != null) zodiacOf(birthMonth, birthDay) else null
+        val birthLabel = when {
+            birthYear != null && birthMonth != null && birthDay != null ->
+                "${birthYear}年${birthMonth}月${birthDay}日" +
+                    if (year > birthYear) " (${year - birthYear}岁)" else ""
+            birthYear != null && birthMonth != null -> "${birthYear}年${birthMonth}月"
+            birthMonth != null && birthDay != null -> "${birthMonth}月${birthDay}日"
+            else -> null
+        }
         return UserProfile(
             uid = uid,
             username = obj.string("username") ?: obj.string("userName")
@@ -228,7 +254,43 @@ class ProfileJsonParser(
                 ?: obj.int("followCount") ?: obj.int("follow_num") ?: 0,
             followerCount = obj.int("fansNum") ?: obj.int("fansnum") ?: obj.int("fans")
                 ?: obj.int("fansCount") ?: obj.int("fans_num") ?: 0,
+            cover = text("cover")?.normalizeImageUrl(),
+            level = number("level")?.toInt(),
+            exp = number("exp")?.toInt(),
+            maxExp = number("maxExp", "max_exp")?.toInt(),
+            likeCount = number("be_like_num", "beLikeNum", "likeNum")?.toInt(),
+            gender = gender,
+            ageTag = ageTag,
+            astro = astro,
+            birthLabel = birthLabel,
+            city = text("city", "province", "location")?.takeUnless { it in UNKNOWN_PLACES },
+            ipLocation = text("ip_location", "ipLocation", "ip_region", "ipRegion")
+                ?.takeUnless { it in UNKNOWN_PLACES },
+            loginTime = number("logintime", "loginTime"),
+            regDate = number("regdate", "regDate"),
+            verifyTitle = text("verify_title", "verifyTitle", "verify_show_name"),
+            isDeveloper = field("isDeveloper")?.primitiveOrNull() in setOf("1", "true"),
+            isFollow = field("isFollow")?.primitiveOrNull() in setOf("1", "true"),
+            isSpecialFollow = field("isSpecialFollow")?.primitiveOrNull() in setOf("1", "true"),
+            isFans = field("isFans")?.primitiveOrNull() in setOf("1", "true"),
+            productOwnerCount = number("product_owner_count", "productOwnerCount")?.toInt(),
+            goodsCount = number("goods_count", "goodsCount")?.toInt(),
         )
+    }
+
+    private fun zodiacOf(month: Int, day: Int): String? {
+        if (month !in 1..12 || day !in 1..31) return null
+        val signs = listOf(
+            Triple("摩羯座", 1, 19), Triple("水瓶座", 2, 18), Triple("双鱼座", 3, 20), Triple("白羊座", 4, 19),
+            Triple("金牛座", 5, 20), Triple("双子座", 6, 21), Triple("巨蟹座", 7, 22), Triple("狮子座", 8, 22),
+            Triple("处女座", 9, 22), Triple("天秤座", 10, 23), Triple("天蝎座", 11, 22), Triple("射手座", 12, 21),
+        )
+        val match = signs.firstOrNull { (_, endMonth, endDay) -> month == endMonth && day <= endDay }
+        return (match ?: if (month == 12) signs[0] else signs[month - 1]).first
+    }
+
+    private companion object {
+        val UNKNOWN_PLACES = setOf("保密", "未知", "未公开", "")
     }
 
     private fun JsonObject.string(key: String): String? = this[key]?.primitiveOrNull()

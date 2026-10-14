@@ -22,7 +22,9 @@ class RustCoolapkGateway(
     context: Context? = null,
     private val parser: FeedJsonParser = FeedJsonParser(),
     private val appParser: AppJsonParser = AppJsonParser(),
-    private val profileParser: ProfileJsonParser = ProfileJsonParser(),
+    private val profileParser: ProfileJsonParser = ProfileJsonParser(
+        currentYear = { java.util.Calendar.getInstance().get(java.util.Calendar.YEAR) },
+    ),
     private val notificationParser: NotificationJsonParser = NotificationJsonParser(),
     private val discoveryParser: DiscoveryJsonParser = DiscoveryJsonParser(),
     private val digitalParser: DigitalJsonParser = DigitalJsonParser(),
