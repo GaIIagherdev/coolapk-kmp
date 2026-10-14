@@ -227,6 +227,35 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    /// 动态详情被人机验证拦截后，带上易盾令牌重试。
+    ///
+    /// `post_token_field` 由服务端在验证码响应里下发，缺省为 `_v2_post_token`；
+    /// 传空字符串表示不携带该字段，行为与 [`Self::get_feed_detail`] 一致。
+    pub fn get_feed_detail_with_token(
+        &self,
+        feed_id: String,
+        post_token: String,
+        post_token_field: String,
+    ) -> Result<String, CoolapkError> {
+        let token = post_token.trim();
+        let field = post_token_field.trim();
+        let value = self.runtime.block_on(self.client.get_feed_detail(
+            &feed_id,
+            (!token.is_empty()).then_some(token),
+            (!field.is_empty()).then_some(field),
+        ))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 读取酷安网页版动态页。
+    ///
+    /// `https://www.coolapk.com/feed/{id}` 在 XHR 指纹头下直接返回 JSON 动态详情，
+    /// 可绕过 `api.coolapk.com/v6/feed/detail` 的验证码风控，用作详情兜底。
+    pub fn fetch_external_page(&self, url: String) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.fetch_external_page(&url))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     pub fn get_feed_replies(
         &self,
         feed_id: String,

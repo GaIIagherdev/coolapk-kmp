@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>酷安人机验证</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      overflow: hidden;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, "PingFang SC", "Noto Sans CJK SC", sans-serif;
+    }
+    #captcha-container {
+      position: fixed;
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+    }
+    #captcha-status {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 50%;
+      margin-top: -10px;
+      text-align: center;
+      font-size: 14px;
+      line-height: 20px;
+      color: #999999;
+    }
+  </style>
+</head>
+<body>
+  <div id="captcha-container"></div>
+  <div id="captcha-status">正在加载人机验证…</div>
+  <script>
+    (function () {
+      'use strict';
+
+      var SCRIPT_URL = 'https://cstaticdun.126.net/load.min.js';
+      var SCRIPT_LOAD_TIMEOUT_MS = 15000;
+
+      // finished：成功或取消只上报一次，之后忽略易盾 SDK 的任何回调。
+      var finished = false;
+      var initializing = false;
+      var captchaInstance = null;
+      var scriptWaiters = null;
+
+      function bridge() {
+        return window.AndroidCaptcha || null;
+      }
+
+      function notifyVerified(validate) {
+        var api = bridge();
+        if (!api || typeof api.onVerified !== 'function') {
+          return;
+        }
+        try {
+          api.onVerified(String(validate));
+        } catch (e) {
+          // 忽略 JS 桥异常，避免打断第三方脚本。
+        }
+      }
+
+      function notifyCancelled() {
+        var api = bridge();
+        if (!api || typeof api.onCancelled !== 'function') {
+          return;
+        }
+        try {
+          api.onCancelled();
+        } catch (e) {
+          // 忽略 JS 桥异常。
+        }
+      }
+
+      function finishVerified(validate) {
+        if (finished) {
+          return;
+        }
+        finished = true;
+        notifyVerified(validate);
+      }
+
+      function finishCancelled() {
+        if (finished) {
+          return;
+        }
+        finished = true;
+        notifyCancelled();
+      }
+
+      function setStatus(text) {
+        var node = document.getElementById('captcha-status');
+        if (!node) {
+          return;
+        }
+        if (text) {
+          node.textContent = text;
+          node.style.display = 'block';
+        } else {
+          node.style.display = 'none';
+        }
+      }
+
+      // 动态加载易盾脚本，带 15 秒超时；失败时移除 script 标签，避免留下半加载状态。
+      function loadScript(onReady, onFailed) {
+        if (window.initNECaptcha) {
+          onReady();
+          return;
+        }
+        if (scriptWaiters) {
+          scriptWaiters.push({ ready: onReady, failed: onFailed });
+          return;
+        }
+        scriptWaiters = [{ ready: onReady, failed: onFailed }];
+
+        var existing = document.querySelector('script[src*="cstaticdun.126.net/load.min.js"]');
+        var script = existing || document.createElement('script');
+        var settled = false;
+        var timer = window.setTimeout(function () {
+          settle(false, '网易易盾验证码脚本加载超时');
+        }, SCRIPT_LOAD_TIMEOUT_MS);
+
+        function cleanup() {
+          window.clearTimeout(timer);
+          script.removeEventListener('load', onLoad);
+          script.removeEventListener('error', onError);
+        }
+
+        function settle(ok, message) {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          cleanup();
+          if (!ok && script.parentNode) {
+            script.parentNode.removeChild(script);
+          }
+          var waiters = scriptWaiters || [];
+          scriptWaiters = null;
+          for (var i = 0; i < waiters.length; i++) {
+            if (ok) {
+              waiters[i].ready();
+            } else {
+              waiters[i].failed(message);
+            }
+          }
+        }
+
+        function onLoad() {
+          if (settled) {
+            return;
+          }
+          if (!window.initNECaptcha) {
+            settle(false, '网易易盾初始化函数不可用');
+            return;
+          }
+          settle(true, '');
+        }
+
+        function onError() {
+          settle(false, '网易易盾验证码脚本加载失败');
+        }
+
+        script.addEventListener('load', onLoad);
+        script.addEventListener('error', onError);
+        if (!existing) {
+          script.src = SCRIPT_URL;
+          script.async = true;
+          script.charset = 'utf-8';
+          document.head.appendChild(script);
+        }
+      }
+
+      function initCaptcha(captchaId) {
+        var container = document.getElementById('captcha-container');
+        if (!container || !window.initNECaptcha) {
+          finishCancelled();
+          return;
+        }
+        try {
+          window.initNECaptcha({
+            captchaId: captchaId,
+            element: container,
+            mode: 'popup',
+            apiVersion: 2,
+            width: '320px',
+            lang: 'zh-CN',
+            onReady: function (instance) {
+              captchaInstance = instance || captchaInstance;
+            },
+            onVerify: function (err, data) {
+              if (err) {
+                finishCancelled();
+                return;
+              }
+              var validate = data && data.validate ? String(data.validate) : '';
+              if (validate) {
+                finishVerified(validate);
+              } else {
+                finishCancelled();
+              }
+            },
+            onClose: function () {
+              finishCancelled();
+            }
+          }, function (instance) {
+            captchaInstance = instance || captchaInstance;
+            if (!captchaInstance || typeof captchaInstance.verify !== 'function') {
+              finishCancelled();
+              return;
+            }
+            try {
+              // popup 模式不会自动弹出，需要主动唤起滑块。
+              captchaInstance.verify();
+            } catch (e) {
+              finishCancelled();
+            }
+          }, function () {
+            finishCancelled();
+          });
+        } catch (e) {
+          finishCancelled();
+        }
+      }
+
+      function startCaptcha(captchaId) {
+        if (finished || initializing || captchaInstance) {
+          return;
+        }
+        if (!captchaId) {
+          finishCancelled();
+          return;
+        }
+        initializing = true;
+        setStatus('正在加载人机验证…');
+        loadScript(function () {
+          initializing = false;
+          if (finished) {
+            return;
+          }
+          setStatus('');
+          initCaptcha(String(captchaId));
+        }, function () {
+          initializing = false;
+          if (finished) {
+            return;
+          }
+          finishCancelled();
+        });
+      }
+
+      // 由原生侧在 onPageFinished 里调用：window.startCoolapkCaptcha(captchaId)
+      window.startCoolapkCaptcha = startCaptcha;
+      window.cancelCoolapkCaptcha = finishCancelled;
+    })();
+  </script>
+</body>
+</html>

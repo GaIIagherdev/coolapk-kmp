@@ -804,6 +804,10 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is
 // rather `InterfaceTooLargeException`, caused by too many methods
@@ -825,6 +829,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_create_feed(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_diagnostics(
 ): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_fetch_external_page(
+): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_app_detail(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_app_list(
@@ -836,6 +842,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_get_discovery_config(
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_discovery_page_data(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_feed_detail(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_feed_detail_with_token(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_feed_replies(
 ): Short
@@ -970,6 +978,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_create_feed(`ptr`: Pointer,`messag
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_diagnostics(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_fetch_external_page(`ptr`: Pointer,`url`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_app_detail(`ptr`: Pointer,`packageName`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_app_list(`ptr`: Pointer,`page`: Int,`category`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
@@ -981,6 +991,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_get_discovery_config(`ptr`: Pointe
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_discovery_page_data(`ptr`: Pointer,`url`: RustBuffer.ByValue,`title`: RustBuffer.ByValue,`subTitle`: RustBuffer.ByValue,`page`: Int,`firstItem`: RustBuffer.ByValue,`lastItem`: RustBuffer.ByValue,`pageContext`: RustBuffer.ByValue,`requestArgsJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_feed_detail(`ptr`: Pointer,`feedId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_feed_detail_with_token(`ptr`: Pointer,`feedId`: RustBuffer.ByValue,`postToken`: RustBuffer.ByValue,`postTokenField`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_feed_replies(`ptr`: Pointer,`feedId`: RustBuffer.ByValue,`page`: Int,`listType`: RustBuffer.ByValue,`fromFeedAuthor`: Byte,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1187,6 +1199,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_diagnostics() != 52388.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_fetch_external_page() != 49037.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_app_detail() != 30073.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1203,6 +1218,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_feed_detail() != 61601.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_feed_detail_with_token() != 22550.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_feed_replies() != 6553.toShort()) {
@@ -1673,6 +1691,14 @@ public interface CoolapkCoreInterface {
     fun `diagnostics`(): kotlin.String
 
     /**
+     * 读取酷安网页版动态页。
+     *
+     * `https://www.coolapk.com/feed/{id}` 在 XHR 指纹头下直接返回 JSON 动态详情，
+     * 可绕过 `api.coolapk.com/v6/feed/detail` 的验证码风控，用作详情兜底。
+     */
+    fun `fetchExternalPage`(`url`: kotlin.String): kotlin.String
+
+    /**
      * 应用详情保留原始实体，交由共享层按界面需要解析。
      */
     fun `getAppDetail`(`packageName`: kotlin.String): kotlin.String
@@ -1695,6 +1721,14 @@ public interface CoolapkCoreInterface {
     fun `getDiscoveryPageData`(`url`: kotlin.String, `title`: kotlin.String, `subTitle`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String, `pageContext`: kotlin.String, `requestArgsJson`: kotlin.String): kotlin.String
 
     fun `getFeedDetail`(`feedId`: kotlin.String): kotlin.String
+
+    /**
+     * 动态详情被人机验证拦截后，带上易盾令牌重试。
+     *
+     * `post_token_field` 由服务端在验证码响应里下发，缺省为 `_v2_post_token`；
+     * 传空字符串表示不携带该字段，行为与 [`Self::get_feed_detail`] 一致。
+     */
+    fun `getFeedDetailWithToken`(`feedId`: kotlin.String, `postToken`: kotlin.String, `postTokenField`: kotlin.String): kotlin.String
 
     fun `getFeedReplies`(`feedId`: kotlin.String, `page`: kotlin.UInt, `listType`: kotlin.String, `fromFeedAuthor`: kotlin.Boolean): kotlin.String
 
@@ -1952,6 +1986,25 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
 
 
     /**
+     * 读取酷安网页版动态页。
+     *
+     * `https://www.coolapk.com/feed/{id}` 在 XHR 指纹头下直接返回 JSON 动态详情，
+     * 可绕过 `api.coolapk.com/v6/feed/detail` 的验证码风控，用作详情兜底。
+     */
+    @Throws(CoolapkException::class)override fun `fetchExternalPage`(`url`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_fetch_external_page(
+        it, FfiConverterString.lower(`url`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
      * 应用详情保留原始实体，交由共享层按界面需要解析。
      */
     @Throws(CoolapkException::class)override fun `getAppDetail`(`packageName`: kotlin.String): kotlin.String {
@@ -2034,6 +2087,25 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_feed_detail(
         it, FfiConverterString.lower(`feedId`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 动态详情被人机验证拦截后，带上易盾令牌重试。
+     *
+     * `post_token_field` 由服务端在验证码响应里下发，缺省为 `_v2_post_token`；
+     * 传空字符串表示不携带该字段，行为与 [`Self::get_feed_detail`] 一致。
+     */
+    @Throws(CoolapkException::class)override fun `getFeedDetailWithToken`(`feedId`: kotlin.String, `postToken`: kotlin.String, `postTokenField`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_feed_detail_with_token(
+        it, FfiConverterString.lower(`feedId`),FfiConverterString.lower(`postToken`),FfiConverterString.lower(`postTokenField`),_status)
 }
     }
     )

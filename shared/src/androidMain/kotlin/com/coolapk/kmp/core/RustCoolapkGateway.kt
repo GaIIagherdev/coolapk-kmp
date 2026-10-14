@@ -312,6 +312,19 @@ class RustCoolapkGateway(
         detailParser.parseDetail(core.getFeedDetail(feedId))
     }
 
+    override suspend fun getFeedDetailWithToken(
+        feedId: String,
+        postToken: String,
+        postTokenField: String,
+    ): FeedItem = onCore {
+        detailParser.parseDetail(core.getFeedDetailWithToken(feedId, postToken, postTokenField))
+    }
+
+    override suspend fun getWebFeedDetail(feedId: String): FeedItem = onCore {
+        val envelope = core.fetchExternalPage(FeedDetailFallback.webDetailUrl(feedId))
+        detailParser.parseDetail(FeedDetailFallback.extractWebDetailJson(envelope))
+    }
+
     override suspend fun getFeedReplies(
         feedId: String,
         page: Int,

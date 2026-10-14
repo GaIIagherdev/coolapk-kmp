@@ -360,6 +360,15 @@ fun FeedDetailScreen(
             },
         )
     }
+
+    // 详情被验证码拦截时先让人机验证，通过后用令牌重试；取消则退回网页版兜底。
+    state.captcha?.let { challenge ->
+        CaptchaDialog(
+            captchaId = challenge.captchaId,
+            onVerified = viewModel::submitCaptcha,
+            onDismissed = viewModel::dismissCaptcha,
+        )
+    }
 }
 
 internal class CommentFocusGate {

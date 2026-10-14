@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.coolapk.kmp.core.CaptchaChallenge
+import com.coolapk.kmp.core.FeedDetailFallback
 import com.coolapk.kmp.core.FeedItem
 import com.coolapk.kmp.core.HomeRepository
 import com.coolapk.kmp.core.ReplyItem
@@ -20,6 +22,8 @@ data class FeedDetailUiState(
     val detail: FeedItem? = null,
     val detailLoading: Boolean = false,
     val detailError: String? = null,
+    /** 非空时界面需要弹出人机验证，完成后回传 validate。 */
+    val captcha: CaptchaChallenge? = null,
     val replies: List<ReplyItem> = emptyList(),
     val repliesLoading: Boolean = false,
     val repliesError: String? = null,
@@ -72,7 +76,7 @@ class FeedDetailViewModel(
         val feedId = _state.value.feedId.takeIf(String::isNotBlank) ?: return
         val generation = feedGeneration
         val request = ++detailRequest
-        _state.update { it.copy(detailLoading = true, detailError = null) }
+        _state.update { it.copy(detailLoading = true, detailError = null, captcha = null) }
         viewModelScope.launch {
             runCatching { repository?.loadFeedDetail(feedId) ?: error("数据服务尚未就绪") }
                 .onSuccess { detail ->
@@ -81,17 +85,67 @@ class FeedDetailViewModel(
                 }
                 .onFailure { error ->
                     if (generation != feedGeneration || request != detailRequest) return@onFailure
-                    val message = error.message.orEmpty()
-                    val displayError = if (
-                        "err_request_captcha_v2" in message ||
-                        "当前访问需要验证码" in message ||
-                        "captchaId" in message
-                    ) {
-                        "查看完整动态需要通过酷安验证或登录"
+                    val challenge = FeedDetailFallback.captchaChallengeFrom(error)
+                    if (challenge != null) {
+                        // 交给界面弹出人机验证；取消或失败时由 dismissCaptcha 走网页兜底。
+                        _state.update { it.copy(detailLoading = false, captcha = challenge, detailError = null) }
                     } else {
-                        message.ifBlank { "动态加载失败" }
+                        _state.update { it.copy(detailLoading = false, detailError = error.displayMessage()) }
                     }
-                    _state.update { it.copy(detailLoading = false, detailError = displayError) }
+                }
+        }
+    }
+
+    /** 用户完成易盾滑块后回传 validate；带令牌重试一次，仍失败则退回网页版入口。 */
+    fun submitCaptcha(validate: String) {
+        val challenge = _state.value.captcha ?: return
+        val feedId = _state.value.feedId.takeIf(String::isNotBlank) ?: return
+        val token = FeedDetailFallback.buildPostToken(challenge.captchaId, validate)
+        val generation = feedGeneration
+        val request = ++detailRequest
+        _state.update { it.copy(captcha = null, detailLoading = true, detailError = null) }
+        viewModelScope.launch {
+            runCatching {
+                repository?.loadFeedDetailWithToken(feedId, token, challenge.captchaField)
+                    ?: error("数据服务尚未就绪")
+            }
+                .onSuccess { detail ->
+                    if (generation != feedGeneration || request != detailRequest) return@onSuccess
+                    _state.update { it.copy(detail = detail, detailLoading = false, detailError = null) }
+                }
+                .onFailure {
+                    if (generation != feedGeneration || request != detailRequest) return@onFailure
+                    loadWebFallback(feedId, generation)
+                }
+        }
+    }
+
+    /** 用户取消人机验证，或验证流程不可用时，直接改用网页版入口。 */
+    fun dismissCaptcha() {
+        if (_state.value.captcha == null) return
+        val feedId = _state.value.feedId.takeIf(String::isNotBlank) ?: return
+        _state.update { it.copy(captcha = null) }
+        loadWebFallback(feedId, feedGeneration)
+    }
+
+    /** 详情接口与令牌重试都不可用时的只读兜底：酷安网页版入口在 XHR 头下直接返回 JSON。 */
+    private fun loadWebFallback(feedId: String, generation: Int) {
+        val request = ++detailRequest
+        _state.update { it.copy(detailLoading = true, detailError = null) }
+        viewModelScope.launch {
+            runCatching { repository?.loadWebFeedDetail(feedId) ?: error("数据服务尚未就绪") }
+                .onSuccess { detail ->
+                    if (generation != feedGeneration || request != detailRequest) return@onSuccess
+                    _state.update { it.copy(detail = detail, detailLoading = false, detailError = null) }
+                }
+                .onFailure { error ->
+                    if (generation != feedGeneration || request != detailRequest) return@onFailure
+                    _state.update {
+                        it.copy(
+                            detailLoading = false,
+                            detailError = "网页版动态也未能加载：${error.displayMessage()}",
+                        )
+                    }
                 }
         }
     }
@@ -294,3 +348,6 @@ class FeedDetailViewModel(
         }
     }
 }
+
+private fun Throwable.displayMessage(): String =
+    message?.takeIf(String::isNotBlank) ?: "动态加载失败"
