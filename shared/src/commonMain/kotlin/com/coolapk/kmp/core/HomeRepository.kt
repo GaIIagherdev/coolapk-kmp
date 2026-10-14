@@ -64,6 +64,19 @@ class HomeRepository(
 
     suspend fun loadUserFeeds(uid: String, page: Int = 1): HomePage = gateway.getUserFeeds(uid, page)
 
+    suspend fun followUser(uid: String, follow: Boolean): Result<Unit> = gateway.followUser(uid, follow)
+
+    suspend fun setSpecialFollow(uid: String, special: Boolean): Result<Unit> = gateway.setSpecialFollow(uid, special)
+
+    suspend fun loadFollowUsers(uid: String, page: Int = 1, category: String = "follow"): UserSummaryPage =
+        gateway.getFollowUsers(uid, page, category)
+
+    suspend fun loadFansUsers(uid: String, page: Int = 1): UserSummaryPage = gateway.getFansUsers(uid, page)
+
+    suspend fun loadUserQrImage(uid: String): String? = gateway.getUserQrImage(uid)
+
+    suspend fun updateProfile(key: String, value: String): Result<Unit> = gateway.updateUserProfile(key, value)
+
     suspend fun loadMyGoods(uid: String, kind: String, page: Int = 1): DigitalPage = gateway.getMyGoodsPage(uid, kind, page)
 
     suspend fun loadProductFeeds(productId: String, page: Int = 1): HomePage = gateway.getProductFeeds(productId, "feed", page)

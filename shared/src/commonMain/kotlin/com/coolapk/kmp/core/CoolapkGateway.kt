@@ -70,6 +70,24 @@ interface CoolapkGateway {
     suspend fun getMyGoodsPage(uid: String, kind: String, page: Int = 1): DigitalPage =
         error("当前平台未提供我的装备接口")
 
+    suspend fun followUser(uid: String, follow: Boolean): Result<Unit> =
+        Result.failure(IllegalStateException("当前平台未提供关注接口"))
+
+    suspend fun setSpecialFollow(uid: String, special: Boolean): Result<Unit> =
+        Result.failure(IllegalStateException("当前平台未提供特别关注接口"))
+
+    /** 关注列表：category 为 follow（全部）、special（特别关注）、friend（互相关注）。 */
+    suspend fun getFollowUsers(uid: String, page: Int = 1, category: String = "follow"): UserSummaryPage =
+        error("当前平台未提供关注列表接口")
+
+    suspend fun getFansUsers(uid: String, page: Int = 1): UserSummaryPage =
+        error("当前平台未提供粉丝列表接口")
+
+    suspend fun getUserQrImage(uid: String): String? = null
+
+    suspend fun updateUserProfile(key: String, value: String): Result<Unit> =
+        Result.failure(IllegalStateException("当前平台未提供资料编辑接口"))
+
     suspend fun getProductFeeds(productId: String, feedType: String = "feed", page: Int = 1): HomePage =
         error("当前平台未提供产品动态接口")
 

@@ -30,6 +30,7 @@ class RustCoolapkGateway(
     private val digitalParser: DigitalJsonParser = DigitalJsonParser(),
     private val digitalProductParser: DigitalProductDetailJsonParser = DigitalProductDetailJsonParser(),
     private val productInteractionParser: ProductInteractionJsonParser = ProductInteractionJsonParser(),
+    private val userListParser: UserListJsonParser = UserListJsonParser(),
     private val searchParser: SearchJsonParser = SearchJsonParser(),
     private val topicParser: TopicJsonParser = TopicJsonParser(),
     private val notificationListParser: NotificationListJsonParser = NotificationListJsonParser(),
@@ -200,6 +201,30 @@ class RustCoolapkGateway(
     override suspend fun getDigitalProductDetail(productId: String): DigitalProductDetail = onCore {
         digitalProductParser.parse(core.getProductDetail(productId), productId)
             ?: throw IllegalStateException("数码产品详情数据不完整")
+    }
+
+    override suspend fun followUser(uid: String, follow: Boolean): Result<Unit> = runCatching {
+        onCore<Unit> { if (follow) core.followUser(uid) else core.unfollowUser(uid) }
+    }
+
+    override suspend fun setSpecialFollow(uid: String, special: Boolean): Result<Unit> = runCatching {
+        onCore<Unit> { core.specialFollowUser(uid, special) }
+    }
+
+    override suspend fun getFollowUsers(uid: String, page: Int, category: String): UserSummaryPage = onCore {
+        userListParser.parsePage(core.getFollowUserList(uid, page.coerceAtLeast(1).toUInt(), category))
+    }
+
+    override suspend fun getFansUsers(uid: String, page: Int): UserSummaryPage = onCore {
+        userListParser.parsePage(core.getFansUserList(uid, page.coerceAtLeast(1).toUInt()))
+    }
+
+    override suspend fun getUserQrImage(uid: String): String? = onCore {
+        userListParser.parseQrImage(core.getUserQrImage(uid))
+    }
+
+    override suspend fun updateUserProfile(key: String, value: String): Result<Unit> = runCatching {
+        onCore<Unit> { core.updateUserProfile(key, value) }
     }
 
     override suspend fun getMyGoodsPage(uid: String, kind: String, page: Int): DigitalPage = onCore {
