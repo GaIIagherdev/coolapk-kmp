@@ -67,6 +67,8 @@ class HomeRepository(
     suspend fun loadUserTabPage(uid: String, tab: String, page: Int = 1, firstItem: String? = null, lastItem: String? = null): DigitalPage =
         gateway.getUserTabPage(uid, tab, page, firstItem, lastItem)
 
+    suspend fun loadUserHomeRows(uid: String): List<HomeCardRow> = gateway.getUserHomeRows(uid)
+
     suspend fun loadUserFeedsTyped(uid: String, feedType: String, page: Int = 1): HomePage =
         gateway.getUserFeedsTyped(uid, feedType, page)
 

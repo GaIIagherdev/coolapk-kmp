@@ -31,6 +31,7 @@ class RustCoolapkGateway(
     private val digitalProductParser: DigitalProductDetailJsonParser = DigitalProductDetailJsonParser(),
     private val productInteractionParser: ProductInteractionJsonParser = ProductInteractionJsonParser(),
     private val userListParser: UserListJsonParser = UserListJsonParser(),
+    private val userHomeParser: UserHomeJsonParser = UserHomeJsonParser(),
     private val searchParser: SearchJsonParser = SearchJsonParser(),
     private val topicParser: TopicJsonParser = TopicJsonParser(),
     private val notificationListParser: NotificationListJsonParser = NotificationListJsonParser(),
@@ -201,6 +202,10 @@ class RustCoolapkGateway(
     override suspend fun getDigitalProductDetail(productId: String): DigitalProductDetail = onCore {
         digitalProductParser.parse(core.getProductDetail(productId), productId)
             ?: throw IllegalStateException("数码产品详情数据不完整")
+    }
+
+    override suspend fun getUserHomeRows(uid: String): List<HomeCardRow> = onCore {
+        userHomeParser.parseRows(core.getUserSpace(uid))
     }
 
     override suspend fun getUserTabPage(uid: String, tab: String, page: Int, firstItem: String?, lastItem: String?): DigitalPage = onCore {
