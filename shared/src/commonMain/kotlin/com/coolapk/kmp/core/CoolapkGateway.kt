@@ -74,6 +74,22 @@ interface CoolapkGateway {
 
     suspend fun getProfile(): UserProfile? = null
 
+    suspend fun getUserProfile(uid: String): UserProfile? =
+        error("当前平台未提供用户主页接口")
+
+    suspend fun getUserFeeds(uid: String, page: Int = 1): HomePage =
+        error("当前平台未提供用户动态接口")
+
+    suspend fun getTopicDetail(tag: String): TopicDetail =
+        error("当前平台未提供话题详情接口")
+
+    suspend fun getTopicFeeds(
+        tag: String,
+        page: Int = 1,
+        sort: TopicFeedSort = TopicFeedSort.DEFAULT,
+        cursor: HomeCursor? = null,
+    ): HomePage = error("当前平台未提供话题动态接口")
+
     suspend fun getNotificationSummary(): NotificationSummary = NotificationSummary(0)
 
     suspend fun getNotificationPage(

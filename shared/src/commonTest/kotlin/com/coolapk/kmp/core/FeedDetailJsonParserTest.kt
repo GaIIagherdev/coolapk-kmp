@@ -51,6 +51,7 @@ class FeedDetailJsonParserTest {
               {"id":"reply-1","fid":"feed-1","username":"甲","userAvatar":"avatar/a.jpg",
                 "message":"一级评论","dateline":1770000000,"floor":"2","likenum":"12",
                 "replyRowsCount":3,"isFeedAuthor":1,"userAction":{"like":1},
+                "userInfo":{"uid":"user-1"},
                 "picArr":["//image.coolapk.com/reply/a.jpg"],
                 "replyRows":[{"id":"child-1","username":"乙","message":"楼中楼"}]}
             ]}
@@ -69,6 +70,7 @@ class FeedDetailJsonParserTest {
             assertEquals(3, replyCount)
             assertTrue(isLiked)
             assertTrue(isFeedAuthor)
+            assertEquals("user-1", uid)
             assertEquals(listOf("https://image.coolapk.com/reply/a.jpg"), imageUrls)
             assertEquals(ReplyPreview("乙", "楼中楼"), previewReplies.single())
         }

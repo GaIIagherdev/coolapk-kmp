@@ -60,6 +60,19 @@ class HomeRepository(
 
     suspend fun loadProfile(): UserProfile? = gateway.getProfile()
 
+    suspend fun loadUserProfile(uid: String): UserProfile? = gateway.getUserProfile(uid)
+
+    suspend fun loadUserFeeds(uid: String, page: Int = 1): HomePage = gateway.getUserFeeds(uid, page)
+
+    suspend fun loadTopicDetail(tag: String): TopicDetail = gateway.getTopicDetail(tag)
+
+    suspend fun loadTopicFeeds(
+        tag: String,
+        page: Int = 1,
+        sort: TopicFeedSort = TopicFeedSort.DEFAULT,
+        cursor: HomeCursor? = null,
+    ): HomePage = gateway.getTopicFeeds(tag, page, sort, cursor)
+
     suspend fun loadNotifications(): NotificationSummary = gateway.getNotificationSummary()
 
     suspend fun loadNotificationPage(

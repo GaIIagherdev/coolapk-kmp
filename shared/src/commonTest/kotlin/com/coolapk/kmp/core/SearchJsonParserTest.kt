@@ -59,6 +59,19 @@ class SearchJsonParserTest {
     }
 
     @Test
+    fun resolvesUserUidFromNestedInfoAndTopicTagFromUrl() {
+        val page = parser.parsePage(
+            """{"data":[
+              {"entityType":"user","title":"用户乙","userInfo":{"uid":"42"}},
+              {"entityType":"feedTopic","title":"摄影话题","url":"https://www.coolapk.com/topic/%E6%91%84%E5%BD%B1"}
+            ]}""",
+            SearchCategory.ALL,
+        )
+        assertEquals("42", page.items[0].targetId)
+        assertEquals("摄影", page.items[1].targetId)
+    }
+
+    @Test
     fun questionDoesNotClaimFeedDetailRoute() {
         val page = parser.parsePage(
             """{"data":[{"entityType":"feedQuestion","questionId":"q1","title":"为什么？"}]}""",

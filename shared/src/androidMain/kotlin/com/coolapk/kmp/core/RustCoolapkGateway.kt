@@ -28,6 +28,7 @@ class RustCoolapkGateway(
     private val digitalParser: DigitalJsonParser = DigitalJsonParser(),
     private val digitalProductParser: DigitalProductDetailJsonParser = DigitalProductDetailJsonParser(),
     private val searchParser: SearchJsonParser = SearchJsonParser(),
+    private val topicParser: TopicJsonParser = TopicJsonParser(),
     private val notificationListParser: NotificationListJsonParser = NotificationListJsonParser(),
     private val detailParser: FeedDetailJsonParser = FeedDetailJsonParser(),
 ) : CoolapkGateway {
@@ -210,6 +211,33 @@ class RustCoolapkGateway(
         val uid = core.getSessionCookie()?.cookieValue("uid")?.takeIf(String::isNotBlank)
             ?: return@onCore null
         profileParser.parse(core.getMyProfile(uid))
+    }
+
+    override suspend fun getUserProfile(uid: String): UserProfile? = onCore {
+        profileParser.parse(core.getUserProfile(uid))
+    }
+
+    override suspend fun getUserFeeds(uid: String, page: Int): HomePage = onCore {
+        parser.parseHomePage(core.getUserFeeds(uid, page.coerceAtLeast(1).toUInt()))
+    }
+
+    override suspend fun getTopicDetail(tag: String): TopicDetail = onCore {
+        topicParser.parseDetail(core.getTopicDetail(tag), tag)
+    }
+
+    override suspend fun getTopicFeeds(
+        tag: String,
+        page: Int,
+        sort: TopicFeedSort,
+        cursor: HomeCursor?,
+    ): HomePage = onCore {
+        parser.parseHomePage(core.getTopicFeeds(
+            tag,
+            page.coerceAtLeast(1).toUInt(),
+            sort.apiValue,
+            cursor?.firstItem.orEmpty(),
+            cursor?.lastItem.orEmpty(),
+        ))
     }
 
     override suspend fun getNotificationSummary(): NotificationSummary = onCore {

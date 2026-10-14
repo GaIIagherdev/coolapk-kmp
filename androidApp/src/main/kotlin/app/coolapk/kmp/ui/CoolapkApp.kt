@@ -1148,7 +1148,7 @@ private fun ProfilePage(
         }
         Spacer(Modifier.height(20.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
-            ProfileStat("动态", profile.feedCount)
+            profile.feedCount?.let { ProfileStat("动态", it) }
             ProfileStat("关注", profile.followingCount)
             ProfileStat("粉丝", profile.followerCount)
         }

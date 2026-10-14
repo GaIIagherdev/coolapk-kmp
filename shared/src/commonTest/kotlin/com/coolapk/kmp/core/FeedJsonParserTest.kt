@@ -65,6 +65,7 @@ class FeedJsonParserTest {
                   "username": "酷友",
                   "message": "正文",
                   "userAvatar": "//image.coolapk.com/avatar/42.jpg",
+                  "userInfo": {"uid": "user-42"},
                   "pics": ["feed/a.jpg", "https://image.coolapk.com/feed/b.jpg"],
                   "likenum": "12",
                   "replynum": 4,
@@ -81,6 +82,7 @@ class FeedJsonParserTest {
         assertEquals("https://image.coolapk.com/avatar/42.jpg", page.items.single().avatarUrl)
         assertEquals(12, page.items.single().likeCount)
         assertEquals(4, page.items.single().replyCount)
+        assertEquals("user-42", page.items.single().uid)
         assertTrue(page.items.single().isLiked)
         assertEquals(
             listOf(
@@ -216,6 +218,19 @@ class AppAndProfileJsonParserTest {
         assertEquals("42", profile.uid)
         assertEquals(12, profile.feedCount)
         assertEquals(99, profile.followerCount)
+    }
+
+    @Test
+    fun profileFeedCountUsesOfficialAliasAndStaysUnknownWhenMissing() {
+        val withFeed = ProfileJsonParser().parse(
+            """{"data":{"uid":"42","username":"测试用户","feed":17}}""",
+        )
+        val withoutFeed = ProfileJsonParser().parse(
+            """{"data":{"uid":"42","username":"测试用户"}}""",
+        )
+
+        assertEquals(17, withFeed?.feedCount)
+        assertEquals(null, withoutFeed?.feedCount)
     }
 
     @Test

@@ -34,6 +34,7 @@ data class ReplyItem(
     val isFeedAuthor: Boolean,
     val imageUrls: List<String>,
     val previewReplies: List<ReplyPreview>,
+    val uid: String? = null,
 )
 
 data class ReplyPage(
@@ -112,6 +113,8 @@ class FeedDetailJsonParser(
             isFeedAuthor = row.boolean("isFeedAuthor") ?: false,
             imageUrls = pictures,
             previewReplies = previews,
+            uid = row.string("uid") ?: row.string("userId") ?: row.string("user_id")
+                ?: user?.string("uid") ?: user?.string("userId") ?: user?.string("id"),
         )
     }
 

@@ -81,6 +81,30 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    pub fn get_topic_detail(&self, tag: String) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_topic_detail(&tag))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    pub fn get_topic_feeds(
+        &self,
+        tag: String,
+        page: u32,
+        list_type: String,
+        first_item: String,
+        last_item: String,
+    ) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_topic_feeds(
+            &tag,
+            page,
+            &list_type,
+            &first_item,
+            &last_item,
+            0,
+        ))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     /// 应用中心列表。
     pub fn get_app_list(&self, page: u32, category: String) -> Result<String, CoolapkError> {
         let value = self
@@ -240,6 +264,16 @@ impl CoolapkCore {
     /// 当前登录用户资料。
     pub fn get_my_profile(&self, uid: String) -> Result<String, CoolapkError> {
         let value = self.runtime.block_on(self.client.get_my_profile(&uid))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    pub fn get_user_profile(&self, uid: String) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_user_profile(&uid))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    pub fn get_user_feeds(&self, uid: String, page: u32) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_user_feeds(&uid, page, "feed"))?;
         Ok(serde_json::to_string(&value)?)
     }
 

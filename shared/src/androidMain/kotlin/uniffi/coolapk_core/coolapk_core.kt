@@ -796,6 +796,14 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
+
+
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is
 // rather `InterfaceTooLargeException`, caused by too many methods
@@ -864,6 +872,14 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_get_session_cookie(
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_sub_replies(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_tab_config(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_topic_detail(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_topic_feeds(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_user_feeds(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_user_profile(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_is_logged_in(
 ): Short
@@ -1001,6 +1017,14 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_get_session_cookie(`ptr`: Pointer,
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_sub_replies(`ptr`: Pointer,`feedId`: RustBuffer.ByValue,`replyId`: RustBuffer.ByValue,`page`: Int,`lastItem`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_tab_config(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_topic_detail(`ptr`: Pointer,`tag`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_topic_feeds(`ptr`: Pointer,`tag`: RustBuffer.ByValue,`page`: Int,`listType`: RustBuffer.ByValue,`firstItem`: RustBuffer.ByValue,`lastItem`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_user_feeds(`ptr`: Pointer,`uid`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_user_profile(`ptr`: Pointer,`uid`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_is_logged_in(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus,
 ): Byte
@@ -1233,6 +1257,18 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_tab_config() != 3526.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_topic_detail() != 48486.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_topic_feeds() != 22525.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_user_feeds() != 61869.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_user_profile() != 19793.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_is_logged_in() != 55558.toShort()) {
@@ -1719,6 +1755,14 @@ public interface CoolapkCoreInterface {
      * 首页初始化响应同时包含数码服务端栏目配置。
      */
     fun `getTabConfig`(): kotlin.String
+
+    fun `getTopicDetail`(`tag`: kotlin.String): kotlin.String
+
+    fun `getTopicFeeds`(`tag`: kotlin.String, `page`: kotlin.UInt, `listType`: kotlin.String, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String
+
+    fun `getUserFeeds`(`uid`: kotlin.String, `page`: kotlin.UInt): kotlin.String
+
+    fun `getUserProfile`(`uid`: kotlin.String): kotlin.String
 
     fun `isLoggedIn`(): kotlin.Boolean
 
@@ -2247,6 +2291,58 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_tab_config(
         it, _status)
+}
+    }
+    )
+    }
+
+
+
+    @Throws(CoolapkException::class)override fun `getTopicDetail`(`tag`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_topic_detail(
+        it, FfiConverterString.lower(`tag`),_status)
+}
+    }
+    )
+    }
+
+
+
+    @Throws(CoolapkException::class)override fun `getTopicFeeds`(`tag`: kotlin.String, `page`: kotlin.UInt, `listType`: kotlin.String, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_topic_feeds(
+        it, FfiConverterString.lower(`tag`),FfiConverterUInt.lower(`page`),FfiConverterString.lower(`listType`),FfiConverterString.lower(`firstItem`),FfiConverterString.lower(`lastItem`),_status)
+}
+    }
+    )
+    }
+
+
+
+    @Throws(CoolapkException::class)override fun `getUserFeeds`(`uid`: kotlin.String, `page`: kotlin.UInt): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_user_feeds(
+        it, FfiConverterString.lower(`uid`),FfiConverterUInt.lower(`page`),_status)
+}
+    }
+    )
+    }
+
+
+
+    @Throws(CoolapkException::class)override fun `getUserProfile`(`uid`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_user_profile(
+        it, FfiConverterString.lower(`uid`),_status)
 }
     }
     )

@@ -106,6 +106,8 @@ class FeedJsonParser(
             isLiked = (obj["userAction"] as? JsonObject)?.boolean("like")
                 ?: obj.boolean("isLiked") ?: obj.boolean("isLike")
                 ?: obj.boolean("is_liked") ?: false,
+            uid = obj.string("uid") ?: obj.string("userId") ?: obj.string("user_id")
+                ?: user?.string("uid") ?: user?.string("userId") ?: user?.string("id"),
         )
     }
 
@@ -220,8 +222,8 @@ class ProfileJsonParser(
                 ?: obj.string("user_avatar"))?.normalizeImageUrl(),
             bio = obj.string("bio") ?: obj.string("signature") ?: obj.string("sign")
                 ?: obj.string("description"),
-            feedCount = obj.int("feedNum") ?: obj.int("feednum") ?: obj.int("feedCount")
-                ?: obj.int("feed_num") ?: 0,
+            feedCount = obj.int("feed") ?: obj.int("feedNum") ?: obj.int("feednum")
+                ?: obj.int("feedCount") ?: obj.int("feed_num") ?: obj.int("feed_count"),
             followingCount = obj.int("followNum") ?: obj.int("follownum") ?: obj.int("follow")
                 ?: obj.int("followCount") ?: obj.int("follow_num") ?: 0,
             followerCount = obj.int("fansNum") ?: obj.int("fansnum") ?: obj.int("fans")

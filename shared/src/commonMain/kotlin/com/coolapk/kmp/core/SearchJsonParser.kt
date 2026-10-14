@@ -98,6 +98,8 @@ class SearchJsonParser(
         val template = row.text("entityTemplate", "entity_template", "template")?.lowercase().orEmpty()
         val packageName = row.text("packageName", "package_name", "pkg", "apkname", "apkName")
         val uid = row.text("uid", "userId", "user_id")
+            ?: (row["userInfo"] as? JsonObject)?.text("uid", "userId", "id")
+            ?: (row["user"] as? JsonObject)?.text("uid", "userId", "id")
         val entityId = row.text("id", "entityId", "entity_id", "feedId", "feed_id")
         val kind = when {
             type.contains("user") || template.contains("user") -> SearchResultKind.USER
@@ -122,7 +124,9 @@ class SearchJsonParser(
             SearchResultKind.APP -> packageName
             SearchResultKind.USER -> uid
             SearchResultKind.TOPIC -> row.text("tag", "topicTag", "topic_tag", "topicName")
-                ?: title.removePrefix("#").trim()
+                ?.trimStart('#')?.trim()?.takeIf(String::isNotBlank)
+                ?: row.text("url", "actionUrl", "action_url", "link")?.topicTagFromUrl()
+                ?: title.trimStart('#').trim()
             SearchResultKind.FEED, SearchResultKind.PRODUCT -> entityId
             SearchResultKind.QUESTION, SearchResultKind.OTHER -> null
         }?.takeIf(String::isNotBlank)
@@ -162,5 +166,30 @@ class SearchJsonParser(
         startsWith("http://") -> "https://${removePrefix("http://")}"
         startsWith("//") -> "https:$this"
         else -> "https://image.coolapk.com/${trimStart('/')}"
+    }
+
+    private fun String.topicTagFromUrl(): String? {
+        val encodedTag = Regex("/(?:topic|t)/([^/?#]+)", RegexOption.IGNORE_CASE)
+            .find(this)?.groupValues?.getOrNull(1) ?: return null
+        return encodedTag.percentDecoded().trimStart('#').trim().takeIf(String::isNotBlank)
+    }
+
+    private fun String.percentDecoded(): String {
+        val bytes = mutableListOf<Byte>()
+        var index = 0
+        while (index < length) {
+            if (this[index] == '%' && index + 2 < length) {
+                val value = substring(index + 1, index + 3).toIntOrNull(16)
+                if (value != null) {
+                    bytes.add(value.toByte())
+                    index += 3
+                    continue
+                }
+            }
+            val codePoint = substring(index, index + 1).encodeToByteArray()
+            bytes.addAll(codePoint.toList())
+            index++
+        }
+        return bytes.toByteArray().decodeToString()
     }
 }

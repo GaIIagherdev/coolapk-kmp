@@ -12,6 +12,7 @@ data class FeedItem(
     val replyCount: Int,
     val imageUrls: List<String>,
     val isLiked: Boolean = false,
+    val uid: String? = null,
 )
 
 data class HomePage(
@@ -48,7 +49,7 @@ data class UserProfile(
     val username: String,
     val avatarUrl: String?,
     val bio: String?,
-    val feedCount: Int,
+    val feedCount: Int?,
     val followingCount: Int,
     val followerCount: Int,
 )
