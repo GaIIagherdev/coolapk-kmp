@@ -1,7 +1,9 @@
 package app.coolapk.kmp.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Devices
+import androidx.compose.material.icons.rounded.Storefront
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Button
@@ -60,6 +63,9 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Dp
@@ -288,7 +294,7 @@ fun UserProfileScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun ProfileHeaderCard(
     profile: UserProfile,
@@ -298,8 +304,9 @@ private fun ProfileHeaderCard(
     onTabChange: (ProfileTab) -> Unit,
     onOpenGoods: () -> Unit,
 ) {
+    val now = System.currentTimeMillis() / 1000
     Column(Modifier.fillMaxWidth()) {
-        // 封面与头像：头像压在封面底边上，与参考项目的个人主页一致
+        // 封面：有封面图时使用图片，否则用品牌色块；头像压在封面底边
         Box(Modifier.fillMaxWidth().height(184.dp)) {
             Box(
                 Modifier
@@ -307,6 +314,14 @@ private fun ProfileHeaderCard(
                     .clipToBounds()
                     .background(if (isOwnPage) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary),
             ) {
+                profile.cover?.let { url ->
+                    AsyncImage(
+                        model = coolapkImageRequest(url),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
                 Box(
                     Modifier
                         .align(Alignment.TopEnd)
@@ -331,25 +346,37 @@ private fun ProfileHeaderCard(
         Spacer(Modifier.height(56.dp))
 
         Column(Modifier.padding(horizontal = 20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            // 名称行：名字、等级、认证
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 Text(
                     profile.username,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
                 )
-                Spacer(Modifier.width(8.dp))
-                Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surfaceContainerHigh) {
-                    Text(
-                        "UID ${profile.uid}",
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                profile.level?.let { level ->
+                    ProfileChip("Lv.$level", MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
+                }
+                if (profile.verifyTitle != null || profile.isDeveloper) {
+                    ProfileChip(
+                        profile.verifyTitle ?: "认证开发者",
+                        MaterialTheme.colorScheme.tertiaryContainer,
+                        MaterialTheme.colorScheme.onTertiaryContainer,
                     )
                 }
             }
+            Text(
+                "UID ${profile.uid}",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 2.dp),
+            )
+
             profile.bio?.toPlainText()?.takeIf(String::isNotBlank)?.let { bio ->
                 Spacer(Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.Top) {
@@ -364,6 +391,25 @@ private fun ProfileHeaderCard(
                 }
             }
 
+            // 活跃、性别年龄、星座、城市、IP 属地、注册时长：与参考项目的标签一致，缺失则不显示
+            val tags = buildList {
+                profile.loginTime?.let { add(formatRelativeTime(it, now) + "活跃") }
+                (profile.ageTag ?: genderLabel(profile.gender))?.let(::add)
+                profile.astro?.let(::add)
+                profile.city?.let(::add)
+                profile.ipLocation?.let { add("IP属地 $it") }
+                registerDaysLabel(profile.regDate, now)?.let(::add)
+            }
+            if (tags.isNotEmpty()) {
+                Spacer(Modifier.height(10.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    tags.forEach { ProfileChip(it, MaterialTheme.colorScheme.surfaceContainerHigh, MaterialTheme.colorScheme.onSurfaceVariant) }
+                }
+            }
+
             Spacer(Modifier.height(16.dp))
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -371,16 +417,43 @@ private fun ProfileHeaderCard(
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
             ) {
                 Row(Modifier.fillMaxWidth().padding(vertical = 14.dp)) {
-                    ProfileStatCell("动态", profile.feedCount, Modifier.weight(1f))
+                    ProfileStatCell("获赞", profile.likeCount, Modifier.weight(1f))
                     ProfileStatCell("关注", profile.followingCount, Modifier.weight(1f))
                     ProfileStatCell("粉丝", profile.followerCount, Modifier.weight(1f))
                 }
             }
 
-            if (isOwnPage) {
-                Spacer(Modifier.height(12.dp))
+            // 装备与商品店铺入口（与参考项目一致）
+            val equipmentCount = profile.productOwnerCount ?: 0
+            Spacer(Modifier.height(12.dp))
+            Surface(
+                modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).clickable(enabled = isOwnPage, onClick = onOpenGoods),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Rounded.Devices, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        if (isOwnPage) "我的装备" else "他的装备",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        "${equipmentCount}个装备",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            if ((profile.goodsCount ?: 0) > 0) {
+                Spacer(Modifier.height(8.dp))
                 Surface(
-                    modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).clickable(onClick = onOpenGoods),
+                    modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.large,
                     color = MaterialTheme.colorScheme.surfaceContainerLowest,
                 ) {
@@ -388,10 +461,14 @@ private fun ProfileHeaderCard(
                         Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(Icons.Rounded.Devices, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Rounded.Storefront, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.width(12.dp))
-                        Text("我的装备", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                        Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("商品店铺", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                        Text(
+                            "${profile.goodsCount}件商品",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
             }
@@ -412,6 +489,50 @@ private fun ProfileHeaderCard(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ProfileChip(text: String, container: Color, content: Color) {
+    Surface(shape = RoundedCornerShape(50), color = container, contentColor = content) {
+        Text(
+            text,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+            style = MaterialTheme.typography.labelMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+private fun genderLabel(gender: Int?): String? = when (gender) {
+    1 -> "男"
+    0, 2 -> "女"
+    else -> null
+}
+
+/** 与参考项目一致：刚刚 / N分钟前 / N小时前 / M月D日。 */
+private fun formatRelativeTime(ts: Long, now: Long): String {
+    val diff = now - ts
+    return when {
+        diff < 60 -> "刚刚"
+        diff < 3600 -> "${diff / 60}分钟前"
+        diff < 86400 -> "${diff / 3600}小时前"
+        else -> "${diff / 86400}天前"
+    }
+}
+
+/** 与参考项目一致：超过一年显示“酷龄 X年”，否则“酷安第N天”。 */
+private fun registerDaysLabel(regDate: Long?, now: Long): String? {
+    if (regDate == null || regDate <= 0) return null
+    val days = (now - regDate) / 86400
+    return when {
+        days > 365 -> {
+            val years = days / 365.25
+            "酷龄 ${"%.1f".format(years).removeSuffix(".0")}年"
+        }
+        days > 0 -> "酷安第${days}天"
+        else -> null
     }
 }
 
