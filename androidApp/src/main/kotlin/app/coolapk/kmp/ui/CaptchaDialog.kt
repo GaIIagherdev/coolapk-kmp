@@ -50,8 +50,11 @@ private const val MAX_VALIDATE_LENGTH = 4096
  * 安全考量：桥对象只暴露必要方法；被注入的脚本是外部第三方代码，且桥方法运行在 WebView 的
  * JavaBridge 线程上，所以这里把入参一律当作不可信数据（trim、截断长度、空值视为失败），
  * 并且只把结果切回主线程后再交给 Compose 回调。
+ *
+ * 这里用 internal 而不是 private：Kotlin 的 private 顶层类在字节码里是包级可见，
+ * 而 @JavascriptInterface 的方法要经 WebView 反射调用，保持字节码 public 更稳妥。
  */
-private class CaptchaJavaScriptBridge(
+internal class CaptchaJavaScriptBridge(
     private val mainHandler: Handler,
     private val onValidate: (String) -> Unit,
     private val onCancel: () -> Unit,
