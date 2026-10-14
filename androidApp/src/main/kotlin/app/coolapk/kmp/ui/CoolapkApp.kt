@@ -38,6 +38,7 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.NotificationsNone
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.Settings
 import app.coolapk.kmp.ui.theme.ThemeMode
 import androidx.compose.material.icons.rounded.Search
@@ -120,6 +121,7 @@ private sealed interface ContentRoute {
     data class Topic(val tag: String) : ContentRoute
     data class User(val uid: String) : ContentRoute
     data object Settings : ContentRoute
+    data object MyGoods : ContentRoute
 }
 
 // material3 1.5.x 的 NavigationRail 不会自行约束宽度：放在 Row 里会吃掉整行，
@@ -178,6 +180,7 @@ internal fun CoolapkApp(
     }
     val closeContent: () -> Unit = { contentRoutes = contentRoutes.dropLast(1) }
     val openSettings: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Settings }
+    val openMyGoods: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.MyGoods }
 
     BackHandler(openedApp != null) {
         openedApp = null
@@ -248,6 +251,7 @@ internal fun CoolapkApp(
                         onNotifications = { notificationsOpen = true },
                         notificationCount = state.notifications.total,
                         onSettings = if (selectedIndex == 4) openSettings else null,
+                        onGoods = if (selectedIndex == 4) openMyGoods else null,
                     )
                 },
                 bottomBar = {
@@ -428,6 +432,19 @@ internal fun CoolapkApp(
                             factory = TopicDetailViewModel.Factory,
                         ),
                     )
+                    is ContentRoute.MyGoods -> state.profile?.uid?.let { ownUid ->
+                        MyGoodsScreen(
+                            uid = ownUid,
+                            onBack = closeContent,
+                            onOpenFeed = { item -> openFeed(FeedRoute(item.id, item, false)) },
+                            onOpenProduct = { id ->
+                                closeContent()
+                                openedProduct = id
+                            },
+                            onLike = viewModel::toggleLike,
+                            likeOverrides = state.likeOverrides,
+                        )
+                    }
                     is ContentRoute.Settings -> SettingsScreen(
                         themeMode = themeMode,
                         onThemeModeChange = onThemeModeChange,
@@ -500,6 +517,7 @@ private fun AppTopBar(
     onNotifications: () -> Unit,
     notificationCount: Int,
     onSettings: (() -> Unit)? = null,
+    onGoods: (() -> Unit)? = null,
 ) {
     TopAppBar(
         title = {
@@ -536,6 +554,11 @@ private fun AppTopBar(
             }
             IconButton(onClick = onRefresh, enabled = !refreshing) {
                 Icon(Icons.Rounded.Refresh, contentDescription = "刷新")
+            }
+            onGoods?.let {
+                IconButton(onClick = it) {
+                    Icon(Icons.Rounded.Inventory2, contentDescription = "我的装备")
+                }
             }
             onSettings?.let {
                 IconButton(onClick = it) {
