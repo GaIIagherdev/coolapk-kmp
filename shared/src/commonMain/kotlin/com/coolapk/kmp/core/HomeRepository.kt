@@ -79,6 +79,10 @@ class HomeRepository(
 
     suspend fun loadFansUsers(uid: String, page: Int = 1): UserSummaryPage = gateway.getFansUsers(uid, page)
 
+    suspend fun sendPrivateMessage(uid: String, message: String): Result<Unit> = gateway.sendPrivateMessage(uid, message)
+
+    suspend fun removeFan(uid: String): Result<Unit> = gateway.removeFan(uid)
+
     suspend fun loadUserQrImage(uid: String): String? = gateway.getUserQrImage(uid)
 
     suspend fun updateProfile(key: String, value: String): Result<Unit> = gateway.updateUserProfile(key, value)

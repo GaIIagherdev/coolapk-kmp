@@ -862,6 +862,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is
 // rather `InterfaceTooLargeException`, caused by too many methods
@@ -1010,6 +1012,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_search_all(
 fun uniffi_coolapk_core_checksum_method_coolapkcore_search_by_type(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_search_feeds(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_send_private_message(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_set_session_cookie(
 ): Short
@@ -1213,6 +1217,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_search_all(`ptr`: Pointer,`query`:
 fun uniffi_coolapk_core_fn_method_coolapkcore_search_by_type(`ptr`: Pointer,`searchType`: RustBuffer.ByValue,`query`: RustBuffer.ByValue,`page`: Int,`firstItem`: RustBuffer.ByValue,`lastItem`: RustBuffer.ByValue,`feedType`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_search_feeds(`ptr`: Pointer,`query`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_send_private_message(`ptr`: Pointer,`uid`: RustBuffer.ByValue,`message`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_set_session_cookie(`ptr`: Pointer,`cookie`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): Unit
@@ -1551,6 +1557,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_search_feeds() != 27890.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_send_private_message() != 53547.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_set_session_cookie() != 30802.toShort()) {
@@ -2221,6 +2230,11 @@ public interface CoolapkCoreInterface {
      * 只返回动态结果，供当前 Android 信息流搜索页使用。
      */
     fun `searchFeeds`(`query`: kotlin.String, `page`: kotlin.UInt): kotlin.String
+
+    /**
+     * 发送私信（文字）。
+     */
+    fun `sendPrivateMessage`(`uid`: kotlin.String, `message`: kotlin.String): kotlin.String
 
     fun `setSessionCookie`(`cookie`: kotlin.String)
 
@@ -3344,6 +3358,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_search_feeds(
         it, FfiConverterString.lower(`query`),FfiConverterUInt.lower(`page`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 发送私信（文字）。
+     */
+    @Throws(CoolapkException::class)override fun `sendPrivateMessage`(`uid`: kotlin.String, `message`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_send_private_message(
+        it, FfiConverterString.lower(`uid`),FfiConverterString.lower(`message`),_status)
 }
     }
     )

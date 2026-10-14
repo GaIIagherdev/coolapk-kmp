@@ -287,6 +287,12 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    /// 发送私信（文字）。
+    pub fn send_private_message(&self, uid: String, message: String) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.send_private_message(&uid, &message))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     /// 移除粉丝。
     pub fn cancel_follower(&self, uid: String) -> Result<String, CoolapkError> {
         let value = self.runtime.block_on(self.client.cancel_follower(&uid))?;

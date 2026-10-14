@@ -83,6 +83,12 @@ interface CoolapkGateway {
     suspend fun getFansUsers(uid: String, page: Int = 1): UserSummaryPage =
         error("当前平台未提供粉丝列表接口")
 
+    suspend fun sendPrivateMessage(uid: String, message: String): Result<Unit> =
+        Result.failure(IllegalStateException("当前平台未提供私信接口"))
+
+    suspend fun removeFan(uid: String): Result<Unit> =
+        Result.failure(IllegalStateException("当前平台未提供移除粉丝接口"))
+
     suspend fun getUserQrImage(uid: String): String? = null
 
     suspend fun updateUserProfile(key: String, value: String): Result<Unit> =

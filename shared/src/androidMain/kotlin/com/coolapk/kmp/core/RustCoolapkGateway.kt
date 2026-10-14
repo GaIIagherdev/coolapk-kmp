@@ -229,6 +229,14 @@ class RustCoolapkGateway(
         userListParser.parsePage(core.getFansUserList(uid, page.coerceAtLeast(1).toUInt()))
     }
 
+    override suspend fun sendPrivateMessage(uid: String, message: String): Result<Unit> = runCatching {
+        onCore<Unit> { core.sendPrivateMessage(uid, message.trim()) }
+    }
+
+    override suspend fun removeFan(uid: String): Result<Unit> = runCatching {
+        onCore<Unit> { core.cancelFollower(uid) }
+    }
+
     override suspend fun getUserQrImage(uid: String): String? = onCore {
         userListParser.parseQrImage(core.getUserQrImage(uid))
     }
