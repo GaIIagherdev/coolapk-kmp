@@ -47,6 +47,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.SubcomposeAsyncImage
 import com.coolapk.kmp.core.DigitalProductDetail
+import com.coolapk.kmp.core.FeedItem
+import com.coolapk.kmp.core.ProductRatingChart
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Tab
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,10 +64,22 @@ internal fun DigitalProductDetailScreen(
     viewModel: DigitalProductDetailViewModel,
     onBack: () -> Unit,
     onOpenImage: (List<String>, Int) -> Unit,
+    onOpenFeed: (FeedItem) -> Unit = {},
+    onLike: (FeedItem) -> Unit = {},
+    likeOverrides: Map<String, Boolean> = emptyMap(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(productId) { viewModel.load(productId) }
     BackHandler(onBack = onBack)
+    var tab by rememberSaveable { mutableStateOf(ProductDetailTab.OVERVIEW) }
+    var writingRating by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(tab, state.productId) {
+        when (tab) {
+            ProductDetailTab.OVERVIEW -> Unit
+            ProductDetailTab.RATINGS -> viewModel.openRatings()
+            ProductDetailTab.DISCUSS -> viewModel.openDiscussions()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -89,14 +109,76 @@ internal fun DigitalProductDetailScreen(
 
             else -> {
                 val detail = state.detail ?: return@Scaffold
-                ProductDetailBody(
-                    detail = detail,
-                    loading = state.loading,
-                    error = state.error,
-                    onRetry = viewModel::retry,
-                    onOpenImage = onOpenImage,
-                    modifier = Modifier.fillMaxSize().padding(padding),
-                )
+                Column(Modifier.fillMaxSize().padding(padding)) {
+                    ProductActionBar(
+                        wish = state.wish,
+                        follow = state.follow,
+                        onWish = viewModel::toggleWish,
+                        onFollow = viewModel::toggleFollow,
+                    )
+                    state.actionError?.let { message ->
+                        Text(
+                            message,
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                    PrimaryTabRow(selectedTabIndex = tab.ordinal) {
+                        ProductDetailTab.entries.forEach { entry ->
+                            Tab(
+                                selected = tab == entry,
+                                onClick = { tab = entry },
+                                text = { Text(entry.label) },
+                            )
+                        }
+                    }
+                    when (tab) {
+                        ProductDetailTab.OVERVIEW -> ProductDetailBody(
+                            detail = detail,
+                            loading = state.loading,
+                            error = state.error,
+                            onRetry = viewModel::retry,
+                            onOpenImage = onOpenImage,
+                            chart = state.chart,
+                            chartPeriod = state.chartPeriod,
+                            onChartPeriod = viewModel::selectChartPeriod,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        ProductDetailTab.RATINGS -> ProductRatingsTab(
+                            chart = state.chart,
+                            chartPeriod = state.chartPeriod,
+                            onChartPeriod = viewModel::selectChartPeriod,
+                            ratings = state.ratings,
+                            selectedStar = state.ratingStar,
+                            onStar = viewModel::setRatingStar,
+                            onLoadMore = viewModel::loadMoreRatings,
+                            onRetry = viewModel::openRatings,
+                            onWrite = { writingRating = true },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        ProductDetailTab.DISCUSS -> ProductDiscussTab(
+                            discussions = state.discussions,
+                            likeOverrides = likeOverrides,
+                            onOpenFeed = onOpenFeed,
+                            onLike = onLike,
+                            onOpenImage = onOpenImage,
+                            onLoadMore = viewModel::loadMoreDiscussions,
+                            onRetry = viewModel::openDiscussions,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+                if (writingRating) {
+                    ProductRatingDialog(
+                        submitting = state.ratingSubmitting,
+                        error = state.actionError,
+                        onDismiss = { writingRating = false },
+                        onSubmit = { score, message, bought ->
+                            viewModel.submitRating(score, message, bought) { writingRating = false }
+                        },
+                    )
+                }
             }
         }
     }
@@ -130,6 +212,9 @@ private fun ProductDetailBody(
     error: String?,
     onRetry: () -> Unit,
     onOpenImage: (List<String>, Int) -> Unit,
+    chart: ProductRatingChart?,
+    chartPeriod: String,
+    onChartPeriod: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val images = (listOfNotNull(detail.logoUrl) + detail.imageUrls).distinct()
@@ -146,6 +231,12 @@ private fun ProductDetailBody(
             }
             if (error != null) item(key = "error") {
                 ProductDetailError(error, onRetry, Modifier.widthIn(max = 900.dp).fillMaxWidth())
+            }
+            if (chart != null && chart.series(chartPeriod).isNotEmpty()) item(key = "trend") {
+                Column(Modifier.widthIn(max = 900.dp).fillMaxWidth()) {
+                    SectionHeader("评分趋势", horizontalPadding = 0.dp)
+                    ProductRatingChartView(chart, chartPeriod, onChartPeriod, Modifier.padding(horizontal = 0.dp))
+                }
             }
             item(key = "overview") {
                 val media: @Composable (Modifier) -> Unit = { mediaModifier ->

@@ -38,6 +38,8 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.NotificationsNone
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Settings
+import app.coolapk.kmp.ui.theme.ThemeMode
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Whatshot
 import androidx.compose.material3.Card
@@ -117,6 +119,7 @@ private sealed interface ContentRoute {
     data class Feed(val value: FeedRoute) : ContentRoute
     data class Topic(val tag: String) : ContentRoute
     data class User(val uid: String) : ContentRoute
+    data object Settings : ContentRoute
 }
 
 // material3 1.5.x 的 NavigationRail 不会自行约束宽度：放在 Row 里会吃掉整行，
@@ -136,6 +139,8 @@ internal fun CoolapkApp(
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
     discoveryViewModel: DiscoveryViewModel = viewModel(factory = DiscoveryViewModel.Factory),
     digitalViewModel: DigitalViewModel = viewModel(factory = DigitalViewModel.Factory),
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
+    onThemeModeChange: (ThemeMode) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val discoveryState by discoveryViewModel.state.collectAsStateWithLifecycle()
@@ -172,6 +177,7 @@ internal fun CoolapkApp(
         }
     }
     val closeContent: () -> Unit = { contentRoutes = contentRoutes.dropLast(1) }
+    val openSettings: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Settings }
 
     BackHandler(openedApp != null) {
         openedApp = null
@@ -241,6 +247,7 @@ internal fun CoolapkApp(
                         onSearch = { searchOpen = true },
                         onNotifications = { notificationsOpen = true },
                         notificationCount = state.notifications.total,
+                        onSettings = if (selectedIndex == 4) openSettings else null,
                     )
                 },
                 bottomBar = {
@@ -379,6 +386,9 @@ internal fun CoolapkApp(
                 viewModel = viewModel(factory = DigitalProductDetailViewModel.Factory),
                 onBack = { openedProduct = null },
                 onOpenImage = openImages,
+                onOpenFeed = { item -> openFeed(FeedRoute(item.id, item, false)) },
+                onLike = viewModel::toggleLike,
+                likeOverrides = state.likeOverrides,
             )
         }
         contentRoutes.forEachIndexed { index, route ->
@@ -417,6 +427,11 @@ internal fun CoolapkApp(
                             key = "topic:$index:${route.tag}",
                             factory = TopicDetailViewModel.Factory,
                         ),
+                    )
+                    is ContentRoute.Settings -> SettingsScreen(
+                        themeMode = themeMode,
+                        onThemeModeChange = onThemeModeChange,
+                        onBack = closeContent,
                     )
                     is ContentRoute.User -> UserProfileScreen(
                         uid = route.uid,
@@ -484,6 +499,7 @@ private fun AppTopBar(
     onSearch: () -> Unit,
     onNotifications: () -> Unit,
     notificationCount: Int,
+    onSettings: (() -> Unit)? = null,
 ) {
     TopAppBar(
         title = {
@@ -520,6 +536,11 @@ private fun AppTopBar(
             }
             IconButton(onClick = onRefresh, enabled = !refreshing) {
                 Icon(Icons.Rounded.Refresh, contentDescription = "刷新")
+            }
+            onSettings?.let {
+                IconButton(onClick = it) {
+                    Icon(Icons.Rounded.Settings, contentDescription = "设置")
+                }
             }
         },
     )
