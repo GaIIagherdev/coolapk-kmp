@@ -128,6 +128,47 @@ class UserProfileViewModelTest {
 
     private fun user(uid: String) = UserProfile(uid, "用户$uid", null, null, 2, 3, 4)
 
+    @Test fun favoritesAndLikedListsLoadOnDemandAndStayIndependent() = runTest(dispatcher) {
+        val gateway = FakeUserGateway()
+        val model = UserProfileViewModel { HomeRepository(gateway) }
+
+        model.open(null, user("42"))
+        runCurrent()
+        gateway.feedRequests[0].response.complete(page("feed", more = false))
+        runCurrent()
+        assertTrue(gateway.favoriteRequests.isEmpty())
+        assertTrue(gateway.likedRequests.isEmpty())
+
+        model.openList(ProfileListKind.FAVORITES)
+        runCurrent()
+        assertEquals(listOf("42" to 1), gateway.favoriteRequests.map { it.uid to it.page })
+        gateway.favoriteRequests[0].response.complete(page("fav", more = false))
+        advanceUntilIdle()
+        assertEquals(listOf("fav"), model.state.value.favorites.items.map(FeedItem::id))
+        assertTrue(model.state.value.liked.items.isEmpty())
+
+        // 已加载过的列表不会重复请求
+        model.openList(ProfileListKind.FAVORITES)
+        runCurrent()
+        assertEquals(1, gateway.favoriteRequests.size)
+
+        model.openList(ProfileListKind.LIKED)
+        runCurrent()
+        gateway.likedRequests[0].response.completeExceptionally(IllegalStateException("赞过加载失败"))
+        runCurrent()
+        assertEquals("赞过加载失败", model.state.value.liked.error)
+        assertEquals(1, model.state.value.liked.retryPage)
+
+        model.retryList(ProfileListKind.LIKED)
+        runCurrent()
+        assertEquals(1, gateway.likedRequests[1].page)
+        gateway.likedRequests[1].response.complete(page("liked", more = false))
+        advanceUntilIdle()
+        assertEquals(listOf("liked"), model.state.value.liked.items.map(FeedItem::id))
+        assertNull(model.state.value.liked.error)
+        assertEquals(listOf("fav"), model.state.value.favorites.items.map(FeedItem::id))
+    }
+
     private fun page(id: String, more: Boolean = true) = HomePage(
         items = listOf(FeedItem(id, null, id, "作者", null, null, null, 0, 0, emptyList())),
         hasMore = more,
@@ -140,6 +181,8 @@ private class FakeUserGateway : CoolapkGateway {
 
     val profileRequests = mutableListOf<ProfileRequest>()
     val feedRequests = mutableListOf<FeedRequest>()
+    val favoriteRequests = mutableListOf<FeedRequest>()
+    val likedRequests = mutableListOf<FeedRequest>()
     var myProfile: UserProfile? = null
 
     override suspend fun getHomePage(page: Int, firstItem: String?, lastItem: String?): HomePage =
@@ -156,4 +199,10 @@ private class FakeUserGateway : CoolapkGateway {
 
     override suspend fun getUserFeeds(uid: String, page: Int): HomePage =
         CompletableDeferred<HomePage>().also { feedRequests += FeedRequest(uid, page, it) }.await()
+
+    override suspend fun getUserFavorites(uid: String, page: Int): HomePage =
+        CompletableDeferred<HomePage>().also { favoriteRequests += FeedRequest(uid, page, it) }.await()
+
+    override suspend fun getUserLiked(uid: String, page: Int): HomePage =
+        CompletableDeferred<HomePage>().also { likedRequests += FeedRequest(uid, page, it) }.await()
 }
