@@ -671,19 +671,23 @@ private fun ProductMetrics(product: DigitalEntity) {
     val score = product.listScore()
     val heat = product.listHeat()
     if (score == null && heat == null) return
-    Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         score?.let {
             Text(
-                "酷友评分 ${"%.1f".format(it)}",
-                style = MaterialTheme.typography.labelMedium,
+                "评分 ${"%.1f".format(it)}",
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.tertiary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
         heat?.let {
             Text(
                 "热度 $it",
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
