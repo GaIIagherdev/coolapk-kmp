@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -71,6 +72,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.coolapk.kmp.core.AppItem
 import com.coolapk.kmp.core.FeedItem
@@ -414,7 +416,7 @@ internal fun FeedCard(
             Spacer(Modifier.height(if (title == null) 10.dp else 6.dp))
             Text(
                 text = message,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 26.sp),
                 maxLines = if (expandable && !expanded) 4 else Int.MAX_VALUE,
                 overflow = if (expandable && !expanded) TextOverflow.Ellipsis else TextOverflow.Clip,
             )
@@ -436,7 +438,7 @@ internal fun FeedCard(
             Spacer(Modifier.height(10.dp))
             FeedImages(item.imageUrls, onOpenImage)
         }
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(12.dp))
         FeedActions(item = item, liked = liked, onLike = onLike, onReply = onReply)
     }
 
@@ -597,24 +599,40 @@ private fun FeedActions(
     onReply: () -> Unit,
 ) {
     val context = LocalContext.current
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+    // 底部操作条：一条浅色胶囊轨道，三等分操作，点赞态用错误容器色高亮
+    Surface(
+        modifier = Modifier.fillMaxWidth().height(44.dp),
+        shape = RoundedCornerShape(50),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        FeedAction(
-            icon = if (liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-            count = (item.likeCount + (if (liked) 1 else 0) - (if (item.isLiked) 1 else 0))
-                .coerceAtLeast(0).formatCompact(),
-            description = "点赞",
-            actionLabel = if (liked) "取消点赞" else "点赞",
-            state = if (liked) "已点赞" else "未点赞",
-            highlighted = liked,
-            onClick = onLike,
-        )
-        FeedAction(Icons.Rounded.ChatBubbleOutline, item.replyCount.formatCompact(), "评论", onClick = onReply)
-        FeedAction(Icons.Rounded.Share, count = null, description = "分享", label = "分享") {
-            shareText(context, item)
+        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+            FeedAction(
+                icon = if (liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                count = (item.likeCount + (if (liked) 1 else 0) - (if (item.isLiked) 1 else 0))
+                    .coerceAtLeast(0).formatCompact(),
+                description = "点赞",
+                actionLabel = if (liked) "取消点赞" else "点赞",
+                state = if (liked) "已点赞" else "未点赞",
+                highlighted = liked,
+                modifier = Modifier.weight(1f),
+                onClick = onLike,
+            )
+            FeedAction(
+                icon = Icons.Rounded.ChatBubbleOutline,
+                count = item.replyCount.formatCompact(),
+                description = "评论",
+                modifier = Modifier.weight(1f),
+                onClick = onReply,
+            )
+            FeedAction(
+                icon = Icons.Rounded.Share,
+                count = null,
+                description = "分享",
+                label = "分享",
+                modifier = Modifier.weight(1f),
+            ) {
+                shareText(context, item)
+            }
         }
     }
 }
@@ -628,15 +646,21 @@ private fun FeedAction(
     label: String? = null,
     state: String? = null,
     highlighted: Boolean = false,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    Surface(
-        modifier = Modifier
-            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+    val trailing = label ?: count
+    val tint = if (highlighted) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .padding(vertical = 4.dp)
             .clip(RoundedCornerShape(50))
+            .background(
+                if (highlighted) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f) else Color.Transparent,
+            )
             .clickable(role = Role.Button, onClickLabel = actionLabel, onClick = onClick)
             .semantics {
-                val trailing = label ?: count
                 contentDescription = when {
                     label != null -> description
                     trailing.isNullOrBlank() -> description
@@ -644,27 +668,18 @@ private fun FeedAction(
                 }
                 state?.let { stateDescription = it }
             },
-        color = if (highlighted) {
-            MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f)
-        } else {
-            Color.Transparent
-        },
-        contentColor = if (highlighted) {
-            MaterialTheme.colorScheme.error
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        },
-        shape = RoundedCornerShape(50),
+        contentAlignment = Alignment.Center,
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(19.dp))
-            val trailing = label ?: count
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = tint)
             if (!trailing.isNullOrBlank()) {
-                Spacer(Modifier.width(5.dp))
-                Text(trailing, modifier = Modifier.clearAndSetSemantics {}, style = MaterialTheme.typography.labelMedium)
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    trailing,
+                    modifier = Modifier.clearAndSetSemantics {},
+                    style = MaterialTheme.typography.labelLarge,
+                    color = tint,
+                )
             }
         }
     }
