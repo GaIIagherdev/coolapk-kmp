@@ -88,6 +88,10 @@ interface CoolapkGateway {
     suspend fun updateUserProfile(key: String, value: String): Result<Unit> =
         Result.failure(IllegalStateException("当前平台未提供资料编辑接口"))
 
+    /** 用户标签页的实体列表（图文、问答、好物榜等）。 */
+    suspend fun getUserTabPage(uid: String, tab: String, page: Int = 1, firstItem: String? = null, lastItem: String? = null): DigitalPage =
+        error("当前平台未提供用户标签页接口")
+
     /** 用户分类动态：feedType 取 feed、reply、rating、picture、ershou、fav。 */
     suspend fun getUserFeedsTyped(uid: String, feedType: String, page: Int = 1): HomePage =
         error("当前平台未提供用户分类动态接口")

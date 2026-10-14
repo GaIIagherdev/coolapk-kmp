@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 
 internal enum class DigitalLibraryMode { BRAND, CATEGORY }
 
-internal data class DigitalContentState(
+data class DigitalContentState(
     val items: List<DigitalEntity> = emptyList(),
     val page: Int = 0,
     val cursor: HomeCursor? = null,

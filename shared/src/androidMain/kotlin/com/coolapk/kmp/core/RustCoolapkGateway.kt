@@ -203,6 +203,12 @@ class RustCoolapkGateway(
             ?: throw IllegalStateException("数码产品详情数据不完整")
     }
 
+    override suspend fun getUserTabPage(uid: String, tab: String, page: Int, firstItem: String?, lastItem: String?): DigitalPage = onCore {
+        digitalParser.parsePage(
+            core.getUserTabData(uid, tab, page.coerceAtLeast(1).toUInt(), firstItem.orEmpty(), lastItem.orEmpty()),
+        )
+    }
+
     override suspend fun getUserFeedsTyped(uid: String, feedType: String, page: Int): HomePage = onCore {
         parser.parseHomePage(core.getUserFeedsTyped(uid, page.coerceAtLeast(1).toUInt(), feedType))
     }

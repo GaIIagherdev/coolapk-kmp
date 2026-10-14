@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.coolapk.kmp.core.FeedItem
+import com.coolapk.kmp.core.HomeCursor
 import com.coolapk.kmp.core.HomeRepository
 import com.coolapk.kmp.core.UserProfile
 import com.coolapk.kmp.core.createPlatformGateway
@@ -45,6 +46,8 @@ data class UserProfileUiState(
     val actionError: String? = null,
     /** 分类动态（回复、评分、酷图、二手），key 为接口的 feedType。 */
     val typed: Map<String, ProfileFeedList> = emptyMap(),
+    /** 标签页实体列表（图文、问答、好物榜等），key 为接口的 tab。 */
+    val entityTabs: Map<String, DigitalContentState> = emptyMap(),
     val qrImage: String? = null,
     val qrLoading: Boolean = false,
     val qrError: String? = null,
@@ -94,6 +97,7 @@ class UserProfileViewModel(
                 favorites = ProfileFeedList(),
                 liked = ProfileFeedList(),
                 typed = emptyMap(),
+                entityTabs = emptyMap(),
             )
         } else {
             UserProfileUiState(
@@ -355,6 +359,71 @@ class UserProfileViewModel(
                             loading = false,
                             error = failure.message ?: "加载失败",
                             retryPage = page,
+                        )))
+                    }
+                }
+            }
+        }
+    }
+
+    fun openEntityTab(tab: String) {
+        val current = _state.value.entityTabs[tab]
+        if (current != null && (current.loading || current.page > 0)) return
+        loadEntityTab(tab, page = 1, cursor = null)
+    }
+
+    fun loadMoreEntityTab(tab: String) {
+        val current = _state.value.entityTabs[tab] ?: return
+        if (current.loading || current.page == 0 || !current.hasMore) return
+        loadEntityTab(tab, page = current.page + 1, cursor = current.cursor)
+    }
+
+    fun retryEntityTab(tab: String) {
+        val current = _state.value.entityTabs[tab]
+        if (current?.loading == true) return
+        if (current == null || current.page == 0) {
+            loadEntityTab(tab, page = 1, cursor = null)
+        } else {
+            loadEntityTab(tab, page = current.page + 1, cursor = current.cursor)
+        }
+    }
+
+    private fun loadEntityTab(tab: String, page: Int, cursor: HomeCursor?) {
+        val uid = _state.value.profile?.uid ?: return
+        val source = repository ?: return
+        val request = requestId
+        _state.update { state ->
+            val previous = state.entityTabs[tab] ?: DigitalContentState()
+            state.copy(entityTabs = state.entityTabs + (tab to previous.copy(loading = true, error = null)))
+        }
+        viewModelScope.launch {
+            try {
+                val result = source.loadUserTabPage(uid, tab, page, cursor?.firstItem, cursor?.lastItem)
+                if (request != requestId) return@launch
+                _state.update { state ->
+                    val previous = state.entityTabs[tab] ?: DigitalContentState()
+                    val existing = if (page == 1) emptySet() else previous.items.map { it.id }.toSet()
+                    val fresh = result.items.filterNot { it.id in existing }.distinctBy { it.id }
+                    val firstItem = result.firstItem
+                    val lastItem = result.lastItem
+                    state.copy(entityTabs = state.entityTabs + (tab to previous.copy(
+                        items = if (page == 1) fresh else previous.items + fresh,
+                        loading = false,
+                        error = null,
+                        page = page,
+                        cursor = if (firstItem != null && lastItem != null) HomeCursor(firstItem, lastItem) else previous.cursor,
+                        hasMore = result.hasMore && fresh.isNotEmpty(),
+                    )))
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                if (request == requestId) {
+                    _state.update { state ->
+                        val previous = state.entityTabs[tab] ?: DigitalContentState()
+                        state.copy(entityTabs = state.entityTabs + (tab to previous.copy(
+                            loading = false,
+                            error = failure.message ?: "加载失败",
                         )))
                     }
                 }

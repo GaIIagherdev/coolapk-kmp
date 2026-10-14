@@ -84,13 +84,17 @@ import com.coolapk.kmp.core.UserProfile
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.math.roundToInt
 
-internal enum class ProfileTab(val label: String, val feedType: String? = null) {
+internal enum class ProfileTab(val label: String, val feedType: String? = null, val entityTab: String? = null) {
     FEEDS("动态"),
     LIKED("赞过"),
     REPLY("回复", "reply"),
     RATING("评分", "rating"),
+    ARTICLE("图文", entityTab = "article"),
+    QA("问答", entityTab = "qa"),
     PICTURE("酷图", "picture"),
     ERSHOU("二手", "ershou"),
+    GOODS("好物", entityTab = "goods"),
+    GOODS_RANK("好物榜", entityTab = "goods_rank"),
     FAVORITES("收藏"),
 }
 
@@ -138,6 +142,19 @@ fun UserProfileScreen(
         else -> null
     }
     val typedType = activeTab.feedType
+    val entityTabKey = activeTab.entityTab
+    LaunchedEffect(entityTabKey, state.profile?.uid) {
+        entityTabKey?.let(viewModel::openEntityTab)
+    }
+    LaunchedEffect(listState, entityTabKey) {
+        if (entityTabKey == null) return@LaunchedEffect
+        snapshotFlow {
+            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            lastVisible >= listState.layoutInfo.totalItemsCount - 3
+        }.distinctUntilChanged().collect { nearEnd ->
+            if (nearEnd) viewModel.loadMoreEntityTab(entityTabKey)
+        }
+    }
     LaunchedEffect(typedType, state.profile?.uid) {
         typedType?.let(viewModel::openTyped)
     }
@@ -276,6 +293,16 @@ fun UserProfileScreen(
                                 onOpenAuthor = onOpenAuthor,
                                 onRetry = { viewModel.retryList(ProfileListKind.FAVORITES) },
                             )
+                            ProfileTab.ARTICLE, ProfileTab.QA, ProfileTab.GOODS, ProfileTab.GOODS_RANK -> {
+                                val key = activeTab.entityTab.orEmpty()
+                                profileEntityItems(
+                                    keyPrefix = key,
+                                    content = state.entityTabs[key] ?: DigitalContentState(),
+                                    emptyTitle = "还没有${activeTab.label}内容",
+                                    onOpenFeed = { feed -> onOpenFeed(feed, false) },
+                                    onRetry = { viewModel.retryEntityTab(key) },
+                                )
+                            }
                             ProfileTab.REPLY, ProfileTab.RATING, ProfileTab.PICTURE, ProfileTab.ERSHOU -> {
                                 val type = activeTab.feedType.orEmpty()
                                 profileListItems(
@@ -595,6 +622,71 @@ private fun ProfileHeaderCard(
                     text = { Text(entry.label, maxLines = 1) },
                 )
             }
+        }
+    }
+}
+
+/** 标签页实体列表：图文、问答、好物等，有动态时打开动态，否则只展示。 */
+private fun LazyListScope.profileEntityItems(
+    keyPrefix: String,
+    content: DigitalContentState,
+    emptyTitle: String,
+    onOpenFeed: (FeedItem) -> Unit,
+    onRetry: () -> Unit,
+) {
+    itemsIndexed(content.items, key = { _, item -> "$keyPrefix-${item.id}" }) { _, entity ->
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 10.dp)
+                .clickable(enabled = entity.feed != null) { entity.feed?.let(onOpenFeed) },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            entity.imageUrl?.let { url ->
+                AsyncImage(
+                    model = coolapkImageRequest(url),
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp).clip(RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Crop,
+                )
+                Spacer(Modifier.width(12.dp))
+            }
+            Column(Modifier.weight(1f)) {
+                Text(
+                    entity.title ?: "未命名",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                entity.subTitle?.takeIf(String::isNotBlank)?.let {
+                    Text(
+                        it.toPlainText(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
+    }
+    content.error?.let { message ->
+        item(key = "$keyPrefix-error") {
+            Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(message, Modifier.weight(1f), color = MaterialTheme.colorScheme.error)
+                TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) { Text("重试") }
+            }
+        }
+    }
+    if (!content.loading && content.page > 0 && content.items.isEmpty() && content.error == null) {
+        item(key = "$keyPrefix-empty") {
+            CoolapkEmptyState(title = emptyTitle, modifier = Modifier.fillMaxWidth())
+        }
+    }
+    if (content.loading && content.items.isEmpty()) item(key = "$keyPrefix-loading") {
+        Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+            ExpressiveLoadingIndicator()
         }
     }
 }
