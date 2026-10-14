@@ -431,6 +431,28 @@ class UserProfileViewModel(
         }
     }
 
+    /** 发送私信：成功后调用 onDone，失败时在页面提示。 */
+    fun sendMessage(text: String, onDone: () -> Unit) {
+        val uid = _state.value.profile?.uid ?: return
+        val source = repository ?: return
+        viewModelScope.launch {
+            source.sendPrivateMessage(uid, text)
+                .onSuccess { onDone() }
+                .onFailure { failure -> _state.update { it.copy(actionError = failure.message ?: "私信发送失败") } }
+        }
+    }
+
+    /** 移除粉丝：成功后把该用户标记为非粉丝。 */
+    fun removeFan() {
+        val profile = _state.value.profile ?: return
+        val source = repository ?: return
+        viewModelScope.launch {
+            source.removeFan(profile.uid)
+                .onSuccess { _state.update { it.copy(profile = it.profile?.copy(isFans = false), actionError = null) } }
+                .onFailure { failure -> _state.update { it.copy(actionError = failure.message ?: "操作失败") } }
+        }
+    }
+
     fun dismissActionError() {
         _state.update { it.copy(actionError = null) }
     }

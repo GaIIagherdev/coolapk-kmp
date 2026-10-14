@@ -26,6 +26,11 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Mail
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material.icons.rounded.QrCode2
@@ -229,6 +234,8 @@ fun UserProfileScreen(
                                 qrError = state.qrError,
                                 onToggleFollow = viewModel::toggleFollow,
                                 onToggleSpecial = viewModel::toggleSpecialFollow,
+                                onSendMessage = viewModel::sendMessage,
+                                onRemoveFan = viewModel::removeFan,
                                 onLoadQr = viewModel::loadQrImage,
                                 onEdit = { onOpenEdit(profile) },
                                 onOpenRelations = { kind -> onOpenRelations(profile.uid, kind) },
@@ -383,6 +390,8 @@ private fun ProfileHeaderCard(
     qrError: String?,
     onToggleFollow: () -> Unit,
     onToggleSpecial: () -> Unit,
+    onSendMessage: (String, () -> Unit) -> Unit,
+    onRemoveFan: () -> Unit,
     onLoadQr: () -> Unit,
     onEdit: () -> Unit,
     onOpenRelations: (RelationKind) -> Unit,
@@ -431,6 +440,36 @@ private fun ProfileHeaderCard(
         Column(Modifier.padding(horizontal = 20.dp)) {
             // 操作行：本人为编辑资料与二维码；他人为关注与特别关注（与参考项目一致）
             var qrOpen by rememberSaveable { mutableStateOf(false) }
+            var messageOpen by rememberSaveable { mutableStateOf(false) }
+            var messageText by rememberSaveable { mutableStateOf("") }
+            var moreOpen by rememberSaveable { mutableStateOf(false) }
+            if (messageOpen) {
+                AlertDialog(
+                    onDismissRequest = { messageOpen = false },
+                    title = { Text("私信 ${profile.username}") },
+                    text = {
+                        OutlinedTextField(
+                            value = messageText,
+                            onValueChange = { messageText = it.take(500) },
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = { Text("输入私信内容") },
+                            minLines = 2,
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                onSendMessage(messageText.trim()) {
+                                    messageOpen = false
+                                    messageText = ""
+                                }
+                            },
+                            enabled = messageText.isNotBlank(),
+                        ) { Text("发送") }
+                    },
+                    dismissButton = { TextButton(onClick = { messageOpen = false }) { Text("取消") } },
+                )
+            }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
                 if (isOwnPage) {
                     OutlinedButton(onClick = onEdit, modifier = Modifier.heightIn(min = 48.dp)) {
@@ -451,6 +490,23 @@ private fun ProfileHeaderCard(
                     }
                     Button(onClick = onToggleFollow, modifier = Modifier.heightIn(min = 48.dp)) {
                         Text(if (profile.isFollow) "已关注" else "关注")
+                    }
+                    Spacer(Modifier.width(4.dp))
+                    IconButton(onClick = { messageOpen = true }) {
+                        Icon(Icons.Rounded.Mail, contentDescription = "私信")
+                    }
+                    Box {
+                        IconButton(onClick = { moreOpen = true }) {
+                            Icon(Icons.Rounded.MoreVert, contentDescription = "更多操作")
+                        }
+                        DropdownMenu(expanded = moreOpen, onDismissRequest = { moreOpen = false }) {
+                            if (profile.isFans) {
+                                DropdownMenuItem(
+                                    text = { Text("移除粉丝") },
+                                    onClick = { moreOpen = false; onRemoveFan() },
+                                )
+                            }
+                        }
                     }
                 }
             }
