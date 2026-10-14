@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.coolapk.kmp.core.FeedItem
+import com.coolapk.kmp.core.HomeCardRow
 import com.coolapk.kmp.core.HomeCursor
 import com.coolapk.kmp.core.HomeRepository
 import com.coolapk.kmp.core.UserProfile
@@ -44,6 +45,8 @@ data class UserProfileUiState(
     val favorites: ProfileFeedList = ProfileFeedList(),
     val liked: ProfileFeedList = ProfileFeedList(),
     val actionError: String? = null,
+    /** 主页卡片（关注的人、关注的板块等）。 */
+    val homeRows: List<HomeCardRow> = emptyList(),
     /** 分类动态（回复、评分、酷图、二手），key 为接口的 feedType。 */
     val typed: Map<String, ProfileFeedList> = emptyMap(),
     /** 标签页实体列表（图文、问答、好物榜等），key 为接口的 tab。 */
@@ -148,6 +151,7 @@ class UserProfileViewModel(
                         feedPage = if (sameUser) it.feedPage else 0,
                     )
                 }
+                loadHomeRows(source, profile.uid, currentRequest)
                 loadFeeds(source, profile.uid, 1, currentRequest)
             } catch (cancelled: CancellationException) {
                 throw cancelled
@@ -260,6 +264,12 @@ class UserProfileViewModel(
                 }
             }
         }
+    }
+
+    private suspend fun loadHomeRows(source: HomeRepository, uid: String, currentRequest: Int) {
+        val rows = runCatching { source.loadUserHomeRows(uid) }.getOrDefault(emptyList())
+        if (currentRequest != requestId) return
+        _state.update { it.copy(homeRows = rows) }
     }
 
     /** 设置或取消特别关注（仅在已关注时可用）。 */

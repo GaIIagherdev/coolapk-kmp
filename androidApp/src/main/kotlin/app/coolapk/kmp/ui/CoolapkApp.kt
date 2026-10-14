@@ -474,6 +474,7 @@ internal fun CoolapkApp(
                         onImportCookie = { loginOpen = true },
                         onLogout = viewModel::logout,
                         onOpenGoods = openMyGoods,
+                        onOpenTopic = { tag -> contentRoutes = contentRoutes + ContentRoute.Topic(tag) },
                         onOpenRelations = { relationUid, kind -> contentRoutes = contentRoutes + ContentRoute.Relations(relationUid, kind) },
                         onOpenEdit = { profile -> contentRoutes = contentRoutes + ContentRoute.ProfileEdit(profile) },
                         selfUid = state.profile?.uid,

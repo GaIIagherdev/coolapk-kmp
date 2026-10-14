@@ -51,9 +51,11 @@ class UserHomeJsonParser(
 
     private fun kindOf(row: JsonObject, entities: List<HomeCardEntity>): HomeCardKind {
         val type = (row.text("entityType", "entityTemplate") ?: "").lowercase()
+        val title = row.text("title", "name", "label").orEmpty()
         return when {
             type.contains("user") || entities.all { it.uid != null } -> HomeCardKind.USER
-            type.contains("topic") || type.contains("tag") || entities.all { it.entityType?.contains("topic", true) == true } ->
+            type.contains("topic") || type.contains("tag") || title.contains("板块") || title.contains("话题") ||
+                entities.all { it.entityType?.contains("topic", true) == true } ->
                 HomeCardKind.TOPIC
             else -> HomeCardKind.GENERIC
         }

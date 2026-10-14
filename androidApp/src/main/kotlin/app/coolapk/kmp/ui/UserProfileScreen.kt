@@ -89,10 +89,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coolapk.kmp.core.FeedItem
 import com.coolapk.kmp.core.UserProfile
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyRow
+import com.coolapk.kmp.core.HomeCardRow
+import com.coolapk.kmp.core.HomeCardKind
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.math.roundToInt
 
 internal enum class ProfileTab(val label: String, val feedType: String? = null, val entityTab: String? = null) {
+    HOME("主页"),
     FEEDS("动态"),
     LIKED("赞过"),
     REPLY("回复", "reply"),
@@ -119,6 +124,7 @@ fun UserProfileScreen(
     onImportCookie: () -> Unit,
     onLogout: () -> Unit,
     onOpenGoods: () -> Unit = {},
+    onOpenTopic: (String) -> Unit = {},
     onOpenRelations: (String, RelationKind) -> Unit = { _, _ -> },
     onOpenEdit: (UserProfile) -> Unit = {},
     selfUid: String? = null,
@@ -146,6 +152,16 @@ fun UserProfileScreen(
 
     val tabState = remember(uid) { mutableStateOf(ProfileTab.FEEDS) }
     val activeTab = tabState.value
+    // 与参考项目一致：未关注的他人主页默认打开“主页”分区
+    val othersPage = !(uid == null || uid == selfUid)
+    LaunchedEffect(state.profile?.uid, state.homeRows.isNotEmpty()) {
+        val profile = state.profile
+        if (othersPage && profile != null && !profile.isFollow && state.homeRows.isNotEmpty() &&
+            tabState.value == ProfileTab.FEEDS
+        ) {
+            tabState.value = ProfileTab.HOME
+        }
+    }
     val activeKind = when (activeTab) {
         ProfileTab.LIKED -> ProfileListKind.LIKED
         else -> null
@@ -230,7 +246,9 @@ fun UserProfileScreen(
                                 tabs = ProfileTab.entries.filter { entry ->
                                     val ownOnly = entry == ProfileTab.LIKED || entry == ProfileTab.REPLY
                                     val needsGoods = entry == ProfileTab.GOODS_STORE
-                                    (isOwnPage || !ownOnly) && (!needsGoods || (state.profile?.goodsCount ?: 0) > 0)
+                                    val needsHome = entry == ProfileTab.HOME
+                                    (isOwnPage || !ownOnly) && (!needsGoods || (state.profile?.goodsCount ?: 0) > 0) &&
+                                        (!needsHome || state.homeRows.isNotEmpty())
                                 },
                                 tab = tabState.value,
                                 onTabChange = { tabState.value = it },
@@ -301,6 +319,25 @@ fun UserProfileScreen(
                                     item(key = "feeds-empty") {
                                         CoolapkEmptyState(title = "暂无动态", modifier = Modifier.fillMaxWidth())
                                     }
+                                }
+                            }
+                            ProfileTab.HOME -> {
+                                profileHomeRows(
+                                    rows = state.homeRows,
+                                    onOpenUser = onOpenAuthor,
+                                    onOpenTopic = onOpenTopic,
+                                )
+                                itemsIndexed(state.feeds, key = { _, item -> "home-${item.id}" }) { index, item ->
+                                    FeedCard(
+                                        item = item,
+                                        liked = likeOverrides[item.id] ?: item.isLiked,
+                                        onLike = { onLike(item) },
+                                        onOpenDetail = { onOpenFeed(item, false) },
+                                        onReply = { onOpenFeed(item, true) },
+                                        onOpenImage = onOpenImage,
+                                        onOpenAuthor = onOpenAuthor,
+                                        dividerAbove = index > 0,
+                                    )
                                 }
                             }
                             ProfileTab.ARTICLE, ProfileTab.QA, ProfileTab.GOODS, ProfileTab.GOODS_RANK,
@@ -685,6 +722,72 @@ private fun ProfileHeaderCard(
                     onClick = { onTabChange(entry) },
                     text = { Text(entry.label, maxLines = 1) },
                 )
+            }
+        }
+    }
+}
+
+/** 主页分区：关注的人（头像横排）、关注的板块（标签）、其它卡片（条目）。 */
+private fun LazyListScope.profileHomeRows(
+    rows: List<HomeCardRow>,
+    onOpenUser: (String) -> Unit,
+    onOpenTopic: (String) -> Unit,
+) {
+    rows.forEachIndexed { rowIndex, row ->
+        item(key = "home-row-$rowIndex") {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                Text(row.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                row.subTitle?.takeIf(String::isNotBlank)?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Spacer(Modifier.height(8.dp))
+                when (row.kind) {
+                    HomeCardKind.USER -> LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(row.entities, key = { it.id }) { entity ->
+                            Column(
+                                Modifier
+                                    .width(72.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .clickable { (entity.uid ?: entity.id).let(onOpenUser) }
+                                    .padding(vertical = 4.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                UserAvatar(entity.imageUrl, entity.title.orEmpty(), 56.dp)
+                                Text(
+                                    entity.title.orEmpty(),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                    }
+                    HomeCardKind.TOPIC -> LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(row.entities, key = { it.id }) { entity ->
+                            Surface(
+                                shape = RoundedCornerShape(50),
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                modifier = Modifier.clickable { onOpenTopic(entity.title ?: entity.id) },
+                            ) {
+                                Text(
+                                    entity.title ?: entity.id,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                )
+                            }
+                        }
+                    }
+                    HomeCardKind.GENERIC -> row.entities.forEach { entity ->
+                        Text(
+                            entity.title ?: "未命名",
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
             }
         }
     }
