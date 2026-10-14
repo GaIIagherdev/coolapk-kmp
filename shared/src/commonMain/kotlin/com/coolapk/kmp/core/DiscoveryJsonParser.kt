@@ -29,6 +29,14 @@ data class DiscoveryCard(
     val url: String?,
     val entityType: String?,
     val feed: FeedItem? = null,
+    val secondHand: SecondHandInfo? = null,
+)
+
+/** 二手闲置的展示字段，来自服务端 ershou_info；非二手内容为 null。 */
+data class SecondHandInfo(
+    val price: String?,
+    val platform: String?,
+    val location: String?,
 )
 
 data class DiscoveryPage(
@@ -134,6 +142,7 @@ class DiscoveryJsonParser(
                     ?: imageChild?.value("url"),
                 entityType = row.value("entityType", "entity_type", "entityTemplate"),
                 feed = feedsById[row.value("id") ?: id],
+                secondHand = row.secondHandInfo(),
             )
         }
         val pageInfo = root["pagination"] as? JsonObject
@@ -188,6 +197,31 @@ class DiscoveryJsonParser(
                 .getOrNull() ?: JsonObject(emptyMap())
             else -> JsonObject(emptyMap())
         }
+    }
+
+    private fun JsonObject.secondHandInfo(): SecondHandInfo? {
+        val raw = this["ershou_info"] ?: this["ershouInfo"] ?: this["second_hand_info"] ?: this["secondHandInfo"]
+        val isSecondHand = raw != null ||
+            value("feedType", "feed_type")?.equals("ershou", true) == true ||
+            value("entityTemplate", "entityType")?.equals("feedErshou", true) == true
+        if (!isSecondHand) return null
+        val info = (raw as? JsonObject)
+            ?: (raw as? JsonPrimitive)?.contentOrNull?.let { text ->
+                runCatching { json.parseToJsonElement(text) as? JsonObject }.getOrNull()
+            }
+            ?: JsonObject(emptyMap())
+        val price = when {
+            info.value("is_face_deal") == "1" -> "价格面议"
+            info.value("product_price") != null -> "¥${info.value("product_price")}"
+            else -> null
+        }
+        return SecondHandInfo(
+            price = price,
+            platform = info.value("link_source"),
+            location = listOfNotNull(info.value("province"), info.value("city"))
+                .joinToString(" ")
+                .takeIf(String::isNotBlank),
+        )
     }
 
     private fun JsonObject.value(vararg keys: String): String? =

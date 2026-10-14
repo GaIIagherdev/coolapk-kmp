@@ -105,4 +105,23 @@ class DiscoveryJsonParserTest {
         assertEquals("41629", page.firstItem)
         assertEquals("41630", page.lastItem)
     }
+
+    @Test
+    fun readsSecondHandPriceAndPlatformFromErshouInfo() {
+        val page = parser.parsePage(
+            """{"data":[{"entityType":"feed","entityTemplate":"feedErshou","entityId":"9",
+            "message":"九成新耳机",
+            "ershou_info":"{\"product_price\":\"199\",\"link_source\":\"闲鱼\",\"province\":\"上海\",\"city\":\"浦东\"}"}]}""",
+        )
+        val card = page.cards.single()
+        assertEquals(SecondHandInfo("¥199", "闲鱼", "上海 浦东"), card.secondHand)
+    }
+
+    @Test
+    fun ordinaryCardsHaveNoSecondHandInfo() {
+        val page = parser.parsePage(
+            """{"data":[{"entityType":"card","entityId":"1","title":"普通卡片"}]}""",
+        )
+        assertEquals(null, page.cards.single().secondHand)
+    }
 }
