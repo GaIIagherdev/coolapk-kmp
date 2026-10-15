@@ -46,6 +46,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -622,16 +623,10 @@ private fun FeedAction(
     onClick: () -> Unit,
 ) {
     val trailing = label ?: count
-    val tint = if (highlighted) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-    Box(
+    TextButton(
+        onClick = onClick,
         modifier = modifier
-            .fillMaxHeight()
-            .padding(vertical = 4.dp)
-            .clip(RoundedCornerShape(50))
-            .background(
-                if (highlighted) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f) else Color.Transparent,
-            )
-            .clickable(role = Role.Button, onClickLabel = actionLabel, onClick = onClick)
+            .heightIn(min = 48.dp)
             .semantics {
                 contentDescription = when {
                     label != null -> description
@@ -640,19 +635,14 @@ private fun FeedAction(
                 }
                 state?.let { stateDescription = it }
             },
-        contentAlignment = Alignment.Center,
+        colors = ButtonDefaults.textButtonColors(
+            contentColor = if (highlighted) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+        ),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = tint)
-            if (!trailing.isNullOrBlank()) {
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    trailing,
-                    modifier = Modifier.clearAndSetSemantics {},
-                    style = MaterialTheme.typography.labelLarge,
-                    color = tint,
-                )
-            }
+        Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
+        if (!trailing.isNullOrBlank()) {
+            Spacer(Modifier.width(6.dp))
+            Text(trailing, modifier = Modifier.clearAndSetSemantics {}, style = MaterialTheme.typography.labelLarge)
         }
     }
 }

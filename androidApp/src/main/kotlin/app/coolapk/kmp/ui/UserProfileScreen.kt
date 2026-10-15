@@ -44,6 +44,8 @@ import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material.icons.rounded.Storefront
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.OutlinedButton
@@ -860,15 +862,12 @@ private fun LazyListScope.profileEntityItems(
 
 @Composable
 private fun ProfileChip(text: String, container: Color, content: Color) {
-    Surface(shape = RoundedCornerShape(50), color = container, contentColor = content) {
-        Text(
-            text,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
-            style = MaterialTheme.typography.labelMedium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
+    AssistChip(
+        onClick = {},
+        label = { Text(text, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        colors = AssistChipDefaults.assistChipColors(containerColor = container, labelColor = content),
+        border = null,
+    )
 }
 
 private fun genderLabel(gender: Int?): String? = when (gender) {

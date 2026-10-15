@@ -1,7 +1,6 @@
 package app.coolapk.kmp.ui
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +21,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -130,36 +131,22 @@ internal fun RelationsScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun UserRelationRow(user: UserSummary, onClick: () -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .clickable(onClick = onClick)
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        UserAvatar(user.avatarUrl, user.username, 48.dp)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                user.username,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+    ListItem(
+        headlineContent = {
+            Text(user.username, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
+        },
+        supportingContent = {
             user.bio?.takeIf(String::isNotBlank)?.let {
-                Text(
-                    it.toPlainText(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Text(it.toPlainText(), style = MaterialTheme.typography.bodySmall, maxLines = 2,
+                    overflow = TextOverflow.Ellipsis)
             }
-        }
-    }
+        },
+        leadingContent = { UserAvatar(user.avatarUrl, user.username, 48.dp) },
+        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
+        modifier = Modifier.clip(MaterialTheme.shapes.large).clickable(onClick = onClick),
+    )
 }
