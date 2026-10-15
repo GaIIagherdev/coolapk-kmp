@@ -31,6 +31,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -225,37 +227,21 @@ fun NotificationScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NotificationRow(item: NotificationItem, onOpenFeed: (String) -> Unit) {
     val feedId = item.feedId
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = feedId != null) { feedId?.let(onOpenFeed) }
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Box(
-            modifier = Modifier.size(44.dp).clip(CircleShape)
-                .background(MaterialTheme.colorScheme.secondaryContainer),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                item.actorName.firstOrNull()?.toString().orEmpty(),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-            )
-            item.actorAvatarUrl?.let { url ->
-                AsyncImage(
-                    model = coolapkImageRequest(url),
-                    contentDescription = null,
-                    modifier = Modifier.matchParentSize().clip(CircleShape),
-                    contentScale = ContentScale.Crop,
+    ListItem(
+        overlineContent = {
+            item.createdAt?.let { time ->
+                Text(
+                    time.toDisplayTime(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        }
-        Spacer(Modifier.width(16.dp))
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        },
+        headlineContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     item.actorName,
@@ -269,41 +255,56 @@ private fun NotificationRow(item: NotificationItem, onOpenFeed: (String) -> Unit
                     Spacer(Modifier.width(8.dp))
                     Box(Modifier.size(7.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
                 }
-                Spacer(Modifier.weight(1f))
-                item.createdAt?.let { time ->
+            }
+        },
+        supportingContent = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    item.message.toPlainText(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                item.targetPreview?.toPlainText()?.takeIf(String::isNotBlank)?.let { preview ->
                     Text(
-                        time.toDisplayTime(),
-                        style = MaterialTheme.typography.labelSmall,
+                        preview,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
-            Text(
-                item.message.toPlainText(),
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-            )
-            item.targetPreview?.toPlainText()?.takeIf(String::isNotBlank)?.let { preview ->
+        },
+        leadingContent = {
+            Box(
+                modifier = Modifier.size(44.dp).clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
                 Text(
-                    preview,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
+                    item.actorName.firstOrNull()?.toString().orEmpty(),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
+                item.actorAvatarUrl?.let { url ->
+                    AsyncImage(
+                        model = coolapkImageRequest(url),
+                        contentDescription = null,
+                        modifier = Modifier.matchParentSize().clip(CircleShape),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
             }
-        }
-        if (feedId != null) {
-            Spacer(Modifier.width(4.dp))
-            Icon(
-                Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp).align(Alignment.CenterVertically),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
+        },
+        trailingContent = if (feedId != null) {
+            { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+        } else {
+            null
+        },
+        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.clickable(enabled = feedId != null) { feedId?.let(onOpenFeed) },
+    )
 }
 
 @Composable

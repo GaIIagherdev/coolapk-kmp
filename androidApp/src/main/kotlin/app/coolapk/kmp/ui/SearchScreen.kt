@@ -35,6 +35,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -121,27 +122,26 @@ fun SearchScreen(
                 IconButton(onClick = onBack) {
                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
                 }
-                TextField(
-                    value = input,
-                    onValueChange = { input = it },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    label = { Text("搜索酷安内容") },
-                    trailingIcon = {
-                        IconButton(onClick = submit, enabled = input.isNotBlank()) {
-                            Icon(Icons.Rounded.Search, contentDescription = "执行搜索")
-                        }
-                    },
-                    shape = RoundedCornerShape(28.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        focusedIndicatorColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        unfocusedIndicatorColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    ),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = { submit() }),
-                )
+                Surface(
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    shape = SearchBarDefaults.inputFieldShape,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                ) {
+                    SearchBarDefaults.InputField(
+                        query = input,
+                        onQueryChange = { input = it },
+                        onSearch = { submit() },
+                        expanded = false,
+                        onExpandedChange = {},
+                        placeholder = { Text("搜索酷安内容") },
+                        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+                        trailingIcon = {
+                            IconButton(onClick = submit, enabled = input.isNotBlank()) {
+                                Icon(Icons.Rounded.Search, contentDescription = "执行搜索")
+                            }
+                        },
+                    )
+                }
             }
         },
     ) { padding ->
