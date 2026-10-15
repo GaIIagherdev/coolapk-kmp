@@ -35,6 +35,9 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -178,20 +181,15 @@ internal fun MyHubScreen(
             Spacer(Modifier.height(12.dp))
 
             // 帮助入口
-            Surface(
-                modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).clickable {
+            ListItem(
+                headlineContent = { Text("有疑惑请参考「酷安常见问题」", style = MaterialTheme.typography.bodyLarge) },
+                leadingContent = { Icon(Icons.Rounded.HelpOutline, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                trailingContent = { Icon(Icons.Rounded.ChevronRight, contentDescription = null) },
+                colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
+                modifier = Modifier.clip(MaterialTheme.shapes.large).clickable {
                     runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(COOLAPK_HELP_URL))) }
                 },
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surfaceContainerLowest,
-            ) {
-                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Rounded.HelpOutline, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.width(12.dp))
-                    Text("有疑惑请参考「酷安常见问题」", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                    Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
+            )
 
             if (profile != null) {
                 Spacer(Modifier.height(8.dp))
@@ -226,28 +224,21 @@ private fun HubMenuCell(item: HubMenuItem, modifier: Modifier) {
     Column(
         modifier = modifier
             .heightIn(min = 88.dp)
-            .clickable(enabled = item.enabled, onClick = item.onClick)
-            .padding(vertical = 10.dp),
+            .padding(vertical = 10.dp)
+            .semantics { if (!item.enabled) contentDescription = "${item.label}，暂未支持" },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Box(
-            Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.secondaryContainer),
-            contentAlignment = Alignment.Center,
+        FilledTonalIconButton(
+            onClick = item.onClick,
+            enabled = item.enabled,
+            modifier = Modifier.size(52.dp),
         ) {
-            Icon(
-                item.icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = contentAlpha),
-            )
+            Icon(item.icon, contentDescription = null)
         }
         Spacer(Modifier.height(6.dp))
         Text(
             item.label,
-            modifier = Modifier.semantics { if (!item.enabled) contentDescription = "${item.label}，暂未支持" },
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha),
             maxLines = 1,

@@ -23,6 +23,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -167,33 +169,12 @@ private fun MyGoodsList(
 }
 
 /** 商品店铺、产品专辑等非动态条目：封面 + 标题 + 副标题，产品可进入详情。 */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GoodsRow(entity: DigitalEntity, onOpenProduct: (String) -> Unit) {
     val isProduct = entity.entityType.equals("product", true)
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .clickable(enabled = isProduct) { onOpenProduct(entity.id) }
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            Modifier.size(72.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh),
-            contentAlignment = Alignment.Center,
-        ) {
-            entity.imageUrl?.let { url ->
-                AsyncImage(
-                    model = coolapkImageRequest(url),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize().padding(6.dp),
-                    contentScale = ContentScale.Fit,
-                )
-            }
-        }
-        Spacer(Modifier.width(14.dp))
-        Column(Modifier.weight(1f)) {
+    ListItem(
+        headlineContent = {
             Text(
                 entity.title ?: "未命名",
                 style = MaterialTheme.typography.titleSmall,
@@ -201,15 +182,30 @@ private fun GoodsRow(entity: DigitalEntity, onOpenProduct: (String) -> Unit) {
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
+        },
+        supportingContent = {
             entity.subTitle?.takeIf(String::isNotBlank)?.let {
-                Text(
-                    it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
-        }
-    }
+        },
+        leadingContent = {
+            Box(
+                Modifier.size(72.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                contentAlignment = Alignment.Center,
+            ) {
+                entity.imageUrl?.let { url ->
+                    AsyncImage(
+                        model = coolapkImageRequest(url),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize().padding(6.dp),
+                        contentScale = ContentScale.Fit,
+                    )
+                }
+            }
+        },
+        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(enabled = isProduct) { onOpenProduct(entity.id) },
+    )
 }

@@ -27,6 +27,8 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -162,14 +164,20 @@ private fun SearchResults(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProductResultRow(product: SearchResult, selected: Boolean, onToggle: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).clickable(onClick = onToggle),
-        shape = RoundedCornerShape(20.dp),
-        color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLowest,
-    ) {
-        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+    ListItem(
+        headlineContent = {
+            Text(product.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
+                maxLines = 2, overflow = TextOverflow.Ellipsis)
+        },
+        supportingContent = {
+            product.subtitle?.takeIf(String::isNotBlank)?.let {
+                Text(it, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        },
+        leadingContent = {
             Box(
                 Modifier.size(64.dp).clip(RoundedCornerShape(14.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh),
@@ -184,33 +192,20 @@ private fun ProductResultRow(product: SearchResult, selected: Boolean, onToggle:
                     )
                 } ?: Icon(Icons.Rounded.Devices, contentDescription = null)
             }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    product.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                product.subtitle?.takeIf(String::isNotBlank)?.let {
-                    Text(
-                        it,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
+        },
+        trailingContent = {
             FilterChip(
                 selected = selected,
                 onClick = onToggle,
                 label = { Text(if (selected) "已加入" else "加入对比") },
-                modifier = Modifier.heightIn(min = 48.dp),
             )
-        }
-    }
+        },
+        colors = ListItemDefaults.colors(
+            containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.surfaceContainerLowest,
+        ),
+        modifier = Modifier.clip(RoundedCornerShape(20.dp)).clickable(onClick = onToggle),
+    )
 }
 
 /** 并排对比：每款产品一列，展示图片、品牌、评分、热度与规格。 */
