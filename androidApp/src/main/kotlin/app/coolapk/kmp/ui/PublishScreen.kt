@@ -26,7 +26,7 @@ import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -303,7 +303,7 @@ private fun PublishBottomBar(
                 Spacer(Modifier.weight(1f))
                 Button(onClick = onSubmit, enabled = state.canSubmit, contentPadding = PaddingValues(horizontal = 22.dp)) {
                     if (state.submitting) {
-                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                        CircularWavyProgressIndicator(Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
                     } else {
                         Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(18.dp))

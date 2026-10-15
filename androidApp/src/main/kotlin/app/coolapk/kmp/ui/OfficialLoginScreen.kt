@@ -24,11 +24,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -235,9 +235,8 @@ internal fun OfficialLoginScreen(
                         modifier = Modifier.fillMaxWidth().height(48.dp),
                     ) {
                         if (verifying) {
-                            CircularProgressIndicator(
+                            CircularWavyProgressIndicator(
                                 modifier = Modifier.padding(end = 8.dp).size(18.dp),
-                                strokeWidth = 2.dp,
                             )
                         }
                         Text(if (verifying) "验证登录中" else "完成登录")
@@ -253,7 +252,7 @@ internal fun OfficialLoginScreen(
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (pageLoading) {
-                LinearProgressIndicator(
+                LinearWavyProgressIndicator(
                     progress = { progress / 100f },
                     modifier = Modifier.fillMaxWidth(),
                 )

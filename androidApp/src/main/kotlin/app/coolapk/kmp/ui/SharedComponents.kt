@@ -44,6 +44,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -216,45 +218,15 @@ internal fun StatColumn(
  * 不使用无限弹性/视差，服务加载语义。
  */
 @Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 internal fun ExpressiveLoadingIndicator(
     modifier: Modifier = Modifier,
     size: Dp = 32.dp,
 ) {
-    val transition = rememberInfiniteTransition(label = "loading")
-    val rotation by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(durationMillis = 1400, easing = LinearEasing)),
-        label = "rotation",
-    )
-    val scale by transition.animateFloat(
-        initialValue = 0.72f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 700, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "scale",
-    )
-    val corner by transition.animateFloat(
-        initialValue = 0.2f,
-        targetValue = 0.5f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 700, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "corner",
-    )
-    Box(
-        modifier = modifier
-            .size(size)
-            .graphicsLayer {
-                rotationZ = rotation
-                scaleX = scale
-                scaleY = scale
-            }
-            .clip(RoundedCornerShape(size * corner))
-            .background(MaterialTheme.colorScheme.primary),
+    // M3E 形状变化加载指示器，统一替代各页面的转圈与自绘动画
+    LoadingIndicator(
+        modifier = modifier.size(size),
+        color = MaterialTheme.colorScheme.primary,
     )
 }
 
