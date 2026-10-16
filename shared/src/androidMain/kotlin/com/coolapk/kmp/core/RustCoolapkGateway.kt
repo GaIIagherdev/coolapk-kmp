@@ -39,7 +39,7 @@ class RustCoolapkGateway(
     private val notificationListParser: NotificationListJsonParser = NotificationListJsonParser(),
     private val detailParser: FeedDetailJsonParser = FeedDetailJsonParser(),
     private val collectionParser: CollectionJsonParser = CollectionJsonParser(),
-    private val followedEntryParser: FollowedEntryJsonParser = FollowedEntryJsonParser(),
+    private val listEntryParser: ListEntryJsonParser = ListEntryJsonParser(),
 ) : CoolapkGateway {
     private val sessionStore = context?.let(::SecureSessionStore)
     private val core: CoolapkCore by lazy {
@@ -267,12 +267,16 @@ class RustCoolapkGateway(
         )
     }
 
-    override suspend fun getFollowedForums(uid: String, page: Int): FollowedEntryPage = onCore {
-        followedEntryParser.parsePage(core.getUserForumFollowList(uid, page.coerceAtLeast(1).toUInt()))
+    override suspend fun getEvents(page: Int): ListEntryPage = onCore {
+        listEntryParser.parsePage(core.getEventList(page.coerceAtLeast(1).toUInt()))
     }
 
-    override suspend fun getFollowedTopics(page: Int): FollowedEntryPage = onCore {
-        followedEntryParser.parsePage(core.getFollowedTopics(page.coerceAtLeast(1).toUInt()))
+    override suspend fun getFollowedForums(uid: String, page: Int): ListEntryPage = onCore {
+        listEntryParser.parsePage(core.getUserForumFollowList(uid, page.coerceAtLeast(1).toUInt()))
+    }
+
+    override suspend fun getFollowedTopics(page: Int): ListEntryPage = onCore {
+        listEntryParser.parsePage(core.getFollowedTopics(page.coerceAtLeast(1).toUInt()))
     }
 
     override suspend fun getBlackList(page: Int): UserSummaryPage = onCore {

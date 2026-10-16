@@ -919,6 +919,12 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    /// 酷友圈活动列表。
+    pub fn get_event_list(&self, page: u32) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_event_list(page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     /// 用户关注的论坛列表。
     pub fn get_user_forum_follow_list(&self, uid: String, page: u32) -> Result<String, CoolapkError> {
         let value = self

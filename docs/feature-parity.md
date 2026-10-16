@@ -27,7 +27,7 @@
 | 发布动态 | — | ✅ | 纯文本，媒体发布未做 |
 | 图片查看 | `/pictures` | ✅ | `ImageViewerDialog` |
 | 相册 | `/albums`、`/album/:id`、`/my-albums` | ⬜ | |
-| 活动列表与详情 | `/events`、`/event/:id` | ⬜ | |
+| 活动列表与详情 | `/events`、`/event/:id` | 🟡 | 已接入活动列表，入口在“我的”页，真机上标题正常、图片未加载；活动详情未做；接口未经真实样本验证 |
 | 自定义列表（anylist） | `/anylist`、`/anylist/:id`、`/anylist/create` | ⬜ | |
 | 节点 / 论坛 | `/node/:type/:id` | ⬜ | |
 | 公众号（dyh） | `/dyh/:id`、`/my-dyh` | ⬜ | |

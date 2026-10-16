@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
-import com.coolapk.kmp.core.FollowedEntry
+import com.coolapk.kmp.core.ListEntry
 
 /** 关注的论坛与话题两个标签。字段未经真实样本验证。 */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,7 +94,7 @@ internal fun FollowedScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EntryRow(entry: FollowedEntry) {
+internal fun EntryRow(entry: ListEntry) {
     ListItem(
         headlineContent = {
             Text(

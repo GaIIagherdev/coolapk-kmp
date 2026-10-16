@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.coolapk.kmp.core.FollowedEntry
-import com.coolapk.kmp.core.FollowedEntryPage
+import com.coolapk.kmp.core.ListEntry
+import com.coolapk.kmp.core.ListEntryPage
 import com.coolapk.kmp.core.HomeRepository
 import com.coolapk.kmp.core.createPlatformGateway
 import kotlinx.coroutines.CancellationException
@@ -22,8 +22,8 @@ internal enum class FollowedTab(val label: String) {
 
 internal data class FollowedUiState(
     val tab: FollowedTab = FollowedTab.FORUMS,
-    val forums: PagedListState<FollowedEntry> = PagedListState(),
-    val topics: PagedListState<FollowedEntry> = PagedListState(),
+    val forums: PagedListState<ListEntry> = PagedListState(),
+    val topics: PagedListState<ListEntry> = PagedListState(),
 )
 
 internal class FollowedViewModel(
@@ -58,10 +58,10 @@ internal class FollowedViewModel(
         load(tab, page = if (snapshot.page == 0) 1 else snapshot.page + 1)
     }
 
-    private fun slot(state: FollowedUiState, tab: FollowedTab): PagedListState<FollowedEntry> =
+    private fun slot(state: FollowedUiState, tab: FollowedTab): PagedListState<ListEntry> =
         if (tab == FollowedTab.FORUMS) state.forums else state.topics
 
-    private fun update(tab: FollowedTab, transform: (PagedListState<FollowedEntry>) -> PagedListState<FollowedEntry>) {
+    private fun update(tab: FollowedTab, transform: (PagedListState<ListEntry>) -> PagedListState<ListEntry>) {
         _state.update { state ->
             if (tab == FollowedTab.FORUMS) state.copy(forums = transform(state.forums))
             else state.copy(topics = transform(state.topics))
@@ -76,14 +76,14 @@ internal class FollowedViewModel(
         update(tab) { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             try {
-                val result: FollowedEntryPage = if (tab == FollowedTab.FORUMS) {
+                val result: ListEntryPage = if (tab == FollowedTab.FORUMS) {
                     source.loadFollowedForums(uid, page)
                 } else {
                     source.loadFollowedTopics(page)
                 }
                 update(tab) { current ->
-                    val existing = if (page == 1) emptySet() else current.items.map(FollowedEntry::id).toSet()
-                    val fresh = result.items.filterNot { it.id in existing }.distinctBy(FollowedEntry::id)
+                    val existing = if (page == 1) emptySet() else current.items.map(ListEntry::id).toSet()
+                    val fresh = result.items.filterNot { it.id in existing }.distinctBy(ListEntry::id)
                     current.copy(
                         items = if (page == 1) fresh else current.items + fresh,
                         loading = false,

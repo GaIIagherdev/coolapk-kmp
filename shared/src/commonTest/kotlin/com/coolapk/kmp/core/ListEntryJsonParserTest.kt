@@ -7,8 +7,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /** 字段依据参考项目推断，未经真实样本验证。 */
-class FollowedEntryJsonParserTest {
-    private val parser = FollowedEntryJsonParser()
+class ListEntryJsonParserTest {
+    private val parser = ListEntryJsonParser()
 
     @Test
     fun readsEntriesWithFallbackFieldNames() {

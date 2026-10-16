@@ -84,12 +84,15 @@ interface CoolapkGateway {
         cursor: HomeCursor? = null,
     ): HomePage = error("当前平台未提供问题回答接口")
 
+    /** 酷友圈活动列表。 */
+    suspend fun getEvents(page: Int = 1): ListEntryPage = error("当前平台未提供活动接口")
+
     /** 关注的论坛列表，需登录。 */
-    suspend fun getFollowedForums(uid: String, page: Int = 1): FollowedEntryPage =
+    suspend fun getFollowedForums(uid: String, page: Int = 1): ListEntryPage =
         error("当前平台未提供关注论坛接口")
 
     /** 关注的话题列表，需登录。 */
-    suspend fun getFollowedTopics(page: Int = 1): FollowedEntryPage =
+    suspend fun getFollowedTopics(page: Int = 1): ListEntryPage =
         error("当前平台未提供关注话题接口")
 
     /** 黑名单用户列表，需登录。 */

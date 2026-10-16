@@ -128,6 +128,7 @@ private sealed interface ContentRoute {
     data object History : ContentRoute
     data object Followed : ContentRoute
     data class Question(val id: String) : ContentRoute
+    data object Events : ContentRoute
     data object ProductSelector : ContentRoute
     data object Messages : ContentRoute
     data class Compare(val configIds: List<String>, val titles: List<String>) : ContentRoute
@@ -198,6 +199,7 @@ internal fun CoolapkApp(
     val openHistory: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.History }
     val openFollowed: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Followed }
     val openQuestion: (String) -> Unit = { id -> contentRoutes = contentRoutes + ContentRoute.Question(id) }
+    val openEvents: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Events }
     val openProductSelector: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.ProductSelector }
     val openMessages: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Messages }
 
@@ -359,6 +361,7 @@ internal fun CoolapkApp(
                             onOpenBlacklist = openBlacklist,
                             onOpenHistory = openHistory,
                             onOpenFollowed = openFollowed,
+                            onOpenEvents = openEvents,
                             onOpenOwnTab = { tab -> state.profile?.uid?.let { contentRoutes = contentRoutes + ContentRoute.User(it, tab) } },
                             onOpenSelector = openProductSelector,
                             onOpenSettings = openSettings,
@@ -487,6 +490,7 @@ internal fun CoolapkApp(
                         profile = route.profile,
                         onBack = closeContent,
                     )
+                    is ContentRoute.Events -> EventsScreen(onBack = closeContent)
                     is ContentRoute.Question -> QuestionDetailScreen(
                         questionId = route.id,
                         onBack = closeContent,
