@@ -919,6 +919,14 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    /// 板块动态列表，board_tag 形如 `#/board/数码测评`。
+    pub fn get_board_feeds(&self, board_tag: String, page: u32) -> Result<String, CoolapkError> {
+        let value = self
+            .runtime
+            .block_on(self.client.get_board_feeds(&board_tag, page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     /// 游戏列表，game_type 取 hot、new、single、online、casual、indie。
     pub fn get_game_list(&self, page: u32, game_type: String) -> Result<String, CoolapkError> {
         let value = self

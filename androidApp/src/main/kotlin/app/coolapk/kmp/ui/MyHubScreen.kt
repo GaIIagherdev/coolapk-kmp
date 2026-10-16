@@ -96,6 +96,7 @@ internal fun MyHubScreen(
     onOpenEvents: () -> Unit,
     onOpenAppCenter: () -> Unit,
     onOpenGameCenter: () -> Unit,
+    onOpenReviews: () -> Unit,
     onOpenSelector: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenNotifications: () -> Unit,
@@ -117,6 +118,7 @@ internal fun MyHubScreen(
         HubMenuItem("活动", Icons.Rounded.Event, true, onOpenEvents),
         HubMenuItem("应用中心", Icons.Rounded.Apps, true, onOpenAppCenter),
         HubMenuItem("游戏中心", Icons.Rounded.SportsEsports, true, onOpenGameCenter),
+        HubMenuItem("评测区", Icons.Rounded.RateReview, true, onOpenReviews),
         HubMenuItem("私信", Icons.Rounded.Mail, true, onOpenMessages),
         HubMenuItem(if (darkNow) "日间模式" else "夜间模式", if (darkNow) Icons.Rounded.LightMode else Icons.Rounded.DarkMode, true) {
             onThemeModeChange(if (darkNow) ThemeMode.LIGHT else ThemeMode.DARK)

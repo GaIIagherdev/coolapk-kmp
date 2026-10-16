@@ -267,6 +267,10 @@ class RustCoolapkGateway(
         )
     }
 
+    override suspend fun getBoardFeeds(boardTag: String, page: Int): HomePage = onCore {
+        parser.parseHomePage(core.getBoardFeeds(boardTag, page.coerceAtLeast(1).toUInt()))
+    }
+
     override suspend fun getGamePage(page: Int, type: String): AppPage = onCore {
         appParser.parsePage(core.getGameList(page.coerceAtLeast(1).toUInt(), type))
     }

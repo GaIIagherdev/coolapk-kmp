@@ -84,6 +84,10 @@ interface CoolapkGateway {
         cursor: HomeCursor? = null,
     ): HomePage = error("当前平台未提供问题回答接口")
 
+    /** 板块动态列表，boardTag 形如 `#/board/数码测评`。 */
+    suspend fun getBoardFeeds(boardTag: String, page: Int = 1): HomePage =
+        error("当前平台未提供板块动态接口")
+
     /** 游戏列表；type 取 hot、new、single、online、casual、indie。 */
     suspend fun getGamePage(page: Int = 1, type: String = "hot"): AppPage =
         error("当前平台未提供游戏接口")

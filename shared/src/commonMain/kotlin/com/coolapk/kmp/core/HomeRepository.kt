@@ -100,6 +100,8 @@ class HomeRepository(
 
     suspend fun loadEvents(page: Int = 1): ListEntryPage = gateway.getEvents(page)
 
+    suspend fun loadBoardFeeds(boardTag: String, page: Int = 1): HomePage = gateway.getBoardFeeds(boardTag, page)
+
     suspend fun loadGames(page: Int = 1, type: String = "hot"): AppPage = gateway.getGamePage(page, type)
 
     suspend fun loadFollowedForums(uid: String, page: Int = 1): ListEntryPage = gateway.getFollowedForums(uid, page)
