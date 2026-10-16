@@ -116,7 +116,7 @@ internal enum class ProfileTab(val label: String, val feedType: String? = null, 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserProfileScreen(
+internal fun UserProfileScreen(
     uid: String?,
     onBack: () -> Unit,
     onOpenFeed: (FeedItem, Boolean) -> Unit,
@@ -133,6 +133,7 @@ fun UserProfileScreen(
     onOpenAuthor: (String) -> Unit = {},
     ownProfile: UserProfile? = null,
     embedded: Boolean = false,
+    initialTab: ProfileTab = ProfileTab.FEEDS,
     likeOverrides: Map<String, Boolean> = emptyMap(),
     viewModel: UserProfileViewModel = viewModel(factory = UserProfileViewModel.Factory),
 ) {
@@ -152,7 +153,7 @@ fun UserProfileScreen(
         }
     }
 
-    val tabState = remember(uid) { mutableStateOf(ProfileTab.FEEDS) }
+    val tabState = remember(uid, initialTab) { mutableStateOf(initialTab) }
     val activeTab = tabState.value
     // 与参考项目一致：未关注的他人主页默认打开“主页”分区
     val othersPage = !(uid == null || uid == selfUid)

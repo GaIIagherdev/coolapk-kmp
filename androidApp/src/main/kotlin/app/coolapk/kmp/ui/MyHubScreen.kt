@@ -21,8 +21,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Reply
 import androidx.compose.material.icons.rounded.Article
+import androidx.compose.material.icons.rounded.Comment
 import androidx.compose.material.icons.rounded.Compare
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.HelpOutline
@@ -34,6 +34,7 @@ import androidx.compose.material.icons.rounded.People
 import androidx.compose.material.icons.rounded.RateReview
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.ThumbUp
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
@@ -82,6 +83,7 @@ internal fun MyHubScreen(
     onOpenProfile: (String) -> Unit,
     onOpenGoods: () -> Unit,
     onOpenFavorites: () -> Unit,
+    onOpenOwnTab: (ProfileTab) -> Unit,
     onOpenSelector: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenNotifications: () -> Unit,
@@ -92,7 +94,8 @@ internal fun MyHubScreen(
     val context = LocalContext.current
     val darkNow = themeMode == ThemeMode.DARK || (themeMode == ThemeMode.SYSTEM && isSystemInDarkTheme())
     val items = listOf(
-        HubMenuItem("我的动态", Icons.Rounded.Article, profile != null) { profile?.let { onOpenProfile(it.uid) } },
+        HubMenuItem("我的动态", Icons.Rounded.Article, profile != null) { onOpenOwnTab(ProfileTab.FEEDS) },
+        HubMenuItem("我的赞", Icons.Rounded.ThumbUp, profile != null) { onOpenOwnTab(ProfileTab.LIKED) },
         HubMenuItem("我的收藏", Icons.Rounded.Star, profile != null, onOpenFavorites),
         HubMenuItem("我的装备", Icons.Rounded.Inventory2, true, onOpenGoods),
         HubMenuItem("选机对比", Icons.Rounded.Compare, true, onOpenSelector),
@@ -102,7 +105,7 @@ internal fun MyHubScreen(
         },
         HubMenuItem("我的关注", Icons.Rounded.People, false) {},
         HubMenuItem("我的点评", Icons.Rounded.RateReview, false) {},
-        HubMenuItem("我的回复", Icons.AutoMirrored.Rounded.Reply, false) {},
+        HubMenuItem("我的评论", Icons.Rounded.Comment, profile != null) { onOpenOwnTab(ProfileTab.REPLY) },
     )
 
     Column(

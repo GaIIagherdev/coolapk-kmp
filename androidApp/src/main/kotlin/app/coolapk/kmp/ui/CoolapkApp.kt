@@ -120,7 +120,7 @@ private data class FeedRoute(
 private sealed interface ContentRoute {
     data class Feed(val value: FeedRoute) : ContentRoute
     data class Topic(val tag: String) : ContentRoute
-    data class User(val uid: String) : ContentRoute
+    data class User(val uid: String, val tab: ProfileTab = ProfileTab.FEEDS) : ContentRoute
     data object Settings : ContentRoute
     data object MyGoods : ContentRoute
     data object Favorites : ContentRoute
@@ -348,6 +348,7 @@ internal fun CoolapkApp(
                             onOpenProfile = openUser,
                             onOpenGoods = openMyGoods,
                             onOpenFavorites = openFavorites,
+                            onOpenOwnTab = { tab -> state.profile?.uid?.let { contentRoutes = contentRoutes + ContentRoute.User(it, tab) } },
                             onOpenSelector = openProductSelector,
                             onOpenSettings = openSettings,
                             onOpenMessages = openMessages,
@@ -500,6 +501,7 @@ internal fun CoolapkApp(
                     )
                     is ContentRoute.User -> UserProfileScreen(
                         uid = route.uid,
+                        initialTab = route.tab,
                         onBack = closeContent,
                         onOpenFeed = { item, comments -> openFeed(FeedRoute(item.id, item, comments)) },
                         onOpenImage = openImages,
