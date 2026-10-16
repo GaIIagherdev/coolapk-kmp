@@ -129,6 +129,7 @@ private sealed interface ContentRoute {
     data object Followed : ContentRoute
     data class Question(val id: String) : ContentRoute
     data object Events : ContentRoute
+    data object AppCenter : ContentRoute
     data object ProductSelector : ContentRoute
     data object Messages : ContentRoute
     data class Compare(val configIds: List<String>, val titles: List<String>) : ContentRoute
@@ -200,6 +201,7 @@ internal fun CoolapkApp(
     val openFollowed: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Followed }
     val openQuestion: (String) -> Unit = { id -> contentRoutes = contentRoutes + ContentRoute.Question(id) }
     val openEvents: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Events }
+    val openAppCenter: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.AppCenter }
     val openProductSelector: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.ProductSelector }
     val openMessages: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Messages }
 
@@ -362,6 +364,7 @@ internal fun CoolapkApp(
                             onOpenHistory = openHistory,
                             onOpenFollowed = openFollowed,
                             onOpenEvents = openEvents,
+                            onOpenAppCenter = openAppCenter,
                             onOpenOwnTab = { tab -> state.profile?.uid?.let { contentRoutes = contentRoutes + ContentRoute.User(it, tab) } },
                             onOpenSelector = openProductSelector,
                             onOpenSettings = openSettings,
@@ -491,6 +494,10 @@ internal fun CoolapkApp(
                         onBack = closeContent,
                     )
                     is ContentRoute.Events -> EventsScreen(onBack = closeContent)
+                    is ContentRoute.AppCenter -> AppCenterScreen(
+                        onBack = closeContent,
+                        onOpenApp = { app -> openedApp = app },
+                    )
                     is ContentRoute.Question -> QuestionDetailScreen(
                         questionId = route.id,
                         onBack = closeContent,

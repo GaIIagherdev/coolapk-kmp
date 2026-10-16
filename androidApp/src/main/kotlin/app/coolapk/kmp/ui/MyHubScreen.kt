@@ -21,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Article
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Comment
@@ -92,6 +93,7 @@ internal fun MyHubScreen(
     onOpenHistory: () -> Unit,
     onOpenFollowed: () -> Unit,
     onOpenEvents: () -> Unit,
+    onOpenAppCenter: () -> Unit,
     onOpenSelector: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenNotifications: () -> Unit,
@@ -111,6 +113,7 @@ internal fun MyHubScreen(
         HubMenuItem("浏览历史", Icons.Rounded.History, profile != null, onOpenHistory),
         HubMenuItem("关注的论坛", Icons.Rounded.Forum, profile != null, onOpenFollowed),
         HubMenuItem("活动", Icons.Rounded.Event, true, onOpenEvents),
+        HubMenuItem("应用中心", Icons.Rounded.Apps, true, onOpenAppCenter),
         HubMenuItem("私信", Icons.Rounded.Mail, true, onOpenMessages),
         HubMenuItem(if (darkNow) "日间模式" else "夜间模式", if (darkNow) Icons.Rounded.LightMode else Icons.Rounded.DarkMode, true) {
             onThemeModeChange(if (darkNow) ThemeMode.LIGHT else ThemeMode.DARK)
