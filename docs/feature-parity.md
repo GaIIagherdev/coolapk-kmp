@@ -97,17 +97,42 @@
 | 外观（主题） | 🟡 |
 | 资料、账号、通知、隐私、内容、下载、网络、快捷键、启动、设备、诊断、关于 | ⬜ |
 
-## 建议顺序
+## 接口就绪度（核对于 `client.rs` 与 `ffi.rs`）
 
-按用户可感知价值和依赖关系，先做以下几项，每项独立成一次提交：
+`client.rs` 中约 200 个方法，`ffi.rs` 只导出了约 80 个。下面是大多数待做功能的后端现状：
 
-1. 收藏与收藏单、我的赞、我的评论、我的动态（依赖现有 `MyHubScreen` 入口）
-2. 浏览历史、黑名单、关注的论坛 / 话题（列表型，结构相似，可共用一个分页列表组件）
-3. 问答详情、直播详情、相册、活动（独立详情页）
-4. 二手、好物清单与排行（需先确认 Rust 接口是否已有）
-5. 应用中心、游戏中心、评测区、话题广场（列表页）
-6. 设置子页（先做网络、外观、关于，其余按需）
+| 功能 | `client.rs` 已实现 | FFI 已导出 | 仍需 |
+| --- | --- | --- | --- |
+| 收藏 / 收藏单 | `get_favorite_list`、`get_collection_list`、`get_collection_detail`、`get_collection_item_list`、`create_collection`、`update_collection`、`delete_collection`、`follow_collection` 等 | 否 | FFI 导出、Gateway、解析器、界面 |
+| 我的赞 / 我的评论 | `get_user_like_list`、`get_user_feeds`（已导出） | 部分 | 核对评论列表接口 |
+| 浏览历史 | `get_recent_history` | 否 | FFI 导出、解析、界面 |
+| 黑名单 | `get_black_list`、`add_to_black_list`、`remove_from_black_list` | 否 | 同上 |
+| 关注的论坛 / 话题 / 问题 | `get_user_follow_nodes`、`get_followed_topics`、`follow_question`、`get_dyh_follow_list` 等 | 否 | 同上 |
+| 隐藏的回复 / 回收站 | `get_hidden_replies`、`get_spam_feed_list` | 否 | 同上 |
+| 问答详情 | `get_question_answers`、`create_answer` | 否 | 同上 |
+| 直播详情 | `get_live_detail`、`follow_live` | 否 | 同上 |
+| 相册 | `get_album_list`、`get_album_detail`、`create_album`、`get_user_album_list` 等 | 否 | 同上 |
+| 活动 | `get_event_list`、`get_event_detail` | 否 | 同上 |
+| 二手 | `get_secondhand_feeds`、`get_secondhand_brand_list`、`get_secondhand_product_list` | 否 | 同上 |
+| 好物清单 / 排行 | `get_goods_list`、`get_goods_detail`、`get_goods_list_items`、`get_rank_feeds`、`get_goods_search_hot_words` 等 | 否 | 同上 |
+| 应用中心 / 游戏中心 | `get_game_list`、`get_app_list`（已导出） | 部分 | 核对分类接口 |
+| 节点（论坛） | `get_node_feeds` | 否 | 同上 |
+| 公众号 | `get_dyh_list`、`get_dyh_feeds`、`get_dyh_detail` | 否 | 同上 |
+| 评测区 | `get_board_feeds`、`get_editor_choice_feeds`、`get_digest_feeds` | 否 | 同上 |
+| 热榜 / 快讯 | `get_headline_feeds`、`get_hot_feeds`（已导出） | 部分 | 核对 |
+| 用户插件 | `get_user_plugins`、`save_user_plugins`、`claim_user_plugin` | 否 | 同上 |
+| 设置相关 | `set_network_proxy`、`update_device_profile`、`get_update_list` 等 | 部分 | 同上 |
 
-## 待补的 Rust 接口
+注意：`ffi.rs` 的名字与 `client.rs` 不一定一一对应（如 `get_user_feeds_typed`），导出前要逐个核对。
 
-开始每一项前，先在 `rust-core/src/coolapk/client.rs` 确认接口是否存在；不存在则按 `AGENTS.md` 的五步流程补齐。
+## 建议执行顺序（每项一次提交）
+
+1. **收藏与收藏单**：导出收藏、收藏单相关 FFI，接入 Gateway 与解析器，做收藏页与收藏单详情。
+2. **我的赞、我的评论、我的动态**：核对接口后接入，复用 `MyHubScreen` 入口。
+3. **浏览历史、黑名单、关注的论坛 / 话题**：列表型页面，可共用一个分页列表组件。
+4. **问答详情、直播详情、相册、活动**：独立详情页。
+5. **二手、好物清单与排行**：导出对应接口，补全好物页的搜索、清单、排行标签。
+6. **应用中心、游戏中心、评测区、话题广场**：列表页。
+7. **设置子页**：先做网络、外观、关于，其余按需。
+
+每项开始前，按 `AGENTS.md` 的五步流程处理接口：`client.rs` → `ffi.rs` 导出 → 重新生成绑定 → Gateway → 解析器与测试。
