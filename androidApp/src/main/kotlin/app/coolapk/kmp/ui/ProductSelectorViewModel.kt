@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.coolapk.kmp.core.DigitalProductDetail
+import com.coolapk.kmp.core.firstConfigId
 import com.coolapk.kmp.core.HomeRepository
 import com.coolapk.kmp.core.SearchCategory
 import com.coolapk.kmp.core.SearchResult
@@ -30,6 +31,11 @@ internal data class ProductSelectorUiState(
     /** 对比中产品的详情，key 为产品 id；加载失败时值为 null。 */
     val details: Map<String, DigitalProductDetail?> = emptyMap(),
     val compareError: String? = null,
+    /** 对比页所需的型号配置 id，解析完成后由界面读取并跳转。 */
+    val compareConfigIds: List<String>? = null,
+    /** 与 compareConfigIds 对应的产品名，用于对比表头。 */
+    val compareTitles: List<String> = emptyList(),
+    val comparing: Boolean = false,
 )
 
 internal class ProductSelectorViewModel(
@@ -115,6 +121,30 @@ internal class ProductSelectorViewModel(
             val detail = runCatching { source.loadDigitalProductDetail(productId) }.getOrNull()
             _state.update { it.copy(details = it.details + (productId to detail)) }
         }
+    }
+
+    /** 读取已选产品的第一个型号配置，凑齐两个以上后进入对比。 */
+    fun startCompare() {
+        val snapshot = _state.value
+        val source = repository ?: return
+        if (snapshot.selected.size < 2 || snapshot.comparing) return
+        _state.update { it.copy(comparing = true, compareError = null) }
+        viewModelScope.launch {
+            val pairs = snapshot.selected.mapNotNull { product ->
+                val productId = product.targetId ?: product.id
+                val detail = snapshot.details[productId] ?: runCatching { source.loadDigitalProductDetail(productId) }.getOrNull()
+                detail?.firstConfigId()?.let { it to product.title }
+            }
+            if (pairs.size < 2) {
+                _state.update { it.copy(comparing = false, compareError = "所选机型缺少可对比配置，请换其他机型") }
+            } else {
+                _state.update { it.copy(comparing = false, compareConfigIds = pairs.map { p -> p.first }, compareTitles = pairs.map { p -> p.second }) }
+            }
+        }
+    }
+
+    fun consumeCompare() {
+        _state.update { it.copy(compareConfigIds = null) }
     }
 
     companion object {

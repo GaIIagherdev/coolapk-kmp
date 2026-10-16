@@ -66,3 +66,13 @@ class DigitalProductDetailJsonParser(
         else -> null
     }
 }
+
+/** 产品第一个型号配置的 id（来自 configRows），用于进入产品对比；没有则为 null。 */
+fun DigitalProductDetail.firstConfigId(): String? {
+    val rows = raw["configRows"] as? kotlinx.serialization.json.JsonArray ?: return null
+    return rows.firstNotNullOfOrNull { row ->
+        (row as? kotlinx.serialization.json.JsonObject)?.get("id")
+            ?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull }
+            ?.takeIf { it.isNotBlank() }
+    }
+}

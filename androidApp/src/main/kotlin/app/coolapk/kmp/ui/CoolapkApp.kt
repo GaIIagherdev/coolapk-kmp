@@ -125,6 +125,7 @@ private sealed interface ContentRoute {
     data object MyGoods : ContentRoute
     data object ProductSelector : ContentRoute
     data object Messages : ContentRoute
+    data class Compare(val configIds: List<String>, val titles: List<String>) : ContentRoute
     data class Chat(val ukey: String, val uid: String, val title: String) : ContentRoute
     data class Relations(val uid: String, val kind: RelationKind) : ContentRoute
     data class ProfileEdit(val profile: com.coolapk.kmp.core.UserProfile) : ContentRoute
@@ -438,7 +439,15 @@ internal fun CoolapkApp(
                             factory = TopicDetailViewModel.Factory,
                         ),
                     )
-                    is ContentRoute.ProductSelector -> ProductSelectorScreen(onBack = closeContent)
+                    is ContentRoute.ProductSelector -> ProductSelectorScreen(
+                        onBack = closeContent,
+                        onCompare = { ids, titles -> contentRoutes = contentRoutes + ContentRoute.Compare(ids, titles) },
+                    )
+                    is ContentRoute.Compare -> ProductCompareScreen(
+                        configIds = route.configIds,
+                        titles = route.titles,
+                        onBack = closeContent,
+                    )
                     is ContentRoute.Messages -> MessagesScreen(
                         onBack = closeContent,
                         onOpenChat = { session ->

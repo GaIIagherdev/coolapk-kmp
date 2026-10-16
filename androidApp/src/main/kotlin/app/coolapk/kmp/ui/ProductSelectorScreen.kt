@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Button
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.IconButton
@@ -39,6 +40,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,10 +61,18 @@ import com.coolapk.kmp.core.SearchResult
 @Composable
 internal fun ProductSelectorScreen(
     onBack: () -> Unit,
+    onCompare: (List<String>, List<String>) -> Unit = { _, _ -> },
     viewModel: ProductSelectorViewModel = viewModel(factory = ProductSelectorViewModel.Factory),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     BackHandler(onBack = onBack)
+    LaunchedEffect(state.compareConfigIds) {
+        state.compareConfigIds?.let { ids ->
+            val titles = state.compareTitles
+            viewModel.consumeCompare()
+            onCompare(ids, titles)
+        }
+    }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
@@ -95,6 +105,15 @@ internal fun ProductSelectorScreen(
                 if (state.selected.isNotEmpty()) {
                     Spacer(Modifier.height(12.dp))
                     CompareColumns(state.selected, state.details, onRemove = viewModel::toggle)
+                }
+                if (state.selected.size >= 2) {
+                    Button(
+                        onClick = viewModel::startCompare,
+                        enabled = !state.comparing,
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(top = 8.dp),
+                    ) {
+                        Text(if (state.comparing) "读取配置中" else "开始对比")
+                    }
                 }
                 state.compareError?.let {
                     Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall,
