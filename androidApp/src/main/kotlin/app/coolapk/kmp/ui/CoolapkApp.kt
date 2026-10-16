@@ -124,6 +124,8 @@ private sealed interface ContentRoute {
     data object Settings : ContentRoute
     data object MyGoods : ContentRoute
     data object ProductSelector : ContentRoute
+    data object Messages : ContentRoute
+    data class Chat(val ukey: String, val uid: String, val title: String) : ContentRoute
     data class Relations(val uid: String, val kind: RelationKind) : ContentRoute
     data class ProfileEdit(val profile: com.coolapk.kmp.core.UserProfile) : ContentRoute
 }
@@ -186,6 +188,7 @@ internal fun CoolapkApp(
     val openSettings: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Settings }
     val openMyGoods: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.MyGoods }
     val openProductSelector: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.ProductSelector }
+    val openMessages: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Messages }
 
     BackHandler(openedApp != null) {
         openedApp = null
@@ -343,6 +346,7 @@ internal fun CoolapkApp(
                             onOpenGoods = openMyGoods,
                             onOpenSelector = openProductSelector,
                             onOpenSettings = openSettings,
+                            onOpenMessages = openMessages,
                             onOpenNotifications = { notificationsOpen = true },
                             onLogout = viewModel::logout,
                         )
@@ -435,6 +439,19 @@ internal fun CoolapkApp(
                         ),
                     )
                     is ContentRoute.ProductSelector -> ProductSelectorScreen(onBack = closeContent)
+                    is ContentRoute.Messages -> MessagesScreen(
+                        onBack = closeContent,
+                        onOpenChat = { session ->
+                            contentRoutes = contentRoutes + ContentRoute.Chat(session.ukey, session.uid ?: session.ukey, session.username)
+                        },
+                    )
+                    is ContentRoute.Chat -> ChatScreen(
+                        ukey = route.ukey,
+                        uid = route.uid,
+                        title = route.title,
+                        selfUid = state.profile?.uid,
+                        onBack = closeContent,
+                    )
                     is ContentRoute.Relations -> RelationsScreen(
                         uid = route.uid,
                         initialKind = route.kind,

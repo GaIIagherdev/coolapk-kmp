@@ -28,6 +28,7 @@ import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.HelpOutline
 import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.Mail
 import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.People
 import androidx.compose.material.icons.rounded.RateReview
@@ -83,6 +84,7 @@ internal fun MyHubScreen(
     onOpenSelector: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenNotifications: () -> Unit,
+    onOpenMessages: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -93,6 +95,7 @@ internal fun MyHubScreen(
         HubMenuItem("我的收藏", Icons.Rounded.Star, profile != null) { profile?.let { onOpenProfile(it.uid) } },
         HubMenuItem("我的装备", Icons.Rounded.Inventory2, true, onOpenGoods),
         HubMenuItem("选机对比", Icons.Rounded.Compare, true, onOpenSelector),
+        HubMenuItem("私信", Icons.Rounded.Mail, true, onOpenMessages),
         HubMenuItem(if (darkNow) "日间模式" else "夜间模式", if (darkNow) Icons.Rounded.LightMode else Icons.Rounded.DarkMode, true) {
             onThemeModeChange(if (darkNow) ThemeMode.LIGHT else ThemeMode.DARK)
         },
