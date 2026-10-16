@@ -133,6 +133,7 @@ private sealed interface ContentRoute {
     data object GameCenter : ContentRoute
     data object Reviews : ContentRoute
     data object Albums : ContentRoute
+    data object SecondHand : ContentRoute
     data object ProductSelector : ContentRoute
     data object Messages : ContentRoute
     data class Compare(val configIds: List<String>, val titles: List<String>) : ContentRoute
@@ -208,6 +209,7 @@ internal fun CoolapkApp(
     val openGameCenter: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.GameCenter }
     val openReviews: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Reviews }
     val openAlbums: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Albums }
+    val openSecondHand: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.SecondHand }
     val openProductSelector: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.ProductSelector }
     val openMessages: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Messages }
 
@@ -374,6 +376,7 @@ internal fun CoolapkApp(
                             onOpenGameCenter = openGameCenter,
                             onOpenReviews = openReviews,
                             onOpenAlbums = openAlbums,
+                            onOpenSecondHand = openSecondHand,
                             onOpenOwnTab = { tab -> state.profile?.uid?.let { contentRoutes = contentRoutes + ContentRoute.User(it, tab) } },
                             onOpenSelector = openProductSelector,
                             onOpenSettings = openSettings,
@@ -504,6 +507,12 @@ internal fun CoolapkApp(
                     )
                     is ContentRoute.Events -> EventsScreen(onBack = closeContent)
                     is ContentRoute.Albums -> AlbumsScreen(onBack = closeContent)
+                    is ContentRoute.SecondHand -> SecondHandScreen(
+                        onBack = closeContent,
+                        onOpenFeed = { item -> openFeed(FeedRoute(item.id, item, false)) },
+                        onLike = viewModel::toggleLike,
+                        likeOverrides = state.likeOverrides,
+                    )
                     is ContentRoute.Reviews -> ReviewScreen(
                         onBack = closeContent,
                         onOpenFeed = { item -> openFeed(FeedRoute(item.id, item, false)) },

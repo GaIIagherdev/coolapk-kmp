@@ -39,6 +39,7 @@ import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.People
 import androidx.compose.material.icons.rounded.RateReview
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.ShoppingBag
 import androidx.compose.material.icons.rounded.SportsEsports
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.ThumbUp
@@ -99,6 +100,7 @@ internal fun MyHubScreen(
     onOpenGameCenter: () -> Unit,
     onOpenReviews: () -> Unit,
     onOpenAlbums: () -> Unit,
+    onOpenSecondHand: () -> Unit,
     onOpenSelector: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenNotifications: () -> Unit,
@@ -122,6 +124,7 @@ internal fun MyHubScreen(
         HubMenuItem("游戏中心", Icons.Rounded.SportsEsports, true, onOpenGameCenter),
         HubMenuItem("评测区", Icons.Rounded.RateReview, true, onOpenReviews),
         HubMenuItem("相册", Icons.Rounded.PhotoLibrary, true, onOpenAlbums),
+        HubMenuItem("二手", Icons.Rounded.ShoppingBag, true, onOpenSecondHand),
         HubMenuItem("私信", Icons.Rounded.Mail, true, onOpenMessages),
         HubMenuItem(if (darkNow) "日间模式" else "夜间模式", if (darkNow) Icons.Rounded.LightMode else Icons.Rounded.DarkMode, true) {
             onThemeModeChange(if (darkNow) ThemeMode.LIGHT else ThemeMode.DARK)
