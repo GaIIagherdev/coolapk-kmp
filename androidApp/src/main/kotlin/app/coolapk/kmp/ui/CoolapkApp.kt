@@ -186,7 +186,9 @@ internal fun CoolapkApp(
         openedImages = ImageViewerSelection.create(urls, index)
     }
     val openFeed: (FeedRoute) -> Unit = { route ->
-        contentRoutes = contentRoutes + ContentRoute.Feed(route)
+        // 问题动态进入问答页，与参考项目一致。
+        val questionId = route.preview?.questionId
+        contentRoutes = contentRoutes + if (questionId != null) ContentRoute.Question(questionId) else ContentRoute.Feed(route)
     }
     val openUser: (String) -> Unit = { uid ->
         uid.takeIf(String::isNotBlank)?.let { contentRoutes = contentRoutes + ContentRoute.User(it) }

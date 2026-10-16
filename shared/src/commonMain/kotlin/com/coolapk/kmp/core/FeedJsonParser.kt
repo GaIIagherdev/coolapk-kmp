@@ -109,7 +109,25 @@ class FeedJsonParser(
                 ?: obj.boolean("is_liked") ?: false,
             uid = obj.string("uid") ?: obj.string("userId") ?: obj.string("user_id")
                 ?: user?.string("uid") ?: user?.string("userId") ?: user?.string("id"),
+            questionId = questionIdOf(obj, id),
         )
+    }
+
+    /**
+     * 与参考项目 isQuestionFeedEntity 一致：实体类型标记含 question（回答除外）即为问题动态。
+     * 问题动态的问题 ID 取 questionId / question_id，缺失时用动态 ID。
+     */
+    private fun questionIdOf(obj: JsonObject, id: String): String? {
+        val markers = listOf(
+            "entityType", "entity_type", "feedType", "feed_type", "feedTypeName", "feed_type_name", "type",
+            "questionType", "question_type", "entityTemplate", "entity_template", "template",
+        ).mapNotNull { obj.string(it)?.lowercase() }
+        if (markers.any { it.contains("answer") || it.contains("回答") }) return null
+        val isQuestion = markers.any {
+            it == "question" || it == "feed_question" || it == "feedquestion" || it.contains("question") || it.contains("提问")
+        } || obj["question"] is JsonObject
+        if (!isQuestion) return null
+        return obj.string("questionId") ?: obj.string("question_id") ?: id
     }
 
     private fun JsonElement.imageUrl(): String? {
@@ -136,7 +154,7 @@ class FeedJsonParser(
 
     private companion object {
         val FEED_ENTITY_TYPES = setOf(
-            "feed", "feedreply", "article", "news", "dyh", "question", "answer",
+            "feed", "feedreply", "article", "news", "dyh", "question", "answer", "feedquestion", "feed_question",
         )
     }
 }

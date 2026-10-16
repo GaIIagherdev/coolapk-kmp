@@ -13,6 +13,8 @@ data class FeedItem(
     val imageUrls: List<String>,
     val isLiked: Boolean = false,
     val uid: String? = null,
+    /** 问题动态的问题 ID（与参考项目一致，没有则用动态 ID）；普通动态为 null。 */
+    val questionId: String? = null,
 )
 
 data class HomePage(
