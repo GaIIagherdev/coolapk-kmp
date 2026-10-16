@@ -64,6 +64,7 @@ cargo test --manifest-path rust-core/Cargo.toml --all-targets
 涉及界面时，再执行 `./gradlew :androidApp:installDebug --offline`，用 `adb exec-out screencap -p` 截图检查。注意：
 
 - 截图保存到 scratchpad 目录，不要放进仓库。
+- 例外：用于 README 展示的截图放在 `docs/screenshots/`，只使用公开内容，不包含账号昵称、UID、Cookie 等信息。
 - 点击坐标以原始像素为准（截图显示尺寸的 1.5 倍），先确认坐标换算再点击。
 - 应用刚启动时可能截到黑屏过渡帧，等待几秒后重新截图。
 - 如果截图中出现酷安的人机验证弹层，关闭它即可，不要尝试绕过。

@@ -16,6 +16,16 @@
 
 这些能力表示代码已接入，不代表已经完成所有设备、账号和服务端响应的验收。详见 [功能矩阵](docs/feature-matrix.md) 和 [架构说明](docs/architecture.md)。
 
+## 界面预览
+
+<p align="center">
+  <img src="docs/screenshots/discover.png" width="150" alt="发现页">
+  <img src="docs/screenshots/more.png" width="150" alt="更多页">
+  <img src="docs/screenshots/games.png" width="150" alt="游戏中心">
+  <img src="docs/screenshots/apps.png" width="150" alt="应用中心">
+  <img src="docs/screenshots/events.png" width="150" alt="活动列表">
+</p>
+
 ## 模块
 
 - `androidApp/`：Compose 页面、导航和 Android 平台交互。
