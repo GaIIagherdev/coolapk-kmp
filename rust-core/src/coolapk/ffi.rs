@@ -287,6 +287,30 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    /// 最近聊天的用户（会话列表）。
+    pub fn get_recent_chat_users(&self, page: u32) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_recent_chat_users(page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 与某个用户的聊天记录；ukey 为会话键，分页使用 first/last item 游标。
+    pub fn list_chat_history(&self, ukey: String, page: u32, first_item: String, last_item: String) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.list_chat_history(&ukey, page, &first_item, &last_item))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 将会话标记为已读。
+    pub fn read_message(&self, ukey: String) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.read_message(&ukey))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 删除会话。
+    pub fn delete_message_chat(&self, ukey: String) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.delete_message_chat(&ukey))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     /// 发送私信（文字）。
     pub fn send_private_message(&self, uid: String, message: String) -> Result<String, CoolapkError> {
         let value = self.runtime.block_on(self.client.send_private_message(&uid, &message))?;

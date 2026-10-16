@@ -866,6 +866,14 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
+
+
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is
 // rather `InterfaceTooLargeException`, caused by too many methods
@@ -892,6 +900,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_clear_notification_count(
 fun uniffi_coolapk_core_checksum_method_coolapkcore_create_feed(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_create_product_rating(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_delete_message_chat(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_diagnostics(
 ): Short
@@ -971,6 +981,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_versions(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_wish_list(
 ): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_recent_chat_users(
+): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_session_cookie(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_sub_replies(
@@ -1003,9 +1015,13 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_like_feed(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_like_reply(
 ): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_list_chat_history(
+): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_login_by_access_code(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_login_by_webview_cookie(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_read_message(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_reply_feed(
 ): Short
@@ -1100,6 +1116,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_create_feed(`ptr`: Pointer,`messag
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_create_product_rating(`ptr`: Pointer,`productId`: RustBuffer.ByValue,`score`: Int,`message`: RustBuffer.ByValue,`buyStatus`: Byte,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_delete_message_chat(`ptr`: Pointer,`ukey`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_diagnostics(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_fetch_external_page(`ptr`: Pointer,`url`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
@@ -1178,6 +1196,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_versions(`ptr`: Pointe
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_wish_list(`ptr`: Pointer,`productId`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_recent_chat_users(`ptr`: Pointer,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_session_cookie(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_sub_replies(`ptr`: Pointer,`feedId`: RustBuffer.ByValue,`replyId`: RustBuffer.ByValue,`page`: Int,`lastItem`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
@@ -1210,9 +1230,13 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_like_feed(`ptr`: Pointer,`feedId`:
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_like_reply(`ptr`: Pointer,`replyId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_list_chat_history(`ptr`: Pointer,`ukey`: RustBuffer.ByValue,`page`: Int,`firstItem`: RustBuffer.ByValue,`lastItem`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_login_by_access_code(`ptr`: Pointer,`code`: RustBuffer.ByValue,`cookie`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_login_by_webview_cookie(`ptr`: Pointer,`cookie`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_read_message(`ptr`: Pointer,`ukey`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_reply_feed(`ptr`: Pointer,`feedId`: RustBuffer.ByValue,`message`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1382,6 +1406,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_create_product_rating() != 54020.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_delete_message_chat() != 25461.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_diagnostics() != 52388.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1499,6 +1526,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_product_wish_list() != 36194.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_recent_chat_users() != 433.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_session_cookie() != 39393.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1547,10 +1577,16 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_like_reply() != 1742.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_list_chat_history() != 21096.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_login_by_access_code() != 31015.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_login_by_webview_cookie() != 22489.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_read_message() != 5104.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_reply_feed() != 24938.toShort()) {
@@ -1990,6 +2026,11 @@ public interface CoolapkCoreInterface {
     fun `createProductRating`(`productId`: kotlin.String, `score`: kotlin.Int, `message`: kotlin.String, `buyStatus`: kotlin.Boolean): kotlin.String
 
     /**
+     * 删除会话。
+     */
+    fun `deleteMessageChat`(`ukey`: kotlin.String): kotlin.String
+
+    /**
      * 返回不含凭据的运行时诊断信息。
      */
     fun `diagnostics`(): kotlin.String
@@ -2157,6 +2198,11 @@ public interface CoolapkCoreInterface {
      */
     fun `getProductWishList`(`productId`: kotlin.String, `page`: kotlin.UInt): kotlin.String
 
+    /**
+     * 最近聊天的用户（会话列表）。
+     */
+    fun `getRecentChatUsers`(`page`: kotlin.UInt): kotlin.String
+
     fun `getSessionCookie`(): kotlin.String?
 
     fun `getSubReplies`(`feedId`: kotlin.String, `replyId`: kotlin.String, `page`: kotlin.UInt, `lastItem`: kotlin.String): kotlin.String
@@ -2214,6 +2260,11 @@ public interface CoolapkCoreInterface {
     fun `likeReply`(`replyId`: kotlin.String): kotlin.String
 
     /**
+     * 与某个用户的聊天记录；ukey 为会话键，分页使用 first/last item 游标。
+     */
+    fun `listChatHistory`(`ukey`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String
+
+    /**
      * 使用官方登录回调中的授权码和 WebView Cookie 完成登录。
      */
     fun `loginByAccessCode`(`code`: kotlin.String, `cookie`: kotlin.String): kotlin.String
@@ -2222,6 +2273,11 @@ public interface CoolapkCoreInterface {
      * 使用官方登录 WebView 返回的 Cookie 登录。
      */
     fun `loginByWebviewCookie`(`cookie`: kotlin.String): kotlin.String
+
+    /**
+     * 将会话标记为已读。
+     */
+    fun `readMessage`(`ukey`: kotlin.String): kotlin.String
 
     /**
      * 发表评论。
@@ -2453,6 +2509,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_create_product_rating(
         it, FfiConverterString.lower(`productId`),FfiConverterInt.lower(`score`),FfiConverterString.lower(`message`),FfiConverterBoolean.lower(`buyStatus`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 删除会话。
+     */
+    @Throws(CoolapkException::class)override fun `deleteMessageChat`(`ukey`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_delete_message_chat(
+        it, FfiConverterString.lower(`ukey`),_status)
 }
     }
     )
@@ -3055,6 +3127,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     }
 
 
+
+    /**
+     * 最近聊天的用户（会话列表）。
+     */
+    @Throws(CoolapkException::class)override fun `getRecentChatUsers`(`page`: kotlin.UInt): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_recent_chat_users(
+        it, FfiConverterUInt.lower(`page`),_status)
+}
+    }
+    )
+    }
+
+
     override fun `getSessionCookie`(): kotlin.String? {
             return FfiConverterOptionalString.lift(
     callWithPointer {
@@ -3287,6 +3375,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
 
 
     /**
+     * 与某个用户的聊天记录；ukey 为会话键，分页使用 first/last item 游标。
+     */
+    @Throws(CoolapkException::class)override fun `listChatHistory`(`ukey`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_list_chat_history(
+        it, FfiConverterString.lower(`ukey`),FfiConverterUInt.lower(`page`),FfiConverterString.lower(`firstItem`),FfiConverterString.lower(`lastItem`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
      * 使用官方登录回调中的授权码和 WebView Cookie 完成登录。
      */
     @Throws(CoolapkException::class)override fun `loginByAccessCode`(`code`: kotlin.String, `cookie`: kotlin.String): kotlin.String {
@@ -3311,6 +3415,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_login_by_webview_cookie(
         it, FfiConverterString.lower(`cookie`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 将会话标记为已读。
+     */
+    @Throws(CoolapkException::class)override fun `readMessage`(`ukey`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_read_message(
+        it, FfiConverterString.lower(`ukey`),_status)
 }
     }
     )
