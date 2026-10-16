@@ -1,5 +1,7 @@
 package com.coolapk.kmp.core
 
+import kotlinx.coroutines.async
+
 class HomeRepository(
     private val gateway: CoolapkGateway,
 ) {
@@ -77,6 +79,12 @@ class HomeRepository(
     suspend fun markChatRead(ukey: String): Result<Unit> = gateway.markChatRead(ukey)
 
     suspend fun deleteChat(ukey: String): Result<Unit> = gateway.deleteChat(ukey)
+
+    /** 并行加载多个型号配置；单个失败时忽略该型号。 */
+    suspend fun loadProductConfigs(configIds: List<String>): List<ProductConfigItem> = kotlinx.coroutines.coroutineScope {
+        configIds.map { id -> async { runCatching { gateway.getProductConfig(id) }.getOrNull() } }
+            .mapNotNull { it.await() }
+    }
 
     suspend fun loadUserFeedsTyped(uid: String, feedType: String, page: Int = 1): HomePage =
         gateway.getUserFeedsTyped(uid, feedType, page)

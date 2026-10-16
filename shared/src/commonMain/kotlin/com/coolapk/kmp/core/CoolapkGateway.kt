@@ -114,6 +114,8 @@ interface CoolapkGateway {
 
     suspend fun deleteChat(ukey: String): Result<Unit> = Result.failure(IllegalStateException("当前平台未提供删除会话接口"))
 
+    suspend fun getProductConfig(configId: String): ProductConfigItem? = null
+
     suspend fun getProductFeeds(productId: String, feedType: String = "feed", page: Int = 1): HomePage =
         error("当前平台未提供产品动态接口")
 

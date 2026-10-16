@@ -33,6 +33,7 @@ class RustCoolapkGateway(
     private val userListParser: UserListJsonParser = UserListJsonParser(),
     private val userHomeParser: UserHomeJsonParser = UserHomeJsonParser(),
     private val chatParser: ChatJsonParser = ChatJsonParser(),
+    private val productConfigParser: ProductConfigJsonParser = ProductConfigJsonParser(),
     private val searchParser: SearchJsonParser = SearchJsonParser(),
     private val topicParser: TopicJsonParser = TopicJsonParser(),
     private val notificationListParser: NotificationListJsonParser = NotificationListJsonParser(),
@@ -213,6 +214,10 @@ class RustCoolapkGateway(
         digitalParser.parsePage(
             core.getUserTabData(uid, tab, page.coerceAtLeast(1).toUInt(), firstItem.orEmpty(), lastItem.orEmpty()),
         )
+    }
+
+    override suspend fun getProductConfig(configId: String): ProductConfigItem? = onCore {
+        productConfigParser.parse(core.getProductConfig(configId), configId)
     }
 
     override suspend fun getRecentChats(page: Int): List<ChatSession> = onCore {
