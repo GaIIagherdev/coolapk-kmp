@@ -37,4 +37,24 @@ class ListEntryJsonParserTest {
         val empty = parser.parsePage("""{"code":200,"data":[]}""")
         assertFalse(empty.hasMore)
     }
+
+    @Test
+    fun readsImageFromPicArrayAndIconFallbacks() {
+        val page = parser.parsePage(
+            """{"code":200,"data":[
+            {"id":"31","title":"数组封面","picArr":["/event/a.png","/event/b.png"]},
+            {"id":"32","title":"图标封面","icon":"https://img.example/icon.png"}
+            ]}""",
+        )
+        assertEquals("https://image.coolapk.com/event/a.png", page.items[0].imageUrl)
+        assertEquals("https://img.example/icon.png", page.items[1].imageUrl)
+    }
+
+    @Test
+    fun upgradesHttpImagesAndSkipsEmptyPic() {
+        val page = parser.parsePage(
+            """{"code":200,"data":[{"id":"41","title":"明文图","pic":"","logo":"http://image.coolapk.com/event/a.png"}]}""",
+        )
+        assertEquals("https://image.coolapk.com/event/a.png", page.items[0].imageUrl)
+    }
 }

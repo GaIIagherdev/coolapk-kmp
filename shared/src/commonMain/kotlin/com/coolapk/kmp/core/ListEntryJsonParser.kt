@@ -32,7 +32,8 @@ class ListEntryJsonParser(
                 id = id,
                 title = title,
                 subtitle = row.text("description", "subTitle", "subtitle", "summary", "intro"),
-                imageUrl = row.text("logo", "pic", "image", "cover")?.let(::normalizeImage),
+                imageUrl = (row.text("pic", "cover", "logo", "icon", "image") ?: row.firstArrayText("picArr"))
+                    ?.let(::normalizeImage),
             )
         }
         return ListEntryPage(items = items, hasMore = rows.isNotEmpty())
@@ -42,7 +43,15 @@ class ListEntryJsonParser(
         (this[key] as? JsonPrimitive)?.contentOrNull?.trim()?.takeIf(String::isNotEmpty)
     }
 
+    /** 数组形式的图片字段（如 picArr），取第一个非空字符串。 */
+    private fun JsonObject.firstArrayText(key: String): String? =
+        (this[key] as? JsonArray)?.firstNotNullOfOrNull { element ->
+            (element as? JsonPrimitive)?.contentOrNull?.trim()?.takeIf(String::isNotEmpty)
+        }
+
+    /** 图片地址统一为 https：Android 默认禁止明文 HTTP，服务端返回的 http 图片会被拦截。 */
     private fun normalizeImage(value: String): String = when {
+        value.startsWith("http://") -> value.replaceFirst("http://", "https://")
         value.startsWith("http") -> value
         value.startsWith("//") -> "https:$value"
         else -> "https://image.coolapk.com/${value.trimStart('/')}"
