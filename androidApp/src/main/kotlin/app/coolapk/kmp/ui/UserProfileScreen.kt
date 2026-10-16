@@ -1,5 +1,10 @@
 package app.coolapk.kmp.ui
 
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.activity.compose.BackHandler
 import android.net.Uri
 import android.content.Intent
@@ -142,6 +147,7 @@ internal fun UserProfileScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val listState = rememberLazyListState()
+    var qrOpen by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(uid, ownProfile) {
         listState.scrollToItem(0)
         viewModel.open(uid, ownProfile)
@@ -267,6 +273,8 @@ internal fun UserProfileScreen(
                                 onSendMessage = viewModel::sendMessage,
                                 onRemoveFan = viewModel::removeFan,
                                 onLoadQr = viewModel::loadQrImage,
+                                qrOpen = qrOpen,
+                                onQrOpenChange = { qrOpen = it },
                                 onEdit = { onOpenEdit(profile) },
                                 onOpenRelations = { kind -> onOpenRelations(profile.uid, kind) },
                                 onOpenEquipmentPage = { equipmentUid ->
@@ -391,6 +399,19 @@ internal fun UserProfileScreen(
         content(Modifier.fillMaxSize())
     } else {
         BackHandler(onBack = onBack)
+        val density = LocalDensity.current
+        // 封面在透明顶栏下延伸；滚出封面后顶栏恢复实底
+        val scrolled by remember {
+            derivedStateOf {
+                listState.firstVisibleItemIndex > 0 ||
+                    listState.firstVisibleItemScrollOffset > with(density) { 150.dp.toPx() }
+            }
+        }
+        val isOwnTop = uid == null || uid == selfUid
+        val buttonColors = IconButtonDefaults.iconButtonColors(
+            containerColor = if (scrolled) Color.Transparent else MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        )
         Scaffold(
             containerColor = MaterialTheme.colorScheme.surface,
             topBar = {
@@ -400,24 +421,34 @@ internal fun UserProfileScreen(
                             state.profile?.username ?: "个人主页",
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (scrolled) 1f else 0f),
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = onBack) {
+                        IconButton(onClick = onBack, colors = buttonColors) {
                             Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
                         }
                     },
                     actions = {
-                        IconButton(onClick = viewModel::refresh, enabled = !state.profileLoading) {
+                        if (isOwnTop) {
+                            IconButton(onClick = { qrOpen = true; viewModel.loadQrImage() }, colors = buttonColors) {
+                                Icon(Icons.Rounded.QrCode2, contentDescription = "二维码名片")
+                            }
+                        }
+                        IconButton(onClick = viewModel::refresh, enabled = !state.profileLoading, colors = buttonColors) {
                             Icon(Icons.Rounded.Refresh, contentDescription = "刷新个人主页")
                         }
+                        Spacer(Modifier.width(4.dp))
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = if (scrolled) MaterialTheme.colorScheme.surface else Color.Transparent,
                     ),
                 )
             },
-        ) { padding -> content(Modifier.fillMaxSize().padding(padding)) }
+        ) { padding ->
+            // 顶栏透明时内容从顶部开始，封面延伸到顶栏下方
+            content(Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding()))
+        }
     }
 }
 
@@ -439,6 +470,8 @@ private fun ProfileHeaderCard(
     onSendMessage: (String, () -> Unit) -> Unit,
     onRemoveFan: () -> Unit,
     onLoadQr: () -> Unit,
+    qrOpen: Boolean,
+    onQrOpenChange: (Boolean) -> Unit,
     onEdit: () -> Unit,
     onOpenRelations: (RelationKind) -> Unit,
     onOpenEquipmentPage: (String) -> Unit,
@@ -475,12 +508,25 @@ private fun ProfileHeaderCard(
             ) {
                 UserAvatar(profile.avatarUrl, profile.username, 96.dp)
             }
+            if (isOwnPage) {
+                FilledTonalButton(
+                    onClick = onEdit,
+                    modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp).offset(y = 24.dp).heightIn(min = 48.dp),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    ),
+                ) {
+                    Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("编辑资料")
+                }
+            }
         }
         Spacer(Modifier.height(56.dp))
 
         Column(Modifier.padding(horizontal = 20.dp)) {
             // 操作行：本人为编辑资料与二维码；他人为关注与特别关注（与参考项目一致）
-            var qrOpen by rememberSaveable { mutableStateOf(false) }
             var messageOpen by rememberSaveable { mutableStateOf(false) }
             var messageText by rememberSaveable { mutableStateOf("") }
             var moreOpen by rememberSaveable { mutableStateOf(false) }
@@ -512,17 +558,7 @@ private fun ProfileHeaderCard(
                 )
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                if (isOwnPage) {
-                    OutlinedButton(onClick = onEdit, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("编辑资料")
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    IconButton(onClick = { qrOpen = true; onLoadQr() }) {
-                        Icon(Icons.Rounded.QrCode2, contentDescription = "二维码名片")
-                    }
-                } else {
+                if (!isOwnPage) {
                     if (profile.isFollow) {
                         OutlinedButton(onClick = onToggleSpecial, modifier = Modifier.heightIn(min = 48.dp)) {
                             Text(if (profile.isSpecialFollow) "特别关注中" else "特别关注")
@@ -556,7 +592,7 @@ private fun ProfileHeaderCard(
             }
             if (qrOpen) {
                 AlertDialog(
-                    onDismissRequest = { qrOpen = false },
+                    onDismissRequest = { onQrOpenChange(false) },
                     title = { Text("我的二维码名片") },
                     text = {
                         when {
@@ -572,7 +608,7 @@ private fun ProfileHeaderCard(
                             else -> Text(qrError ?: "二维码加载失败，请稍后重试")
                         }
                     },
-                    confirmButton = { TextButton(onClick = { qrOpen = false }) { Text("关闭") } },
+                    confirmButton = { TextButton(onClick = { onQrOpenChange(false) }) { Text("关闭") } },
                 )
             }
             Spacer(Modifier.height(8.dp))
@@ -657,52 +693,55 @@ private fun ProfileHeaderCard(
 
             // 装备与商品店铺入口（与参考项目一致）
             val equipmentCount = profile.productOwnerCount ?: 0
+            val hasGoods = (profile.goodsCount ?: 0) > 0
             Spacer(Modifier.height(12.dp))
+            // 装备与商品店铺同属一组，中间用分隔线相连
             Surface(
-                modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).clickable(onClick = {
-                    if (isOwnPage) onOpenGoods() else onOpenEquipmentPage(profile.uid)
-                }),
+                modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.surfaceContainerLowest,
             ) {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(Icons.Rounded.Devices, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.width(12.dp))
-                    Text(
-                        if (isOwnPage) "我的装备" else "他的装备",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Text(
-                        "${equipmentCount}个装备",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            if ((profile.goodsCount ?: 0) > 0) {
-                Spacer(Modifier.height(8.dp))
-                Surface(
-                    modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).clickable { onTabChange(ProfileTab.GOODS_STORE) },
-                    shape = MaterialTheme.shapes.large,
-                    color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                ) {
+                Column {
                     Row(
-                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { if (isOwnPage) onOpenGoods() else onOpenEquipmentPage(profile.uid) }
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(Icons.Rounded.Storefront, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Rounded.Devices, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(Modifier.width(12.dp))
-                        Text("商品店铺", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
                         Text(
-                            "${profile.goodsCount}件商品",
+                            if (isOwnPage) "我的装备" else "他的装备",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(
+                            "${equipmentCount}个装备",
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    if (hasGoods) {
+                        GroupedDivider(Modifier.padding(horizontal = 16.dp))
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { onTabChange(ProfileTab.GOODS_STORE) }
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(Icons.Rounded.Storefront, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(12.dp))
+                            Text("商品店铺", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                            Text(
+                                "${profile.goodsCount}件商品",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
                 }
             }
