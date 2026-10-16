@@ -66,6 +66,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -78,6 +79,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
@@ -445,12 +447,12 @@ private fun ProfileHeaderCard(
     val context = LocalContext.current
     Column(Modifier.fillMaxWidth()) {
         // 封面：有封面图时使用图片，否则用品牌色块；头像压在封面底边
-        Box(Modifier.fillMaxWidth().height(184.dp)) {
+        Box(Modifier.fillMaxWidth().height(200.dp)) {
             Box(
                 Modifier
                     .fillMaxSize()
                     .clipToBounds()
-                    .background(if (isOwnPage) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary),
+                    .background(if (isOwnPage) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer),
             ) {
                 profile.cover?.let { url ->
                     AsyncImage(
@@ -460,20 +462,13 @@ private fun ProfileHeaderCard(
                         contentScale = ContentScale.Crop,
                     )
                 }
-                Box(
-                    Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = 60.dp, y = (-70).dp)
-                        .size(220.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.22f)),
-                )
             }
             Box(
                 Modifier
                     .align(Alignment.BottomStart)
                     .padding(start = 20.dp)
                     .offset(y = 48.dp)
+                    .shadow(4.dp, CircleShape)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surface)
                     .padding(4.dp),
@@ -638,12 +633,11 @@ private fun ProfileHeaderCard(
             }
             if (tags.isNotEmpty()) {
                 Spacer(Modifier.height(10.dp))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    tags.forEach { ProfileChip(it, MaterialTheme.colorScheme.surfaceContainerHigh, MaterialTheme.colorScheme.onSurfaceVariant) }
-                }
+                Text(
+                    tags.joinToString(" · "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
 
             Spacer(Modifier.height(16.dp))
@@ -654,7 +648,9 @@ private fun ProfileHeaderCard(
             ) {
                 Row(Modifier.fillMaxWidth().padding(vertical = 14.dp)) {
                     ProfileStatCell("获赞", profile.likeCount, Modifier.weight(1f))
+                    VerticalDivider(Modifier.height(32.dp).align(Alignment.CenterVertically), color = MaterialTheme.colorScheme.outlineVariant)
                     ProfileStatCell("关注", profile.followingCount, Modifier.weight(1f), onClick = { onOpenRelations(RelationKind.FOLLOW) })
+                    VerticalDivider(Modifier.height(32.dp).align(Alignment.CenterVertically), color = MaterialTheme.colorScheme.outlineVariant)
                     ProfileStatCell("粉丝", profile.followerCount, Modifier.weight(1f), onClick = { onOpenRelations(RelationKind.FANS) })
                 }
             }
