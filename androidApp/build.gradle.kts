@@ -48,8 +48,21 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            // 签名信息由 CI 通过环境变量注入；本地未配置时 release 保持未签名，不影响开发构建。
+            System.getenv("ANDROID_KEYSTORE_PATH")?.let { path ->
+                storeFile = file(path)
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release").takeIf { System.getenv("ANDROID_KEYSTORE_PATH") != null }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
