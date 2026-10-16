@@ -127,6 +127,7 @@ private sealed interface ContentRoute {
     data object Blacklist : ContentRoute
     data object History : ContentRoute
     data object Followed : ContentRoute
+    data class Question(val id: String) : ContentRoute
     data object ProductSelector : ContentRoute
     data object Messages : ContentRoute
     data class Compare(val configIds: List<String>, val titles: List<String>) : ContentRoute
@@ -196,6 +197,7 @@ internal fun CoolapkApp(
     val openBlacklist: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Blacklist }
     val openHistory: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.History }
     val openFollowed: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Followed }
+    val openQuestion: (String) -> Unit = { id -> contentRoutes = contentRoutes + ContentRoute.Question(id) }
     val openProductSelector: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.ProductSelector }
     val openMessages: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Messages }
 
@@ -386,6 +388,7 @@ internal fun CoolapkApp(
                         }
                         com.coolapk.kmp.core.SearchResultKind.TOPIC -> result.targetId?.let(openTopic)
                         com.coolapk.kmp.core.SearchResultKind.USER -> result.targetId?.let(openUser)
+                        com.coolapk.kmp.core.SearchResultKind.QUESTION -> result.targetId?.let(openQuestion)
                         else -> Unit
                     }
                 },
@@ -483,6 +486,13 @@ internal fun CoolapkApp(
                     is ContentRoute.ProfileEdit -> ProfileEditScreen(
                         profile = route.profile,
                         onBack = closeContent,
+                    )
+                    is ContentRoute.Question -> QuestionDetailScreen(
+                        questionId = route.id,
+                        onBack = closeContent,
+                        onOpenFeed = { item -> openFeed(FeedRoute(item.id, item, false)) },
+                        onLike = viewModel::toggleLike,
+                        likeOverrides = state.likeOverrides,
                     )
                     is ContentRoute.Followed -> state.profile?.uid?.let { ownUid ->
                         FollowedScreen(uid = ownUid, onBack = closeContent)

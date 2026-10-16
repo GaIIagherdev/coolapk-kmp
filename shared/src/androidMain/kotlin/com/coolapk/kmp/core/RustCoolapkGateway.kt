@@ -250,6 +250,23 @@ class RustCoolapkGateway(
         onCore<Unit> { core.specialFollowUser(uid, special) }
     }
 
+    override suspend fun getQuestionAnswers(
+        questionId: String,
+        sort: String,
+        page: Int,
+        cursor: HomeCursor?,
+    ): HomePage = onCore {
+        parser.parseHomePage(
+            core.getQuestionAnswers(
+                questionId,
+                sort,
+                page.coerceAtLeast(1).toUInt(),
+                cursor?.firstItem.orEmpty(),
+                cursor?.lastItem.orEmpty(),
+            ),
+        )
+    }
+
     override suspend fun getFollowedForums(uid: String, page: Int): FollowedEntryPage = onCore {
         followedEntryParser.parsePage(core.getUserForumFollowList(uid, page.coerceAtLeast(1).toUInt()))
     }

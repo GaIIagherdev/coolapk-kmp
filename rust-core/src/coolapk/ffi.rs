@@ -900,6 +900,25 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    /// 问题下的回答列表，sort 取 reply（热门）、like（高赞）或 dateline（最新）。
+    pub fn get_question_answers(
+        &self,
+        question_id: String,
+        sort: String,
+        page: u32,
+        first_item: String,
+        last_item: String,
+    ) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_question_answers(
+            &question_id,
+            &sort,
+            page,
+            &first_item,
+            &last_item,
+        ))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     /// 用户关注的论坛列表。
     pub fn get_user_forum_follow_list(&self, uid: String, page: u32) -> Result<String, CoolapkError> {
         let value = self

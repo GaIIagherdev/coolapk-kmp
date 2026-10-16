@@ -76,6 +76,14 @@ interface CoolapkGateway {
     suspend fun setSpecialFollow(uid: String, special: Boolean): Result<Unit> =
         Result.failure(IllegalStateException("当前平台未提供特别关注接口"))
 
+    /** 问题下的回答列表；sort 为 reply（热门）、like（高赞）或 dateline（最新）。 */
+    suspend fun getQuestionAnswers(
+        questionId: String,
+        sort: String = "reply",
+        page: Int = 1,
+        cursor: HomeCursor? = null,
+    ): HomePage = error("当前平台未提供问题回答接口")
+
     /** 关注的论坛列表，需登录。 */
     suspend fun getFollowedForums(uid: String, page: Int = 1): FollowedEntryPage =
         error("当前平台未提供关注论坛接口")

@@ -100,6 +100,9 @@ class HomeRepository(
 
     suspend fun loadFollowedForums(uid: String, page: Int = 1): FollowedEntryPage = gateway.getFollowedForums(uid, page)
 
+    suspend fun loadQuestionAnswers(questionId: String, sort: String, page: Int = 1, cursor: HomeCursor? = null): HomePage =
+        gateway.getQuestionAnswers(questionId, sort, page, cursor)
+
     suspend fun loadFollowedTopics(page: Int = 1): FollowedEntryPage = gateway.getFollowedTopics(page)
 
     suspend fun removeFromBlackList(uid: String): Result<Unit> = gateway.removeFromBlackList(uid)

@@ -916,6 +916,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is
 // rather `InterfaceTooLargeException`, caused by too many methods
@@ -1046,6 +1048,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_subtab_feeds(
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_versions(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_wish_list(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_question_answers(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_recent_chat_users(
 ): Short
@@ -1303,6 +1307,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_subtab_feeds(`ptr`: Po
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_versions(`ptr`: Pointer,`productId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_wish_list(`ptr`: Pointer,`productId`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_question_answers(`ptr`: Pointer,`questionId`: RustBuffer.ByValue,`sort`: RustBuffer.ByValue,`page`: Int,`firstItem`: RustBuffer.ByValue,`lastItem`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_recent_chat_users(`ptr`: Pointer,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1686,6 +1692,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_product_wish_list() != 36194.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_question_answers() != 4992.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_recent_chat_users() != 433.toShort()) {
@@ -2431,6 +2440,11 @@ public interface CoolapkCoreInterface {
      * 产品的想要名单（分页）。
      */
     fun `getProductWishList`(`productId`: kotlin.String, `page`: kotlin.UInt): kotlin.String
+
+    /**
+     * 问题下的回答列表，sort 取 reply（热门）、like（高赞）或 dateline（最新）。
+     */
+    fun `getQuestionAnswers`(`questionId`: kotlin.String, `sort`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String
 
     /**
      * 最近聊天的用户（会话列表）。
@@ -3565,6 +3579,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_product_wish_list(
         it, FfiConverterString.lower(`productId`),FfiConverterUInt.lower(`page`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 问题下的回答列表，sort 取 reply（热门）、like（高赞）或 dateline（最新）。
+     */
+    @Throws(CoolapkException::class)override fun `getQuestionAnswers`(`questionId`: kotlin.String, `sort`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_question_answers(
+        it, FfiConverterString.lower(`questionId`),FfiConverterString.lower(`sort`),FfiConverterUInt.lower(`page`),FfiConverterString.lower(`firstItem`),FfiConverterString.lower(`lastItem`),_status)
 }
     }
     )
