@@ -76,6 +76,13 @@ interface CoolapkGateway {
     suspend fun setSpecialFollow(uid: String, special: Boolean): Result<Unit> =
         Result.failure(IllegalStateException("当前平台未提供特别关注接口"))
 
+    /** 黑名单用户列表，需登录。 */
+    suspend fun getBlackList(page: Int = 1): UserSummaryPage =
+        error("当前平台未提供黑名单接口")
+
+    suspend fun removeFromBlackList(uid: String): Result<Unit> =
+        Result.failure(IllegalStateException("当前平台未提供移出黑名单接口"))
+
     /** 关注列表：category 为 follow（全部）、special（特别关注）、friend（互相关注）。 */
     suspend fun getFollowUsers(uid: String, page: Int = 1, category: String = "follow"): UserSummaryPage =
         error("当前平台未提供关注列表接口")

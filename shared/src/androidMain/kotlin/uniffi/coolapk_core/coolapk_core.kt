@@ -906,6 +906,10 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is
 // rather `InterfaceTooLargeException`, caused by too many methods
@@ -952,6 +956,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_follow_user(
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_app_detail(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_app_list(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_black_list(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_collection_detail(
 ): Short
@@ -1079,6 +1085,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_read_message(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_remove_collection_item(
 ): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_remove_from_black_list(
+): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_reply_feed(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_reply_to_comment(
@@ -1199,6 +1207,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_follow_user(`ptr`: Pointer,`uid`: 
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_app_detail(`ptr`: Pointer,`packageName`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_app_list(`ptr`: Pointer,`page`: Int,`category`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_black_list(`ptr`: Pointer,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_collection_detail(`ptr`: Pointer,`collectionId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1325,6 +1335,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_login_by_webview_cookie(`ptr`: Poi
 fun uniffi_coolapk_core_fn_method_coolapkcore_read_message(`ptr`: Pointer,`ukey`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_remove_collection_item(`ptr`: Pointer,`itemId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_remove_from_black_list(`ptr`: Pointer,`uid`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_reply_feed(`ptr`: Pointer,`feedId`: RustBuffer.ByValue,`message`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1532,6 +1544,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_app_list() != 37642.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_black_list() != 28144.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_collection_detail() != 42885.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1719,6 +1734,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_remove_collection_item() != 13827.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_remove_from_black_list() != 64519.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_reply_feed() != 24938.toShort()) {
@@ -2210,6 +2228,11 @@ public interface CoolapkCoreInterface {
      */
     fun `getAppList`(`page`: kotlin.UInt, `category`: kotlin.String): kotlin.String
 
+    /**
+     * 黑名单用户列表（需登录）。
+     */
+    fun `getBlackList`(`page`: kotlin.UInt): kotlin.String
+
     fun `getCollectionDetail`(`collectionId`: kotlin.String): kotlin.String
 
     /**
@@ -2464,6 +2487,11 @@ public interface CoolapkCoreInterface {
      * 从收藏单中移除一条内容，`item_id` 是收藏条目 ID，不是动态 ID。
      */
     fun `removeCollectionItem`(`itemId`: kotlin.String): kotlin.String
+
+    /**
+     * 把用户移出黑名单。
+     */
+    fun `removeFromBlackList`(`uid`: kotlin.String): kotlin.String
 
     /**
      * 发表评论。
@@ -2856,6 +2884,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_app_list(
         it, FfiConverterUInt.lower(`page`),FfiConverterString.lower(`category`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 黑名单用户列表（需登录）。
+     */
+    @Throws(CoolapkException::class)override fun `getBlackList`(`page`: kotlin.UInt): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_black_list(
+        it, FfiConverterUInt.lower(`page`),_status)
 }
     }
     )
@@ -3802,6 +3846,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_remove_collection_item(
         it, FfiConverterString.lower(`itemId`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 把用户移出黑名单。
+     */
+    @Throws(CoolapkException::class)override fun `removeFromBlackList`(`uid`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_remove_from_black_list(
+        it, FfiConverterString.lower(`uid`),_status)
 }
     }
     )

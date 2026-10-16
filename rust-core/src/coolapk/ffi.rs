@@ -885,6 +885,20 @@ impl CoolapkCore {
             .block_on(self.client.unlike_collection(&collection_id))?;
         Ok(serde_json::to_string(&value)?)
     }
+
+    /// 黑名单用户列表（需登录）。
+    pub fn get_black_list(&self, page: u32) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_black_list(page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 把用户移出黑名单。
+    pub fn remove_from_black_list(&self, uid: String) -> Result<String, CoolapkError> {
+        let value = self
+            .runtime
+            .block_on(self.client.remove_from_black_list(&uid))?;
+        Ok(serde_json::to_string(&value)?)
+    }
 }
 
 #[cfg(test)]

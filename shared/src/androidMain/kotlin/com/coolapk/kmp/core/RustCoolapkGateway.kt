@@ -249,6 +249,14 @@ class RustCoolapkGateway(
         onCore<Unit> { core.specialFollowUser(uid, special) }
     }
 
+    override suspend fun getBlackList(page: Int): UserSummaryPage = onCore {
+        userListParser.parsePage(core.getBlackList(page.coerceAtLeast(1).toUInt()))
+    }
+
+    override suspend fun removeFromBlackList(uid: String): Result<Unit> = runCatching {
+        onCore<Unit> { core.removeFromBlackList(uid) }
+    }
+
     override suspend fun getFollowUsers(uid: String, page: Int, category: String): UserSummaryPage = onCore {
         userListParser.parsePage(core.getFollowUserList(uid, page.coerceAtLeast(1).toUInt(), category))
     }

@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Article
+import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Comment
 import androidx.compose.material.icons.rounded.Compare
 import androidx.compose.material.icons.rounded.DarkMode
@@ -84,6 +85,7 @@ internal fun MyHubScreen(
     onOpenGoods: () -> Unit,
     onOpenFavorites: () -> Unit,
     onOpenOwnTab: (ProfileTab) -> Unit,
+    onOpenBlacklist: () -> Unit,
     onOpenSelector: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenNotifications: () -> Unit,
@@ -99,6 +101,7 @@ internal fun MyHubScreen(
         HubMenuItem("我的收藏", Icons.Rounded.Star, profile != null, onOpenFavorites),
         HubMenuItem("我的装备", Icons.Rounded.Inventory2, true, onOpenGoods),
         HubMenuItem("选机对比", Icons.Rounded.Compare, true, onOpenSelector),
+        HubMenuItem("黑名单", Icons.Rounded.Block, profile != null, onOpenBlacklist),
         HubMenuItem("私信", Icons.Rounded.Mail, true, onOpenMessages),
         HubMenuItem(if (darkNow) "日间模式" else "夜间模式", if (darkNow) Icons.Rounded.LightMode else Icons.Rounded.DarkMode, true) {
             onThemeModeChange(if (darkNow) ThemeMode.LIGHT else ThemeMode.DARK)
