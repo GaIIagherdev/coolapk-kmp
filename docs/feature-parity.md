@@ -77,7 +77,7 @@
 | 我的动态 | `section=my_feeds` | ⬜ | |
 | 浏览历史 | `/history` | ⬜ | |
 | 我的常去 | `section=my_recent` | ⬜ | |
-| 收藏与收藏单 | `/favorites`、`/collection/:id` | ⬜ | |
+| 收藏与收藏单 | `/favorites`、`/collection/:id` | 🟡 | 已接入收藏的动态、收藏单列表与收藏单内容（只读）；创建、编辑、删除、移出内容的界面未做；真机截图待验证；接口未经真实账号验证 |
 | 关注的论坛 / 话题 / 收藏单 / 问题 / 数码吧 | `/followed-nodes` 等 | ⬜ | |
 | 内容回收站 | `/recycle-bin` | ⬜ | |
 | 隐藏的回复 | `/hidden-replies` | ⬜ | |

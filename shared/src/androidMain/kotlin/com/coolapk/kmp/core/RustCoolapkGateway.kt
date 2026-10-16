@@ -38,6 +38,7 @@ class RustCoolapkGateway(
     private val topicParser: TopicJsonParser = TopicJsonParser(),
     private val notificationListParser: NotificationListJsonParser = NotificationListJsonParser(),
     private val detailParser: FeedDetailJsonParser = FeedDetailJsonParser(),
+    private val collectionParser: CollectionJsonParser = CollectionJsonParser(),
 ) : CoolapkGateway {
     private val sessionStore = context?.let(::SecureSessionStore)
     private val core: CoolapkCore by lazy {
@@ -336,6 +337,82 @@ class RustCoolapkGateway(
 
     override suspend fun getUserLiked(uid: String, page: Int): HomePage = onCore {
         parser.parseHomePage(core.getUserLiked(uid, page.coerceAtLeast(1).toUInt()))
+    }
+
+    override suspend fun getFavoriteFeeds(page: Int, cursor: HomeCursor?): HomePage = onCore {
+        parser.parseHomePage(
+            core.getFavoriteList(
+                "feed",
+                page.coerceAtLeast(1).toUInt(),
+                cursor?.firstItem.orEmpty(),
+                cursor?.lastItem.orEmpty(),
+            ),
+        )
+    }
+
+    override suspend fun getCollections(uid: String, page: Int, cursor: HomeCursor?): FeedCollectionPage = onCore {
+        collectionParser.parsePage(
+            core.getCollectionList(
+                uid,
+                page.coerceAtLeast(1).toUInt(),
+                cursor?.firstItem.orEmpty(),
+                cursor?.lastItem.orEmpty(),
+            ),
+        )
+    }
+
+    override suspend fun getCollectionDetail(collectionId: String): FeedCollection? = onCore {
+        collectionParser.parseDetail(core.getCollectionDetail(collectionId), collectionId)
+    }
+
+    override suspend fun getCollectionItems(collectionId: String, page: Int, cursor: HomeCursor?): HomePage = onCore {
+        parser.parseHomePage(
+            core.getCollectionItemList(
+                collectionId,
+                page.coerceAtLeast(1).toUInt(),
+                cursor?.firstItem.orEmpty(),
+                cursor?.lastItem.orEmpty(),
+            ),
+        )
+    }
+
+    override suspend fun createCollection(
+        title: String,
+        description: String,
+        cover: String,
+        isOpen: Boolean,
+    ): Result<Unit> = runCatching {
+        onCore<Unit> { core.createCollection(title, description, cover, if (isOpen) 1 else 0, "") }
+    }
+
+    override suspend fun updateCollection(
+        collectionId: String,
+        title: String,
+        description: String,
+        cover: String,
+        isOpen: Boolean,
+    ): Result<Unit> = runCatching {
+        onCore<Unit> { core.updateCollection(collectionId, title, description, cover, if (isOpen) 1 else 0) }
+    }
+
+    override suspend fun deleteCollection(collectionId: String): Result<Unit> = runCatching {
+        onCore<Unit> { core.deleteCollection(collectionId) }
+    }
+
+    override suspend fun removeCollectionItem(itemId: String): Result<Unit> = runCatching {
+        onCore<Unit> { core.removeCollectionItem(itemId) }
+    }
+
+    override suspend fun setCollectionFollow(collectionId: String, follow: Boolean): Result<Unit> = runCatching {
+        onCore<Unit> {
+            if (follow) core.followCollection(collectionId) else core.unfollowCollection(collectionId)
+        }
+    }
+
+    override suspend fun setCollectionLike(collectionId: String, liked: Boolean): Result<Unit> = runCatching {
+        onCore<Unit> {
+            if (liked) core.likeCollection(collectionId) else core.unlikeCollection(collectionId)
+        }
     }
 
     override suspend fun getTopicDetail(tag: String): TopicDetail = onCore {

@@ -81,6 +81,7 @@ internal fun MyHubScreen(
     onLogin: () -> Unit,
     onOpenProfile: (String) -> Unit,
     onOpenGoods: () -> Unit,
+    onOpenFavorites: () -> Unit,
     onOpenSelector: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenNotifications: () -> Unit,
@@ -92,7 +93,7 @@ internal fun MyHubScreen(
     val darkNow = themeMode == ThemeMode.DARK || (themeMode == ThemeMode.SYSTEM && isSystemInDarkTheme())
     val items = listOf(
         HubMenuItem("我的动态", Icons.Rounded.Article, profile != null) { profile?.let { onOpenProfile(it.uid) } },
-        HubMenuItem("我的收藏", Icons.Rounded.Star, profile != null) { profile?.let { onOpenProfile(it.uid) } },
+        HubMenuItem("我的收藏", Icons.Rounded.Star, profile != null, onOpenFavorites),
         HubMenuItem("我的装备", Icons.Rounded.Inventory2, true, onOpenGoods),
         HubMenuItem("选机对比", Icons.Rounded.Compare, true, onOpenSelector),
         HubMenuItem("私信", Icons.Rounded.Mail, true, onOpenMessages),

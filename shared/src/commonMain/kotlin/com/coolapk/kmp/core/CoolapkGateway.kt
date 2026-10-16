@@ -154,6 +154,54 @@ interface CoolapkGateway {
     suspend fun getUserLiked(uid: String, page: Int = 1): HomePage =
         error("当前平台未提供用户赞过接口")
 
+    /** 当前账号收藏的动态，需要登录。 */
+    suspend fun getFavoriteFeeds(page: Int = 1, cursor: HomeCursor? = null): HomePage =
+        error("当前平台未提供收藏动态接口")
+
+    /** 收藏单列表；uid 为空时返回当前账号的收藏单。 */
+    suspend fun getCollections(
+        uid: String = "",
+        page: Int = 1,
+        cursor: HomeCursor? = null,
+    ): FeedCollectionPage = error("当前平台未提供收藏单接口")
+
+    suspend fun getCollectionDetail(collectionId: String): FeedCollection? =
+        error("当前平台未提供收藏单详情接口")
+
+    suspend fun getCollectionItems(
+        collectionId: String,
+        page: Int = 1,
+        cursor: HomeCursor? = null,
+    ): HomePage = error("当前平台未提供收藏单内容接口")
+
+    suspend fun createCollection(
+        title: String,
+        description: String,
+        cover: String,
+        isOpen: Boolean,
+    ): Result<Unit> = Result.failure(IllegalStateException("当前平台未提供创建收藏单接口"))
+
+    suspend fun updateCollection(
+        collectionId: String,
+        title: String,
+        description: String,
+        cover: String,
+        isOpen: Boolean,
+    ): Result<Unit> = Result.failure(IllegalStateException("当前平台未提供编辑收藏单接口"))
+
+    suspend fun deleteCollection(collectionId: String): Result<Unit> =
+        Result.failure(IllegalStateException("当前平台未提供删除收藏单接口"))
+
+    /** 从收藏单移除一条内容，itemId 是收藏条目 ID，不是动态 ID。 */
+    suspend fun removeCollectionItem(itemId: String): Result<Unit> =
+        Result.failure(IllegalStateException("当前平台未提供移出收藏接口"))
+
+    suspend fun setCollectionFollow(collectionId: String, follow: Boolean): Result<Unit> =
+        Result.failure(IllegalStateException("当前平台未提供关注收藏单接口"))
+
+    suspend fun setCollectionLike(collectionId: String, liked: Boolean): Result<Unit> =
+        Result.failure(IllegalStateException("当前平台未提供点赞收藏单接口"))
+
     suspend fun getTopicDetail(tag: String): TopicDetail =
         error("当前平台未提供话题详情接口")
 

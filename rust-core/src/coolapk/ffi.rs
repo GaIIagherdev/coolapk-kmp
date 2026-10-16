@@ -714,6 +714,177 @@ impl CoolapkCore {
         })
         .to_string()
     }
+
+    /// 收藏列表，`fav_type` 支持 feed / apk / album。
+    pub fn get_favorite_list(
+        &self,
+        fav_type: String,
+        page: u32,
+        first_item: String,
+        last_item: String,
+    ) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_favorite_list(
+            &fav_type,
+            page,
+            &first_item,
+            &last_item,
+        ))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 查询动态所在的收藏单，用于判断收藏状态。
+    pub fn get_feed_collection_status(&self, feed_id: String) -> Result<String, CoolapkError> {
+        let value = self
+            .runtime
+            .block_on(self.client.get_feed_collection_status(&feed_id))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 把动态加入或移出收藏单。
+    pub fn update_collection_item(
+        &self,
+        collection_ids: String,
+        cancel_ids: String,
+        target_id: String,
+        feed_type: String,
+        trace: String,
+    ) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.update_collection_item(
+            &collection_ids,
+            &cancel_ids,
+            &target_id,
+            &feed_type,
+            &trace,
+        ))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 收藏单列表，`uid` 为空时返回当前账号的收藏单。
+    pub fn get_collection_list(
+        &self,
+        uid: String,
+        page: u32,
+        first_item: String,
+        last_item: String,
+    ) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_collection_list(
+            &uid,
+            page,
+            &first_item,
+            &last_item,
+        ))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 收藏单内的内容列表。
+    pub fn get_collection_item_list(
+        &self,
+        collection_id: String,
+        page: u32,
+        first_item: String,
+        last_item: String,
+    ) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_collection_item_list(
+            &collection_id,
+            page,
+            &first_item,
+            &last_item,
+        ))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    pub fn get_collection_detail(&self, collection_id: String) -> Result<String, CoolapkError> {
+        let value = self
+            .runtime
+            .block_on(self.client.get_collection_detail(&collection_id))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    pub fn create_collection(
+        &self,
+        title: String,
+        description: String,
+        cover: String,
+        is_open: i32,
+        source_id: String,
+    ) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.create_collection(
+            &title,
+            &description,
+            &cover,
+            is_open,
+            &source_id,
+        ))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    pub fn update_collection(
+        &self,
+        collection_id: String,
+        title: String,
+        description: String,
+        cover: String,
+        is_open: i32,
+    ) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.update_collection(
+            &collection_id,
+            &title,
+            &description,
+            &cover,
+            is_open,
+        ))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    pub fn delete_collection(&self, collection_id: String) -> Result<String, CoolapkError> {
+        let value = self
+            .runtime
+            .block_on(self.client.delete_collection(&collection_id))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 从收藏单中移除一条内容，`item_id` 是收藏条目 ID，不是动态 ID。
+    pub fn remove_collection_item(&self, item_id: String) -> Result<String, CoolapkError> {
+        let value = self
+            .runtime
+            .block_on(self.client.remove_collection_item(&item_id))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    pub fn clear_collection_invalid_items(&self, collection_id: String) -> Result<String, CoolapkError> {
+        let value = self
+            .runtime
+            .block_on(self.client.clear_collection_invalid_items(&collection_id))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    pub fn follow_collection(&self, collection_id: String) -> Result<String, CoolapkError> {
+        let value = self
+            .runtime
+            .block_on(self.client.follow_collection(&collection_id))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    pub fn unfollow_collection(&self, collection_id: String) -> Result<String, CoolapkError> {
+        let value = self
+            .runtime
+            .block_on(self.client.unfollow_collection(&collection_id))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    pub fn like_collection(&self, collection_id: String) -> Result<String, CoolapkError> {
+        let value = self
+            .runtime
+            .block_on(self.client.like_collection(&collection_id))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    pub fn unlike_collection(&self, collection_id: String) -> Result<String, CoolapkError> {
+        let value = self
+            .runtime
+            .block_on(self.client.unlike_collection(&collection_id))?;
+        Ok(serde_json::to_string(&value)?)
+    }
 }
 
 #[cfg(test)]

@@ -126,6 +126,17 @@ class HomeRepository(
 
     suspend fun loadUserLiked(uid: String, page: Int = 1): HomePage = gateway.getUserLiked(uid, page)
 
+    suspend fun loadFavoriteFeeds(page: Int = 1, cursor: HomeCursor? = null): HomePage =
+        gateway.getFavoriteFeeds(page, cursor)
+
+    suspend fun loadCollections(uid: String = "", page: Int = 1, cursor: HomeCursor? = null): FeedCollectionPage =
+        gateway.getCollections(uid, page, cursor)
+
+    suspend fun loadCollectionDetail(collectionId: String): FeedCollection? = gateway.getCollectionDetail(collectionId)
+
+    suspend fun loadCollectionItems(collectionId: String, page: Int = 1, cursor: HomeCursor? = null): HomePage =
+        gateway.getCollectionItems(collectionId, page, cursor)
+
     suspend fun loadTopicDetail(tag: String): TopicDetail = gateway.getTopicDetail(tag)
 
     suspend fun loadTopicFeeds(

@@ -876,6 +876,36 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is
 // rather `InterfaceTooLargeException`, caused by too many methods
@@ -897,11 +927,17 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_change_product_follow_status
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_change_product_wish_status(
 ): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_clear_collection_invalid_items(
+): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_clear_notification_count(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_create_collection(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_create_feed(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_create_product_rating(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_delete_collection(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_delete_message_chat(
 ): Short
@@ -909,11 +945,19 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_diagnostics(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_fetch_external_page(
 ): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_follow_collection(
+): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_follow_user(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_app_detail(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_app_list(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_collection_detail(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_collection_item_list(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_collection_list(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_device_info(
 ): Short
@@ -922,6 +966,10 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_get_discovery_config(
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_discovery_page_data(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_fans_user_list(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_favorite_list(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_feed_collection_status(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_feed_detail(
 ): Short
@@ -1015,6 +1063,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_get_user_tab_data(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_is_logged_in(
 ): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_like_collection(
+): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_like_feed(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_like_reply(
@@ -1026,6 +1076,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_login_by_access_code(
 fun uniffi_coolapk_core_checksum_method_coolapkcore_login_by_webview_cookie(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_read_message(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_remove_collection_item(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_reply_feed(
 ): Short
@@ -1043,11 +1095,19 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_set_session_cookie(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_special_follow_user(
 ): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_unfollow_collection(
+): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_unfollow_user(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_unlike_collection(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_unlike_feed(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_unlike_reply(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_update_collection(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_update_collection_item(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_update_user_profile(
 ): Short
@@ -1114,11 +1174,17 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_change_product_follow_status(`ptr`
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_change_product_wish_status(`ptr`: Pointer,`productId`: RustBuffer.ByValue,`status`: Int,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_clear_collection_invalid_items(`ptr`: Pointer,`collectionId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_clear_notification_count(`ptr`: Pointer,`notificationType`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_create_collection(`ptr`: Pointer,`title`: RustBuffer.ByValue,`description`: RustBuffer.ByValue,`cover`: RustBuffer.ByValue,`isOpen`: Int,`sourceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_create_feed(`ptr`: Pointer,`message`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_create_product_rating(`ptr`: Pointer,`productId`: RustBuffer.ByValue,`score`: Int,`message`: RustBuffer.ByValue,`buyStatus`: Byte,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_delete_collection(`ptr`: Pointer,`collectionId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_delete_message_chat(`ptr`: Pointer,`ukey`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1126,11 +1192,19 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_diagnostics(`ptr`: Pointer,uniffi_
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_fetch_external_page(`ptr`: Pointer,`url`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_follow_collection(`ptr`: Pointer,`collectionId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_follow_user(`ptr`: Pointer,`uid`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_app_detail(`ptr`: Pointer,`packageName`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_app_list(`ptr`: Pointer,`page`: Int,`category`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_collection_detail(`ptr`: Pointer,`collectionId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_collection_item_list(`ptr`: Pointer,`collectionId`: RustBuffer.ByValue,`page`: Int,`firstItem`: RustBuffer.ByValue,`lastItem`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_collection_list(`ptr`: Pointer,`uid`: RustBuffer.ByValue,`page`: Int,`firstItem`: RustBuffer.ByValue,`lastItem`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_device_info(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1139,6 +1213,10 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_get_discovery_config(`ptr`: Pointe
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_discovery_page_data(`ptr`: Pointer,`url`: RustBuffer.ByValue,`title`: RustBuffer.ByValue,`subTitle`: RustBuffer.ByValue,`page`: Int,`firstItem`: RustBuffer.ByValue,`lastItem`: RustBuffer.ByValue,`pageContext`: RustBuffer.ByValue,`requestArgsJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_fans_user_list(`ptr`: Pointer,`uid`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_favorite_list(`ptr`: Pointer,`favType`: RustBuffer.ByValue,`page`: Int,`firstItem`: RustBuffer.ByValue,`lastItem`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_feed_collection_status(`ptr`: Pointer,`feedId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_feed_detail(`ptr`: Pointer,`feedId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1232,6 +1310,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_get_user_tab_data(`ptr`: Pointer,`
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_is_logged_in(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus,
 ): Byte
+fun uniffi_coolapk_core_fn_method_coolapkcore_like_collection(`ptr`: Pointer,`collectionId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_like_feed(`ptr`: Pointer,`feedId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_like_reply(`ptr`: Pointer,`replyId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
@@ -1243,6 +1323,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_login_by_access_code(`ptr`: Pointe
 fun uniffi_coolapk_core_fn_method_coolapkcore_login_by_webview_cookie(`ptr`: Pointer,`cookie`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_read_message(`ptr`: Pointer,`ukey`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_remove_collection_item(`ptr`: Pointer,`itemId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_reply_feed(`ptr`: Pointer,`feedId`: RustBuffer.ByValue,`message`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1260,11 +1342,19 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_set_session_cookie(`ptr`: Pointer,
 ): Unit
 fun uniffi_coolapk_core_fn_method_coolapkcore_special_follow_user(`ptr`: Pointer,`uid`: RustBuffer.ByValue,`special`: Byte,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_unfollow_collection(`ptr`: Pointer,`collectionId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_unfollow_user(`ptr`: Pointer,`uid`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_unlike_collection(`ptr`: Pointer,`collectionId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_unlike_feed(`ptr`: Pointer,`feedId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_unlike_reply(`ptr`: Pointer,`replyId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_update_collection(`ptr`: Pointer,`collectionId`: RustBuffer.ByValue,`title`: RustBuffer.ByValue,`description`: RustBuffer.ByValue,`cover`: RustBuffer.ByValue,`isOpen`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_update_collection_item(`ptr`: Pointer,`collectionIds`: RustBuffer.ByValue,`cancelIds`: RustBuffer.ByValue,`targetId`: RustBuffer.ByValue,`feedType`: RustBuffer.ByValue,`trace`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_update_user_profile(`ptr`: Pointer,`key`: RustBuffer.ByValue,`value`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1403,13 +1493,22 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_change_product_wish_status() != 22678.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_clear_collection_invalid_items() != 49363.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_clear_notification_count() != 50970.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_create_collection() != 13419.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_create_feed() != 50211.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_create_product_rating() != 54020.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_delete_collection() != 3727.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_delete_message_chat() != 25461.toShort()) {
@@ -1421,6 +1520,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_fetch_external_page() != 49037.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_follow_collection() != 5673.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_follow_user() != 61071.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1428,6 +1530,15 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_app_list() != 37642.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_collection_detail() != 42885.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_collection_item_list() != 7557.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_collection_list() != 63214.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_device_info() != 44182.toShort()) {
@@ -1440,6 +1551,12 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_fans_user_list() != 9344.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_favorite_list() != 51878.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_feed_collection_status() != 10916.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_feed_detail() != 61601.toShort()) {
@@ -1580,6 +1697,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_is_logged_in() != 55558.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_like_collection() != 23695.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_like_feed() != 32644.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1596,6 +1716,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_read_message() != 5104.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_remove_collection_item() != 13827.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_reply_feed() != 24938.toShort()) {
@@ -1622,13 +1745,25 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_special_follow_user() != 44403.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_unfollow_collection() != 24337.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_unfollow_user() != 34550.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_unlike_collection() != 5047.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_unlike_feed() != 40974.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_unlike_reply() != 33318.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_update_collection() != 40198.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_update_collection_item() != 58184.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_update_user_profile() != 50922.toShort()) {
@@ -2022,7 +2157,11 @@ public interface CoolapkCoreInterface {
      */
     fun `changeProductWishStatus`(`productId`: kotlin.String, `status`: kotlin.Int): kotlin.String
 
+    fun `clearCollectionInvalidItems`(`collectionId`: kotlin.String): kotlin.String
+
     fun `clearNotificationCount`(`notificationType`: kotlin.String): kotlin.String
+
+    fun `createCollection`(`title`: kotlin.String, `description`: kotlin.String, `cover`: kotlin.String, `isOpen`: kotlin.Int, `sourceId`: kotlin.String): kotlin.String
 
     /**
      * 发布一条不带媒体的普通动态。验证码或风控失败直接返回服务端错误，交由界面提示。
@@ -2033,6 +2172,8 @@ public interface CoolapkCoreInterface {
      * 发表产品点评（1–5 星）。
      */
     fun `createProductRating`(`productId`: kotlin.String, `score`: kotlin.Int, `message`: kotlin.String, `buyStatus`: kotlin.Boolean): kotlin.String
+
+    fun `deleteCollection`(`collectionId`: kotlin.String): kotlin.String
 
     /**
      * 删除会话。
@@ -2052,6 +2193,8 @@ public interface CoolapkCoreInterface {
      */
     fun `fetchExternalPage`(`url`: kotlin.String): kotlin.String
 
+    fun `followCollection`(`collectionId`: kotlin.String): kotlin.String
+
     /**
      * 关注某个用户。
      */
@@ -2066,6 +2209,18 @@ public interface CoolapkCoreInterface {
      * 应用中心列表。
      */
     fun `getAppList`(`page`: kotlin.UInt, `category`: kotlin.String): kotlin.String
+
+    fun `getCollectionDetail`(`collectionId`: kotlin.String): kotlin.String
+
+    /**
+     * 收藏单内的内容列表。
+     */
+    fun `getCollectionItemList`(`collectionId`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String
+
+    /**
+     * 收藏单列表，`uid` 为空时返回当前账号的收藏单。
+     */
+    fun `getCollectionList`(`uid`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String
 
     fun `getDeviceInfo`(): kotlin.String
 
@@ -2083,6 +2238,16 @@ public interface CoolapkCoreInterface {
      * 粉丝列表。
      */
     fun `getFansUserList`(`uid`: kotlin.String, `page`: kotlin.UInt): kotlin.String
+
+    /**
+     * 收藏列表，`fav_type` 支持 feed / apk / album。
+     */
+    fun `getFavoriteList`(`favType`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String
+
+    /**
+     * 查询动态所在的收藏单，用于判断收藏状态。
+     */
+    fun `getFeedCollectionStatus`(`feedId`: kotlin.String): kotlin.String
 
     fun `getFeedDetail`(`feedId`: kotlin.String): kotlin.String
 
@@ -2266,6 +2431,8 @@ public interface CoolapkCoreInterface {
 
     fun `isLoggedIn`(): kotlin.Boolean
 
+    fun `likeCollection`(`collectionId`: kotlin.String): kotlin.String
+
     /**
      * 点赞动态。
      */
@@ -2292,6 +2459,11 @@ public interface CoolapkCoreInterface {
      * 将会话标记为已读。
      */
     fun `readMessage`(`ukey`: kotlin.String): kotlin.String
+
+    /**
+     * 从收藏单中移除一条内容，`item_id` 是收藏条目 ID，不是动态 ID。
+     */
+    fun `removeCollectionItem`(`itemId`: kotlin.String): kotlin.String
 
     /**
      * 发表评论。
@@ -2327,10 +2499,14 @@ public interface CoolapkCoreInterface {
      */
     fun `specialFollowUser`(`uid`: kotlin.String, `special`: kotlin.Boolean): kotlin.String
 
+    fun `unfollowCollection`(`collectionId`: kotlin.String): kotlin.String
+
     /**
      * 取消关注某个用户。
      */
     fun `unfollowUser`(`uid`: kotlin.String): kotlin.String
+
+    fun `unlikeCollection`(`collectionId`: kotlin.String): kotlin.String
 
     /**
      * 取消点赞动态。
@@ -2338,6 +2514,13 @@ public interface CoolapkCoreInterface {
     fun `unlikeFeed`(`feedId`: kotlin.String): kotlin.String
 
     fun `unlikeReply`(`replyId`: kotlin.String): kotlin.String
+
+    fun `updateCollection`(`collectionId`: kotlin.String, `title`: kotlin.String, `description`: kotlin.String, `cover`: kotlin.String, `isOpen`: kotlin.Int): kotlin.String
+
+    /**
+     * 把动态加入或移出收藏单。
+     */
+    fun `updateCollectionItem`(`collectionIds`: kotlin.String, `cancelIds`: kotlin.String, `targetId`: kotlin.String, `feedType`: kotlin.String, `trace`: kotlin.String): kotlin.String
 
     /**
      * 更新个人资料字段（如 bio、gender、birthday、location）；key 为空时 value 为 JSON 对象。
@@ -2485,12 +2668,38 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
 
 
 
+    @Throws(CoolapkException::class)override fun `clearCollectionInvalidItems`(`collectionId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_clear_collection_invalid_items(
+        it, FfiConverterString.lower(`collectionId`),_status)
+}
+    }
+    )
+    }
+
+
+
     @Throws(CoolapkException::class)override fun `clearNotificationCount`(`notificationType`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     callWithPointer {
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_clear_notification_count(
         it, FfiConverterString.lower(`notificationType`),_status)
+}
+    }
+    )
+    }
+
+
+
+    @Throws(CoolapkException::class)override fun `createCollection`(`title`: kotlin.String, `description`: kotlin.String, `cover`: kotlin.String, `isOpen`: kotlin.Int, `sourceId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_create_collection(
+        it, FfiConverterString.lower(`title`),FfiConverterString.lower(`description`),FfiConverterString.lower(`cover`),FfiConverterInt.lower(`isOpen`),FfiConverterString.lower(`sourceId`),_status)
 }
     }
     )
@@ -2523,6 +2732,19 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_create_product_rating(
         it, FfiConverterString.lower(`productId`),FfiConverterInt.lower(`score`),FfiConverterString.lower(`message`),FfiConverterBoolean.lower(`buyStatus`),_status)
+}
+    }
+    )
+    }
+
+
+
+    @Throws(CoolapkException::class)override fun `deleteCollection`(`collectionId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_delete_collection(
+        it, FfiConverterString.lower(`collectionId`),_status)
 }
     }
     )
@@ -2580,6 +2802,19 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
 
 
 
+    @Throws(CoolapkException::class)override fun `followCollection`(`collectionId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_follow_collection(
+        it, FfiConverterString.lower(`collectionId`),_status)
+}
+    }
+    )
+    }
+
+
+
     /**
      * 关注某个用户。
      */
@@ -2621,6 +2856,51 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_app_list(
         it, FfiConverterUInt.lower(`page`),FfiConverterString.lower(`category`),_status)
+}
+    }
+    )
+    }
+
+
+
+    @Throws(CoolapkException::class)override fun `getCollectionDetail`(`collectionId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_collection_detail(
+        it, FfiConverterString.lower(`collectionId`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 收藏单内的内容列表。
+     */
+    @Throws(CoolapkException::class)override fun `getCollectionItemList`(`collectionId`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_collection_item_list(
+        it, FfiConverterString.lower(`collectionId`),FfiConverterUInt.lower(`page`),FfiConverterString.lower(`firstItem`),FfiConverterString.lower(`lastItem`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 收藏单列表，`uid` 为空时返回当前账号的收藏单。
+     */
+    @Throws(CoolapkException::class)override fun `getCollectionList`(`uid`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_collection_list(
+        it, FfiConverterString.lower(`uid`),FfiConverterUInt.lower(`page`),FfiConverterString.lower(`firstItem`),FfiConverterString.lower(`lastItem`),_status)
 }
     }
     )
@@ -2682,6 +2962,38 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_fans_user_list(
         it, FfiConverterString.lower(`uid`),FfiConverterUInt.lower(`page`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 收藏列表，`fav_type` 支持 feed / apk / album。
+     */
+    @Throws(CoolapkException::class)override fun `getFavoriteList`(`favType`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_favorite_list(
+        it, FfiConverterString.lower(`favType`),FfiConverterUInt.lower(`page`),FfiConverterString.lower(`firstItem`),FfiConverterString.lower(`lastItem`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 查询动态所在的收藏单，用于判断收藏状态。
+     */
+    @Throws(CoolapkException::class)override fun `getFeedCollectionStatus`(`feedId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_feed_collection_status(
+        it, FfiConverterString.lower(`feedId`),_status)
 }
     }
     )
@@ -3375,6 +3687,19 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
 
 
 
+    @Throws(CoolapkException::class)override fun `likeCollection`(`collectionId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_like_collection(
+        it, FfiConverterString.lower(`collectionId`),_status)
+}
+    }
+    )
+    }
+
+
+
     /**
      * 点赞动态。
      */
@@ -3461,6 +3786,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_read_message(
         it, FfiConverterString.lower(`ukey`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 从收藏单中移除一条内容，`item_id` 是收藏条目 ID，不是动态 ID。
+     */
+    @Throws(CoolapkException::class)override fun `removeCollectionItem`(`itemId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_remove_collection_item(
+        it, FfiConverterString.lower(`itemId`),_status)
 }
     }
     )
@@ -3588,6 +3929,19 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
 
 
 
+    @Throws(CoolapkException::class)override fun `unfollowCollection`(`collectionId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_unfollow_collection(
+        it, FfiConverterString.lower(`collectionId`),_status)
+}
+    }
+    )
+    }
+
+
+
     /**
      * 取消关注某个用户。
      */
@@ -3597,6 +3951,19 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_unfollow_user(
         it, FfiConverterString.lower(`uid`),_status)
+}
+    }
+    )
+    }
+
+
+
+    @Throws(CoolapkException::class)override fun `unlikeCollection`(`collectionId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_unlike_collection(
+        it, FfiConverterString.lower(`collectionId`),_status)
 }
     }
     )
@@ -3626,6 +3993,35 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_unlike_reply(
         it, FfiConverterString.lower(`replyId`),_status)
+}
+    }
+    )
+    }
+
+
+
+    @Throws(CoolapkException::class)override fun `updateCollection`(`collectionId`: kotlin.String, `title`: kotlin.String, `description`: kotlin.String, `cover`: kotlin.String, `isOpen`: kotlin.Int): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_update_collection(
+        it, FfiConverterString.lower(`collectionId`),FfiConverterString.lower(`title`),FfiConverterString.lower(`description`),FfiConverterString.lower(`cover`),FfiConverterInt.lower(`isOpen`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 把动态加入或移出收藏单。
+     */
+    @Throws(CoolapkException::class)override fun `updateCollectionItem`(`collectionIds`: kotlin.String, `cancelIds`: kotlin.String, `targetId`: kotlin.String, `feedType`: kotlin.String, `trace`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_update_collection_item(
+        it, FfiConverterString.lower(`collectionIds`),FfiConverterString.lower(`cancelIds`),FfiConverterString.lower(`targetId`),FfiConverterString.lower(`feedType`),FfiConverterString.lower(`trace`),_status)
 }
     }
     )
