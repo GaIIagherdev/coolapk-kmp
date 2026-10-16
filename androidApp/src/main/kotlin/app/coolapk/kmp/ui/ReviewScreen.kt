@@ -68,6 +68,14 @@ internal fun ReviewScreen(
                     )
                 }
             }
+            state.notice?.let { notice ->
+                Text(
+                    notice,
+                    modifier = Modifier.widthIn(max = 900.dp).fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             PagedColumn(
                 list = state.list,
                 emptyTitle = "这个板块还没有内容",

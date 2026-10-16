@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.coolapk.kmp.core.FeedChannel
 import com.coolapk.kmp.core.FeedItem
 import com.coolapk.kmp.core.HomeCursor
 import com.coolapk.kmp.core.HomePage
@@ -29,6 +30,8 @@ internal enum class ReviewBoard(val boardTag: String, val label: String) {
 internal data class ReviewUiState(
     val board: ReviewBoard = ReviewBoard.REVIEW,
     val list: PagedListState<FeedItem> = PagedListState(),
+    /** 板块加载失败、回退到热门动态时的提示。 */
+    val notice: String? = null,
 )
 
 internal class ReviewViewModel(
@@ -70,10 +73,18 @@ internal class ReviewViewModel(
         _state.update { it.copy(list = it.list.copy(loading = true, error = null)) }
         viewModelScope.launch {
             try {
-                val result = source.loadBoardFeeds(board.boardTag, page)
+                val (result, notice) = try {
+                    source.loadBoardFeeds(board.boardTag, page) to null
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (failure: Exception) {
+                    // 与参考项目一致：板块接口失败时（首页）回退到热门动态，并明确提示。
+                    if (page != 1) throw failure
+                    source.load(FeedChannel.HOT, 1) to "板块加载失败，已显示热门动态"
+                }
                 _state.update { state ->
                     if (state.board != board) return@update state
-                    state.copy(list = state.list.merged(page, result))
+                    state.copy(list = state.list.merged(page, result), notice = notice)
                 }
             } catch (cancelled: CancellationException) {
                 throw cancelled
