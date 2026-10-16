@@ -286,6 +286,7 @@ internal fun CoolapkApp(
                         onNotifications = { notificationsOpen = true },
                         notificationCount = state.notifications.total,
                         onCompare = if (selectedIndex == 1) openProductSelector else null,
+                        onMore = if (selectedIndex == 3) openMore else null,
                     )
                 },
                 bottomBar = {
@@ -336,7 +337,6 @@ internal fun CoolapkApp(
                         )
                         3 -> DiscoveryScreen(
                             viewModel = discoveryViewModel,
-                            onOpenMore = openMore,
                             feedState = state,
                             onLike = viewModel::toggleLike,
                             onOpenFeed = { id, preview, comments ->
@@ -652,6 +652,7 @@ private fun AppTopBar(
     onSettings: (() -> Unit)? = null,
     onGoods: (() -> Unit)? = null,
     onCompare: (() -> Unit)? = null,
+    onMore: (() -> Unit)? = null,
 ) {
     TopAppBar(
         title = {
@@ -692,6 +693,11 @@ private fun AppTopBar(
             onCompare?.let {
                 IconButton(onClick = it) {
                     Icon(Icons.Rounded.Compare, contentDescription = "选机对比")
+                }
+            }
+            onMore?.let {
+                IconButton(onClick = it) {
+                    Icon(Icons.Rounded.Apps, contentDescription = "更多内容")
                 }
             }
             onGoods?.let {
