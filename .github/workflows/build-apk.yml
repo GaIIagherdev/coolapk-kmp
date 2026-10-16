@@ -30,13 +30,15 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: 安装 Android SDK 与 NDK
-        uses: android-actions/setup-android@v3
-
       - name: 安装 NDK ${{ env.ANDROID_NDK_VERSION }}
+        # Ubuntu 运行器已预装 Android SDK，这里只补装指定版本的 NDK
         run: |
-          yes | sdkmanager --licenses > /dev/null
-          sdkmanager --install "ndk;${ANDROID_NDK_VERSION}"
+          SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(ls -d "$ANDROID_SDK_ROOT"/cmdline-tools/*/bin/sdkmanager | head -1)"
+          fi
+          yes | "$SDKMANAGER" --licenses > /dev/null
+          "$SDKMANAGER" "ndk;${ANDROID_NDK_VERSION}"
           echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/${ANDROID_NDK_VERSION}" >> "$GITHUB_ENV"
 
       - name: 安装 Rust 与 Android 目标
