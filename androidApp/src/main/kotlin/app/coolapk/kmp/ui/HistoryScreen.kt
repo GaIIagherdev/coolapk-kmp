@@ -19,16 +19,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.coolapk.kmp.core.FeedItem
+import com.coolapk.kmp.core.HistoryEntry
 
-/** 浏览历史：目前展示历史中的动态，其他类型（用户、话题、应用）暂未解析。 */
+/** 浏览历史：与参考项目一致展示点击过的动态，点击打开动态详情。 */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HistoryScreen(
     onBack: () -> Unit,
-    onOpenFeed: (FeedItem) -> Unit,
-    onLike: (FeedItem) -> Unit,
-    likeOverrides: Map<String, Boolean>,
+    onOpenFeed: (String) -> Unit,
     viewModel: HistoryViewModel = viewModel(key = "history", factory = HistoryViewModel.factory()),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -55,17 +53,22 @@ internal fun HistoryScreen(
                 key = { it.id },
                 onLoadMore = viewModel::loadMore,
                 onRetry = viewModel::retry,
-            ) { feed ->
-                FeedCard(
-                    item = feed,
-                    liked = likeOverrides[feed.id] ?: feed.isLiked,
-                    onLike = { onLike(feed) },
-                    onOpenDetail = { onOpenFeed(feed) },
-                    onReply = { onOpenFeed(feed) },
-                    onOpenImage = { _, _ -> },
-                    card = true,
-                )
+            ) { entry: HistoryEntry ->
+                HistoryRow(entry, onOpen = onOpenFeed)
             }
         }
     }
+}
+
+@Composable
+private fun HistoryRow(entry: HistoryEntry, onOpen: (String) -> Unit) {
+    EntryRow(
+        entry = com.coolapk.kmp.core.ListEntry(
+            id = entry.id,
+            title = entry.title,
+            subtitle = entry.description,
+            imageUrl = entry.imageUrl,
+        ),
+        onClick = entry.feedId?.let { feedId -> { onOpen(feedId) } },
+    )
 }

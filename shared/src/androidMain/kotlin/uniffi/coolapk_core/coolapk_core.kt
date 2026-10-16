@@ -926,6 +926,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is
 // rather `InterfaceTooLargeException`, caused by too many methods
@@ -1012,6 +1014,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_get_followed_topics(
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_game_list(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_goods_store_items(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_hit_history(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_home_feeds(
 ): Short
@@ -1279,6 +1283,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_get_followed_topics(`ptr`: Pointer
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_game_list(`ptr`: Pointer,`page`: Int,`gameType`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_goods_store_items(`ptr`: Pointer,`uid`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_hit_history(`ptr`: Pointer,`historyType`: RustBuffer.ByValue,`page`: Int,`firstItem`: RustBuffer.ByValue,`lastItem`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_home_feeds(`ptr`: Pointer,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1650,6 +1656,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_goods_store_items() != 55549.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_hit_history() != 24808.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_home_feeds() != 11343.toShort()) {
@@ -2390,6 +2399,11 @@ public interface CoolapkCoreInterface {
      * 我的商品店铺列表。
      */
     fun `getGoodsStoreItems`(`uid`: kotlin.String, `page`: kotlin.UInt): kotlin.String
+
+    /**
+     * 点击历史（与参考项目浏览历史页一致），history_type 取 feed 等；游标为空字符串时不带。
+     */
+    fun `getHitHistory`(`historyType`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String
 
     /**
      * 兼容只关心动态列表的调用方。
@@ -3307,6 +3321,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_goods_store_items(
         it, FfiConverterString.lower(`uid`),FfiConverterUInt.lower(`page`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 点击历史（与参考项目浏览历史页一致），history_type 取 feed 等；游标为空字符串时不带。
+     */
+    @Throws(CoolapkException::class)override fun `getHitHistory`(`historyType`: kotlin.String, `page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_hit_history(
+        it, FfiConverterString.lower(`historyType`),FfiConverterUInt.lower(`page`),FfiConverterString.lower(`firstItem`),FfiConverterString.lower(`lastItem`),_status)
 }
     }
     )

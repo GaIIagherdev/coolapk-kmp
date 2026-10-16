@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.coolapk.kmp.core.FeedItem
+import com.coolapk.kmp.core.HistoryEntry
+import com.coolapk.kmp.core.HistoryEntryPage
 import com.coolapk.kmp.core.HomeCursor
-import com.coolapk.kmp.core.HomePage
 import com.coolapk.kmp.core.HomeRepository
 import com.coolapk.kmp.core.createPlatformGateway
 import kotlinx.coroutines.CancellationException
@@ -16,11 +16,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/** 浏览历史：与参考项目一致，使用点击历史（feed 类型）分页。 */
 internal class HistoryViewModel(
     private val repositoryProvider: () -> HomeRepository,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(PagedListState<FeedItem>())
-    val state: StateFlow<PagedListState<FeedItem>> = _state.asStateFlow()
+    private val _state = MutableStateFlow(PagedListState<HistoryEntry>())
+    val state: StateFlow<PagedListState<HistoryEntry>> = _state.asStateFlow()
     private val repository by lazy { runCatching(repositoryProvider).getOrNull() }
 
     init {
@@ -48,7 +49,7 @@ internal class HistoryViewModel(
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             try {
-                val result = source.loadRecentHistory(page, cursor)
+                val result = source.loadFeedHistory(page, cursor)
                 _state.update { state -> state.merged(page, result) }
             } catch (cancelled: CancellationException) {
                 throw cancelled
@@ -58,9 +59,9 @@ internal class HistoryViewModel(
         }
     }
 
-    private fun PagedListState<FeedItem>.merged(page: Int, result: HomePage): PagedListState<FeedItem> {
-        val existing = if (page == 1) emptySet() else items.map(FeedItem::id).toSet()
-        val fresh = result.items.filterNot { it.id in existing }.distinctBy(FeedItem::id)
+    private fun PagedListState<HistoryEntry>.merged(page: Int, result: HistoryEntryPage): PagedListState<HistoryEntry> {
+        val existing = if (page == 1) emptySet() else items.map(HistoryEntry::id).toSet()
+        val fresh = result.items.filterNot { it.id in existing }.distinctBy(HistoryEntry::id)
         val cursor = result.firstItem?.let { first -> result.lastItem?.let { last -> HomeCursor(first, last) } }
         return copy(
             items = if (page == 1) fresh else items + fresh,

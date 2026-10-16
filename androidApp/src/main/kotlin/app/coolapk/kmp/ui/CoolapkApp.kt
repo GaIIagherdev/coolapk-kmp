@@ -541,9 +541,7 @@ internal fun CoolapkApp(
                     }
                     is ContentRoute.History -> HistoryScreen(
                         onBack = closeContent,
-                        onOpenFeed = { item -> openFeed(FeedRoute(item.id, item, false)) },
-                        onLike = viewModel::toggleLike,
-                        likeOverrides = state.likeOverrides,
+                        onOpenFeed = { id -> openFeed(FeedRoute(id)) },
                     )
                     is ContentRoute.Blacklist -> BlacklistScreen(
                         onBack = closeContent,

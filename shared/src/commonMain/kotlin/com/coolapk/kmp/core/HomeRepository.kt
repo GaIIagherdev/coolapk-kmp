@@ -145,6 +145,9 @@ class HomeRepository(
 
     suspend fun loadUserLiked(uid: String, page: Int = 1): HomePage = gateway.getUserLiked(uid, page)
 
+    suspend fun loadFeedHistory(page: Int = 1, cursor: HomeCursor? = null): HistoryEntryPage =
+        gateway.getFeedHistory(page, cursor)
+
     suspend fun loadRecentHistory(page: Int = 1, cursor: HomeCursor? = null): HomePage =
         gateway.getRecentHistory(page, cursor)
 

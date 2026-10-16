@@ -40,6 +40,7 @@ class RustCoolapkGateway(
     private val detailParser: FeedDetailJsonParser = FeedDetailJsonParser(),
     private val collectionParser: CollectionJsonParser = CollectionJsonParser(),
     private val listEntryParser: ListEntryJsonParser = ListEntryJsonParser(),
+    private val historyParser: HistoryJsonParser = HistoryJsonParser(),
 ) : CoolapkGateway {
     private val sessionStore = context?.let(::SecureSessionStore)
     private val core: CoolapkCore by lazy {
@@ -387,6 +388,17 @@ class RustCoolapkGateway(
 
     override suspend fun getUserLiked(uid: String, page: Int): HomePage = onCore {
         parser.parseHomePage(core.getUserLiked(uid, page.coerceAtLeast(1).toUInt()))
+    }
+
+    override suspend fun getFeedHistory(page: Int, cursor: HomeCursor?): HistoryEntryPage = onCore {
+        historyParser.parsePage(
+            core.getHitHistory(
+                "feed",
+                page.coerceAtLeast(1).toUInt(),
+                cursor?.firstItem.orEmpty(),
+                cursor?.lastItem.orEmpty(),
+            ),
+        )
     }
 
     override suspend fun getRecentHistory(page: Int, cursor: HomeCursor?): HomePage = onCore {

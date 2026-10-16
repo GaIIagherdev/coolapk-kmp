@@ -2,6 +2,7 @@ package app.coolapk.kmp.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -94,7 +95,7 @@ internal fun FollowedScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun EntryRow(entry: ListEntry) {
+internal fun EntryRow(entry: ListEntry, onClick: (() -> Unit)? = null) {
     ListItem(
         headlineContent = {
             Text(
@@ -126,6 +127,8 @@ internal fun EntryRow(entry: ListEntry) {
             }
         },
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
-        modifier = Modifier.clip(RoundedCornerShape(20.dp)),
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
     )
 }
