@@ -98,6 +98,10 @@ class HomeRepository(
 
     suspend fun loadBlackList(page: Int = 1): UserSummaryPage = gateway.getBlackList(page)
 
+    suspend fun loadFollowedForums(uid: String, page: Int = 1): FollowedEntryPage = gateway.getFollowedForums(uid, page)
+
+    suspend fun loadFollowedTopics(page: Int = 1): FollowedEntryPage = gateway.getFollowedTopics(page)
+
     suspend fun removeFromBlackList(uid: String): Result<Unit> = gateway.removeFromBlackList(uid)
 
     suspend fun loadFansUsers(uid: String, page: Int = 1): UserSummaryPage = gateway.getFansUsers(uid, page)

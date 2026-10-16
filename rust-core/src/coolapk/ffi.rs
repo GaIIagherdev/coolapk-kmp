@@ -900,6 +900,20 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    /// 用户关注的论坛列表。
+    pub fn get_user_forum_follow_list(&self, uid: String, page: u32) -> Result<String, CoolapkError> {
+        let value = self
+            .runtime
+            .block_on(self.client.get_user_forum_follow_list(&uid, page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
+    /// 用户关注的话题列表。
+    pub fn get_followed_topics(&self, page: u32) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_followed_topics(page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     /// 浏览历史（混合类型：动态、用户、话题、应用等）；first_item / last_item 为空字符串时不带游标。
     pub fn get_recent_history(
         &self,

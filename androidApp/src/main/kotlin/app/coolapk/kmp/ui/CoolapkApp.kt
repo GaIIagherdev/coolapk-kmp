@@ -126,6 +126,7 @@ private sealed interface ContentRoute {
     data object Favorites : ContentRoute
     data object Blacklist : ContentRoute
     data object History : ContentRoute
+    data object Followed : ContentRoute
     data object ProductSelector : ContentRoute
     data object Messages : ContentRoute
     data class Compare(val configIds: List<String>, val titles: List<String>) : ContentRoute
@@ -194,6 +195,7 @@ internal fun CoolapkApp(
     val openFavorites: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Favorites }
     val openBlacklist: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Blacklist }
     val openHistory: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.History }
+    val openFollowed: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Followed }
     val openProductSelector: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.ProductSelector }
     val openMessages: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Messages }
 
@@ -354,6 +356,7 @@ internal fun CoolapkApp(
                             onOpenFavorites = openFavorites,
                             onOpenBlacklist = openBlacklist,
                             onOpenHistory = openHistory,
+                            onOpenFollowed = openFollowed,
                             onOpenOwnTab = { tab -> state.profile?.uid?.let { contentRoutes = contentRoutes + ContentRoute.User(it, tab) } },
                             onOpenSelector = openProductSelector,
                             onOpenSettings = openSettings,
@@ -481,6 +484,9 @@ internal fun CoolapkApp(
                         profile = route.profile,
                         onBack = closeContent,
                     )
+                    is ContentRoute.Followed -> state.profile?.uid?.let { ownUid ->
+                        FollowedScreen(uid = ownUid, onBack = closeContent)
+                    }
                     is ContentRoute.History -> HistoryScreen(
                         onBack = closeContent,
                         onOpenFeed = { item -> openFeed(FeedRoute(item.id, item, false)) },

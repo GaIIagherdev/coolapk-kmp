@@ -76,6 +76,14 @@ interface CoolapkGateway {
     suspend fun setSpecialFollow(uid: String, special: Boolean): Result<Unit> =
         Result.failure(IllegalStateException("当前平台未提供特别关注接口"))
 
+    /** 关注的论坛列表，需登录。 */
+    suspend fun getFollowedForums(uid: String, page: Int = 1): FollowedEntryPage =
+        error("当前平台未提供关注论坛接口")
+
+    /** 关注的话题列表，需登录。 */
+    suspend fun getFollowedTopics(page: Int = 1): FollowedEntryPage =
+        error("当前平台未提供关注话题接口")
+
     /** 黑名单用户列表，需登录。 */
     suspend fun getBlackList(page: Int = 1): UserSummaryPage =
         error("当前平台未提供黑名单接口")

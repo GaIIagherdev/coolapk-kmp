@@ -39,6 +39,7 @@ class RustCoolapkGateway(
     private val notificationListParser: NotificationListJsonParser = NotificationListJsonParser(),
     private val detailParser: FeedDetailJsonParser = FeedDetailJsonParser(),
     private val collectionParser: CollectionJsonParser = CollectionJsonParser(),
+    private val followedEntryParser: FollowedEntryJsonParser = FollowedEntryJsonParser(),
 ) : CoolapkGateway {
     private val sessionStore = context?.let(::SecureSessionStore)
     private val core: CoolapkCore by lazy {
@@ -247,6 +248,14 @@ class RustCoolapkGateway(
 
     override suspend fun setSpecialFollow(uid: String, special: Boolean): Result<Unit> = runCatching {
         onCore<Unit> { core.specialFollowUser(uid, special) }
+    }
+
+    override suspend fun getFollowedForums(uid: String, page: Int): FollowedEntryPage = onCore {
+        followedEntryParser.parsePage(core.getUserForumFollowList(uid, page.coerceAtLeast(1).toUInt()))
+    }
+
+    override suspend fun getFollowedTopics(page: Int): FollowedEntryPage = onCore {
+        followedEntryParser.parsePage(core.getFollowedTopics(page.coerceAtLeast(1).toUInt()))
     }
 
     override suspend fun getBlackList(page: Int): UserSummaryPage = onCore {
