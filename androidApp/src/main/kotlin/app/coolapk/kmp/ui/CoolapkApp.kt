@@ -132,6 +132,7 @@ private sealed interface ContentRoute {
     data object AppCenter : ContentRoute
     data object GameCenter : ContentRoute
     data object Reviews : ContentRoute
+    data object Albums : ContentRoute
     data object ProductSelector : ContentRoute
     data object Messages : ContentRoute
     data class Compare(val configIds: List<String>, val titles: List<String>) : ContentRoute
@@ -206,6 +207,7 @@ internal fun CoolapkApp(
     val openAppCenter: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.AppCenter }
     val openGameCenter: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.GameCenter }
     val openReviews: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Reviews }
+    val openAlbums: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Albums }
     val openProductSelector: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.ProductSelector }
     val openMessages: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Messages }
 
@@ -371,6 +373,7 @@ internal fun CoolapkApp(
                             onOpenAppCenter = openAppCenter,
                             onOpenGameCenter = openGameCenter,
                             onOpenReviews = openReviews,
+                            onOpenAlbums = openAlbums,
                             onOpenOwnTab = { tab -> state.profile?.uid?.let { contentRoutes = contentRoutes + ContentRoute.User(it, tab) } },
                             onOpenSelector = openProductSelector,
                             onOpenSettings = openSettings,
@@ -500,6 +503,7 @@ internal fun CoolapkApp(
                         onBack = closeContent,
                     )
                     is ContentRoute.Events -> EventsScreen(onBack = closeContent)
+                    is ContentRoute.Albums -> AlbumsScreen(onBack = closeContent)
                     is ContentRoute.Reviews -> ReviewScreen(
                         onBack = closeContent,
                         onOpenFeed = { item -> openFeed(FeedRoute(item.id, item, false)) },

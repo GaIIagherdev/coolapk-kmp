@@ -919,6 +919,14 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    /// 相册列表，list_type 取 hot（热门）或 new（最新）。
+    pub fn get_album_list(&self, list_type: String, page: u32) -> Result<String, CoolapkError> {
+        let value = self
+            .runtime
+            .block_on(self.client.get_album_list(&list_type, page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     /// 板块动态列表，board_tag 形如 `#/board/数码测评`。
     pub fn get_board_feeds(&self, board_tag: String, page: u32) -> Result<String, CoolapkError> {
         let value = self

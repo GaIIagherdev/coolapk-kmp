@@ -267,6 +267,10 @@ class RustCoolapkGateway(
         )
     }
 
+    override suspend fun getAlbums(listType: String, page: Int): ListEntryPage = onCore {
+        listEntryParser.parsePage(core.getAlbumList(listType, page.coerceAtLeast(1).toUInt()))
+    }
+
     override suspend fun getBoardFeeds(boardTag: String, page: Int): HomePage = onCore {
         parser.parseHomePage(core.getBoardFeeds(boardTag, page.coerceAtLeast(1).toUInt()))
     }

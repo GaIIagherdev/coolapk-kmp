@@ -26,7 +26,7 @@
 | 直播详情 | `/live/:id` | ⬜ | |
 | 发布动态 | — | ✅ | 纯文本，媒体发布未做 |
 | 图片查看 | `/pictures` | ✅ | `ImageViewerDialog` |
-| 相册 | `/albums`、`/album/:id`、`/my-albums` | ⬜ | |
+| 相册 | `/albums`、`/album/:id`、`/my-albums` | 🟡 | 已接入热门与最新两个分类的相册列表，入口在“我的”页；真机上标题与简介正常，图片未加载（与活动、话题共用的图片字段待真实样本确认）；相册详情、我的相册未做 |
 | 活动列表与详情 | `/events`、`/event/:id` | 🟡 | 已接入活动列表，入口在“我的”页，真机上标题正常、图片未加载；活动详情未做；接口未经真实样本验证 |
 | 自定义列表（anylist） | `/anylist`、`/anylist/:id`、`/anylist/create` | ⬜ | |
 | 节点 / 论坛 | `/node/:type/:id` | ⬜ | |

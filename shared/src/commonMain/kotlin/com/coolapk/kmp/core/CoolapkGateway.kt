@@ -84,6 +84,10 @@ interface CoolapkGateway {
         cursor: HomeCursor? = null,
     ): HomePage = error("当前平台未提供问题回答接口")
 
+    /** 相册列表；listType 取 hot（热门）或 new（最新）。 */
+    suspend fun getAlbums(listType: String = "hot", page: Int = 1): ListEntryPage =
+        error("当前平台未提供相册接口")
+
     /** 板块动态列表，boardTag 形如 `#/board/数码测评`。 */
     suspend fun getBoardFeeds(boardTag: String, page: Int = 1): HomePage =
         error("当前平台未提供板块动态接口")

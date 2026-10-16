@@ -924,6 +924,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is
 // rather `InterfaceTooLargeException`, caused by too many methods
@@ -966,6 +968,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_fetch_external_page(
 fun uniffi_coolapk_core_checksum_method_coolapkcore_follow_collection(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_follow_user(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_album_list(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_app_detail(
 ): Short
@@ -1231,6 +1235,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_fetch_external_page(`ptr`: Pointer
 fun uniffi_coolapk_core_fn_method_coolapkcore_follow_collection(`ptr`: Pointer,`collectionId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_follow_user(`ptr`: Pointer,`uid`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_album_list(`ptr`: Pointer,`listType`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_app_detail(`ptr`: Pointer,`packageName`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1578,6 +1584,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_follow_user() != 61071.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_album_list() != 41711.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_app_detail() != 30073.toShort()) {
@@ -2282,6 +2291,11 @@ public interface CoolapkCoreInterface {
     fun `followUser`(`uid`: kotlin.String): kotlin.String
 
     /**
+     * 相册列表，list_type 取 hot（热门）或 new（最新）。
+     */
+    fun `getAlbumList`(`listType`: kotlin.String, `page`: kotlin.UInt): kotlin.String
+
+    /**
      * 应用详情保留原始实体，交由共享层按界面需要解析。
      */
     fun `getAppDetail`(`packageName`: kotlin.String): kotlin.String
@@ -2950,6 +2964,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_follow_user(
         it, FfiConverterString.lower(`uid`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 相册列表，list_type 取 hot（热门）或 new（最新）。
+     */
+    @Throws(CoolapkException::class)override fun `getAlbumList`(`listType`: kotlin.String, `page`: kotlin.UInt): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_album_list(
+        it, FfiConverterString.lower(`listType`),FfiConverterUInt.lower(`page`),_status)
 }
     }
     )
