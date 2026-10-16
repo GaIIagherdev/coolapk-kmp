@@ -586,17 +586,6 @@ class RustCoolapkGateway(
         detailParser.parseDetail(core.getFeedDetailWithToken(feedId, postToken, postTokenField))
     }
 
-    override suspend fun getWebFeedDetail(feedId: String): FeedItem = onCore {
-        val body = FeedDetailFallback.extractWebDetailJson(
-            core.fetchExternalPage(FeedDetailFallback.webDetailUrl(feedId)),
-        )
-        // 动态本身不可见时，服务端的说明比解析器的「缺少有效内容」有用得多
-        FeedDetailFallback.webDetailServerMessage(body)?.let { reason ->
-            throw FeedUnavailableException(reason)
-        }
-        detailParser.parseDetail(body)
-    }
-
     override suspend fun getFeedReplies(
         feedId: String,
         page: Int,

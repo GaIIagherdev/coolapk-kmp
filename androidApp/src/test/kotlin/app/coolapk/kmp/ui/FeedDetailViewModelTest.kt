@@ -46,7 +46,6 @@ class FeedDetailViewModelTest {
         assertEquals(CaptchaChallenge("abc12345", "_v2_post_token"), viewModel.state.value.captcha)
         assertNull(viewModel.state.value.detailError)
         assertTrue(gateway.tokenRequests.isEmpty())
-        assertTrue(gateway.webRequests.isEmpty())
     }
 
     @Test
@@ -71,11 +70,10 @@ class FeedDetailViewModelTest {
         runCurrent()
         assertEquals("100", viewModel.state.value.detail?.id)
         assertNull(viewModel.state.value.detailError)
-        assertTrue(gateway.webRequests.isEmpty())
     }
 
     @Test
-    fun dismissingCaptchaFallsBackToWebDetail() = runTest(dispatcher) {
+    fun dismissingCaptchaRequiresVerificationWithoutWebFallback() = runTest(dispatcher) {
         val gateway = FakeFeedDetailGateway()
         val viewModel = FeedDetailViewModel { HomeRepository(gateway) }
         viewModel.open("100", null)
@@ -87,16 +85,12 @@ class FeedDetailViewModelTest {
         runCurrent()
 
         assertNull(viewModel.state.value.captcha)
-        assertEquals(listOf("100"), gateway.webRequests)
-
-        gateway.completeWeb(0, feed("100"))
-        runCurrent()
-        assertEquals("100", viewModel.state.value.detail?.id)
-        assertNull(viewModel.state.value.detailError)
+        assertNull(viewModel.state.value.detail)
+        assertEquals("需要完成人机验证后才能查看此动态", viewModel.state.value.detailError)
     }
 
     @Test
-    fun failedTokenRetryStillFallsBackToWebDetail() = runTest(dispatcher) {
+    fun failedTokenRetryReportsVerificationNotAccepted() = runTest(dispatcher) {
         val gateway = FakeFeedDetailGateway()
         val viewModel = FeedDetailViewModel { HomeRepository(gateway) }
         viewModel.open("100", null)
@@ -109,46 +103,8 @@ class FeedDetailViewModelTest {
         gateway.failToken(0, IllegalStateException("""{"code":403,"messageStatus":"err_request_captcha_v2"}"""))
         runCurrent()
 
-        assertEquals(listOf("100"), gateway.webRequests)
-        gateway.completeWeb(0, feed("100"))
-        runCurrent()
-        assertEquals("100", viewModel.state.value.detail?.id)
-    }
-
-    @Test
-    fun webFallbackFailureSurfacesExplicitError() = runTest(dispatcher) {
-        val gateway = FakeFeedDetailGateway()
-        val viewModel = FeedDetailViewModel { HomeRepository(gateway) }
-        viewModel.open("100", null)
-        runCurrent()
-        gateway.failDetail(0, captchaError())
-        runCurrent()
-
-        viewModel.dismissCaptcha()
-        runCurrent()
-        gateway.failWeb(0, IllegalStateException("网页版页面不可用"))
-        runCurrent()
-
-        val message = viewModel.state.value.detailError
-        assertNotNull(message)
-        assertTrue(message!!.startsWith("网页版动态也未能加载："))
-    }
-
-    @Test
-    fun unavailableFeedShowsServerReasonWithoutWrapper() = runTest(dispatcher) {
-        val gateway = FakeFeedDetailGateway()
-        val viewModel = FeedDetailViewModel { HomeRepository(gateway) }
-        viewModel.open("100", null)
-        runCurrent()
-        gateway.failDetail(0, captchaError())
-        runCurrent()
-
-        viewModel.dismissCaptcha()
-        runCurrent()
-        gateway.failWeb(0, FeedUnavailableException("作者设置为仅半年内动态可见，无法查看"))
-        runCurrent()
-
-        assertEquals("作者设置为仅半年内动态可见，无法查看", viewModel.state.value.detailError)
+        assertNull(viewModel.state.value.detail)
+        assertEquals("人机验证未通过，请重新验证后再试", viewModel.state.value.detailError)
     }
 
     @Test
@@ -162,7 +118,6 @@ class FeedDetailViewModelTest {
 
         assertNull(viewModel.state.value.captcha)
         assertEquals("网络连接超时", viewModel.state.value.detailError)
-        assertTrue(gateway.webRequests.isEmpty())
     }
 
     private fun captchaError() = IllegalStateException(
@@ -176,8 +131,6 @@ private class FakeFeedDetailGateway : CoolapkGateway {
     private val detailReplies = mutableListOf<CompletableDeferred<FeedItem>>()
     val tokenRequests = mutableListOf<Triple<String, String, String>>()
     private val tokenReplies = mutableListOf<CompletableDeferred<FeedItem>>()
-    val webRequests = mutableListOf<String>()
-    private val webReplies = mutableListOf<CompletableDeferred<FeedItem>>()
 
     override suspend fun getFeedDetail(feedId: String): FeedItem =
         CompletableDeferred<FeedItem>().also(detailReplies::add).await()
@@ -191,11 +144,6 @@ private class FakeFeedDetailGateway : CoolapkGateway {
         return CompletableDeferred<FeedItem>().also(tokenReplies::add).await()
     }
 
-    override suspend fun getWebFeedDetail(feedId: String): FeedItem {
-        webRequests += feedId
-        return CompletableDeferred<FeedItem>().also(webReplies::add).await()
-    }
-
     fun failDetail(index: Int, error: Throwable) {
         detailReplies[index].completeExceptionally(error)
     }
@@ -206,14 +154,6 @@ private class FakeFeedDetailGateway : CoolapkGateway {
 
     fun failToken(index: Int, error: Throwable) {
         tokenReplies[index].completeExceptionally(error)
-    }
-
-    fun completeWeb(index: Int, item: FeedItem) {
-        webReplies[index].complete(item)
-    }
-
-    fun failWeb(index: Int, error: Throwable) {
-        webReplies[index].completeExceptionally(error)
     }
 
     override suspend fun getFeedReplies(

@@ -119,42 +119,16 @@ class FeedDetailViewModel(
                 }
                 .onFailure { error ->
                     if (generation != feedGeneration || request != detailRequest) return@onFailure
-                    Log.w(TAG, "带令牌重试详情失败，转网页版兜底 feedId=$feedId", error)
-                    loadWebFallback(feedId, generation)
+                    Log.w(TAG, "带令牌重试详情失败 feedId=$feedId", error)
+                    _state.update { it.copy(detailLoading = false, detailError = RETRY_NOT_ACCEPTED_MESSAGE) }
                 }
         }
     }
 
-    /** 用户取消人机验证，或验证流程不可用时，直接改用网页版入口。 */
+    /** 用户取消人机验证：不提供绕过途径，动态保持未加载，并提示需要完成验证。 */
     fun dismissCaptcha() {
         if (_state.value.captcha == null) return
-        val feedId = _state.value.feedId.takeIf(String::isNotBlank) ?: return
-        _state.update { it.copy(captcha = null) }
-        loadWebFallback(feedId, feedGeneration)
-    }
-
-    /** 详情接口与令牌重试都不可用时的只读兜底：酷安网页版入口在 XHR 头下直接返回 JSON。 */
-    private fun loadWebFallback(feedId: String, generation: Int) {
-        val request = ++detailRequest
-        _state.update { it.copy(detailLoading = true, detailError = null) }
-        viewModelScope.launch {
-            runCatching { repository?.loadWebFeedDetail(feedId) ?: error("数据服务尚未就绪") }
-                .onSuccess { detail ->
-                    if (generation != feedGeneration || request != detailRequest) return@onSuccess
-                    _state.update { it.copy(detail = detail, detailLoading = false, detailError = null) }
-                }
-                .onFailure { error ->
-                    if (generation != feedGeneration || request != detailRequest) return@onFailure
-                    Log.w(TAG, "网页版兜底失败 feedId=$feedId", error)
-                    // 服务端已说明动态不可见时，直接展示原话，不再套兜底失败的包装
-                    val message = if (error is FeedUnavailableException) {
-                        error.displayMessage()
-                    } else {
-                        "网页版动态也未能加载：${error.displayMessage()}"
-                    }
-                    _state.update { it.copy(detailLoading = false, detailError = message) }
-                }
-        }
+        _state.update { it.copy(captcha = null, detailLoading = false, detailError = VERIFY_REQUIRED_MESSAGE) }
     }
 
     fun selectSort(sort: ReplySort) {
@@ -357,6 +331,8 @@ class FeedDetailViewModel(
 }
 
 private const val TAG = "FeedDetailViewModel"
+private const val VERIFY_REQUIRED_MESSAGE = "需要完成人机验证后才能查看此动态"
+private const val RETRY_NOT_ACCEPTED_MESSAGE = "人机验证未通过，请重新验证后再试"
 
 private fun Throwable.displayMessage(): String =
     message?.takeIf(String::isNotBlank) ?: "动态加载失败"

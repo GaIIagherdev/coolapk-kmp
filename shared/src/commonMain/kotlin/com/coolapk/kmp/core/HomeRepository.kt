@@ -206,8 +206,6 @@ class HomeRepository(
         postTokenField: String,
     ): FeedItem = gateway.getFeedDetailWithToken(feedId, postToken, postTokenField)
 
-    suspend fun loadWebFeedDetail(feedId: String): FeedItem = gateway.getWebFeedDetail(feedId)
-
     suspend fun loadFeedReplies(
         feedId: String,
         page: Int = 1,

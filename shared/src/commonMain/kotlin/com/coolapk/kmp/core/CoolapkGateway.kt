@@ -297,10 +297,6 @@ interface CoolapkGateway {
         postTokenField: String,
     ): FeedItem = error("当前平台未提供人机验证重试接口")
 
-    /** 网页版动态入口兜底，用于验证码无法通过时仍能读到完整动态。 */
-    suspend fun getWebFeedDetail(feedId: String): FeedItem =
-        error("当前平台未提供网页版动态详情兜底")
-
     suspend fun getFeedReplies(
         feedId: String,
         page: Int = 1,
