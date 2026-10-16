@@ -311,6 +311,12 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    /// 产品配置（型号参数），用于产品对比。
+    pub fn get_product_config(&self, config_id: String) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_product_config(&config_id))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     /// 发送私信（文字）。
     pub fn send_private_message(&self, uid: String, message: String) -> Result<String, CoolapkError> {
         let value = self.runtime.block_on(self.client.send_private_message(&uid, &message))?;

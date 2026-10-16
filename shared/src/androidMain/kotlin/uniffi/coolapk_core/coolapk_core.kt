@@ -874,6 +874,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is
 // rather `InterfaceTooLargeException`, caused by too many methods
@@ -962,6 +964,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_brand_products(
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_buy_list(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_category_list(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_config(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_detail(
 ): Short
@@ -1177,6 +1181,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_brand_products(`ptr`: 
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_buy_list(`ptr`: Pointer,`productId`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_category_list(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_config(`ptr`: Pointer,`configId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_detail(`ptr`: Pointer,`productId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1497,6 +1503,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_product_category_list() != 51644.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_product_config() != 39825.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_product_detail() != 8213.toShort()) {
@@ -2158,6 +2167,11 @@ public interface CoolapkCoreInterface {
     fun `getProductBuyList`(`productId`: kotlin.String, `page`: kotlin.UInt): kotlin.String
 
     fun `getProductCategoryList`(): kotlin.String
+
+    /**
+     * 产品配置（型号参数），用于产品对比。
+     */
+    fun `getProductConfig`(`configId`: kotlin.String): kotlin.String
 
     fun `getProductDetail`(`productId`: kotlin.String): kotlin.String
 
@@ -2983,6 +2997,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_product_category_list(
         it, _status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 产品配置（型号参数），用于产品对比。
+     */
+    @Throws(CoolapkException::class)override fun `getProductConfig`(`configId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_product_config(
+        it, FfiConverterString.lower(`configId`),_status)
 }
     }
     )
