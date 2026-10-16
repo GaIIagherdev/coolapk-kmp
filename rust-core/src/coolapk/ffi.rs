@@ -899,6 +899,21 @@ impl CoolapkCore {
             .block_on(self.client.remove_from_black_list(&uid))?;
         Ok(serde_json::to_string(&value)?)
     }
+
+    /// 浏览历史（混合类型：动态、用户、话题、应用等）；first_item / last_item 为空字符串时不带游标。
+    pub fn get_recent_history(
+        &self,
+        page: u32,
+        first_item: String,
+        last_item: String,
+    ) -> Result<String, CoolapkError> {
+        let first = Some(first_item.as_str()).filter(|value| !value.is_empty());
+        let last = Some(last_item.as_str()).filter(|value| !value.is_empty());
+        let value = self
+            .runtime
+            .block_on(self.client.get_recent_history(page, first, last))?;
+        Ok(serde_json::to_string(&value)?)
+    }
 }
 
 #[cfg(test)]

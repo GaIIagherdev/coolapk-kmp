@@ -910,6 +910,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is
 // rather `InterfaceTooLargeException`, caused by too many methods
@@ -1040,6 +1042,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_versions(
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_product_wish_list(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_recent_chat_users(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_recent_history(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_session_cookie(
 ): Short
@@ -1291,6 +1295,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_versions(`ptr`: Pointe
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_product_wish_list(`ptr`: Pointer,`productId`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_recent_chat_users(`ptr`: Pointer,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_recent_history(`ptr`: Pointer,`page`: Int,`firstItem`: RustBuffer.ByValue,`lastItem`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_session_cookie(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1668,6 +1674,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_recent_chat_users() != 433.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_recent_history() != 26357.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_session_cookie() != 39393.toShort()) {
@@ -2404,6 +2413,11 @@ public interface CoolapkCoreInterface {
      * 最近聊天的用户（会话列表）。
      */
     fun `getRecentChatUsers`(`page`: kotlin.UInt): kotlin.String
+
+    /**
+     * 浏览历史（混合类型：动态、用户、话题、应用等）；first_item / last_item 为空字符串时不带游标。
+     */
+    fun `getRecentHistory`(`page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String
 
     fun `getSessionCookie`(): kotlin.String?
 
@@ -3523,6 +3537,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_recent_chat_users(
         it, FfiConverterUInt.lower(`page`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 浏览历史（混合类型：动态、用户、话题、应用等）；first_item / last_item 为空字符串时不带游标。
+     */
+    @Throws(CoolapkException::class)override fun `getRecentHistory`(`page`: kotlin.UInt, `firstItem`: kotlin.String, `lastItem`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_recent_history(
+        it, FfiConverterUInt.lower(`page`),FfiConverterString.lower(`firstItem`),FfiConverterString.lower(`lastItem`),_status)
 }
     }
     )

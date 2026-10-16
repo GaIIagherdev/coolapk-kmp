@@ -347,6 +347,16 @@ class RustCoolapkGateway(
         parser.parseHomePage(core.getUserLiked(uid, page.coerceAtLeast(1).toUInt()))
     }
 
+    override suspend fun getRecentHistory(page: Int, cursor: HomeCursor?): HomePage = onCore {
+        parser.parseHomePage(
+            core.getRecentHistory(
+                page.coerceAtLeast(1).toUInt(),
+                cursor?.firstItem.orEmpty(),
+                cursor?.lastItem.orEmpty(),
+            ),
+        )
+    }
+
     override suspend fun getFavoriteFeeds(page: Int, cursor: HomeCursor?): HomePage = onCore {
         parser.parseHomePage(
             core.getFavoriteList(

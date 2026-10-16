@@ -171,7 +171,7 @@ private fun CollectionList(
 
 /** 通用分页容器：处理首次加载、错误、空态、加载更多。 */
 @Composable
-private fun <T> PagedColumn(
+internal fun <T> PagedColumn(
     list: PagedListState<T>,
     emptyTitle: String,
     emptyDetail: String,

@@ -161,6 +161,10 @@ interface CoolapkGateway {
     suspend fun getUserLiked(uid: String, page: Int = 1): HomePage =
         error("当前平台未提供用户赞过接口")
 
+    /** 浏览历史中的动态（其他类型暂未解析）。 */
+    suspend fun getRecentHistory(page: Int = 1, cursor: HomeCursor? = null): HomePage =
+        error("当前平台未提供浏览历史接口")
+
     /** 当前账号收藏的动态，需要登录。 */
     suspend fun getFavoriteFeeds(page: Int = 1, cursor: HomeCursor? = null): HomePage =
         error("当前平台未提供收藏动态接口")

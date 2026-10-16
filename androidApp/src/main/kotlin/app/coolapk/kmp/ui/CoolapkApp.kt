@@ -125,6 +125,7 @@ private sealed interface ContentRoute {
     data object MyGoods : ContentRoute
     data object Favorites : ContentRoute
     data object Blacklist : ContentRoute
+    data object History : ContentRoute
     data object ProductSelector : ContentRoute
     data object Messages : ContentRoute
     data class Compare(val configIds: List<String>, val titles: List<String>) : ContentRoute
@@ -192,6 +193,7 @@ internal fun CoolapkApp(
     val openMyGoods: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.MyGoods }
     val openFavorites: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Favorites }
     val openBlacklist: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Blacklist }
+    val openHistory: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.History }
     val openProductSelector: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.ProductSelector }
     val openMessages: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Messages }
 
@@ -351,6 +353,7 @@ internal fun CoolapkApp(
                             onOpenGoods = openMyGoods,
                             onOpenFavorites = openFavorites,
                             onOpenBlacklist = openBlacklist,
+                            onOpenHistory = openHistory,
                             onOpenOwnTab = { tab -> state.profile?.uid?.let { contentRoutes = contentRoutes + ContentRoute.User(it, tab) } },
                             onOpenSelector = openProductSelector,
                             onOpenSettings = openSettings,
@@ -477,6 +480,12 @@ internal fun CoolapkApp(
                     is ContentRoute.ProfileEdit -> ProfileEditScreen(
                         profile = route.profile,
                         onBack = closeContent,
+                    )
+                    is ContentRoute.History -> HistoryScreen(
+                        onBack = closeContent,
+                        onOpenFeed = { item -> openFeed(FeedRoute(item.id, item, false)) },
+                        onLike = viewModel::toggleLike,
+                        likeOverrides = state.likeOverrides,
                     )
                     is ContentRoute.Blacklist -> BlacklistScreen(
                         onBack = closeContent,
