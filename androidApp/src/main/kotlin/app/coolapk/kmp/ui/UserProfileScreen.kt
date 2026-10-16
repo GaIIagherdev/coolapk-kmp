@@ -1,5 +1,12 @@
 package app.coolapk.kmp.ui
 
+import androidx.core.view.WindowCompat
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.runtime.DisposableEffect
+import android.app.Activity
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.material3.IconButtonDefaults
@@ -407,9 +414,19 @@ internal fun UserProfileScreen(
                     listState.firstVisibleItemScrollOffset > with(density) { 150.dp.toPx() }
             }
         }
+        // 封面可见时状态栏图标用浅色，滚出封面后恢复深色；离开页面时还原
+        val view = LocalView.current
+        DisposableEffect(scrolled) {
+            val controller = (view.context as? Activity)?.window?.let { WindowCompat.getInsetsController(it, view) }
+            val previous = controller?.isAppearanceLightStatusBars
+            controller?.isAppearanceLightStatusBars = scrolled
+            onDispose {
+                if (controller != null && previous != null) controller.isAppearanceLightStatusBars = previous
+            }
+        }
         val isOwnTop = uid == null || uid == selfUid
         val buttonColors = IconButtonDefaults.iconButtonColors(
-            containerColor = if (scrolled) Color.Transparent else MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
+            containerColor = if (scrolled) Color.Transparent else MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface,
         )
         Scaffold(
@@ -496,6 +513,14 @@ private fun ProfileHeaderCard(
                     )
                 }
             }
+            // 状态栏区域压一层淡色遮罩，保证状态栏图标在封面上可读
+            Box(
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .windowInsetsTopHeight(WindowInsets.statusBars)
+                    .background(Color.Black.copy(alpha = 0.3f)),
+            )
             Box(
                 Modifier
                     .align(Alignment.BottomStart)
@@ -617,6 +642,7 @@ private fun ProfileHeaderCard(
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
+                itemVerticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
@@ -682,7 +708,7 @@ private fun ProfileHeaderCard(
                 shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
             ) {
-                Row(Modifier.fillMaxWidth().padding(vertical = 14.dp)) {
+                Row(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
                     ProfileStatCell("获赞", profile.likeCount, Modifier.weight(1f))
                     VerticalDivider(Modifier.height(32.dp).align(Alignment.CenterVertically), color = MaterialTheme.colorScheme.outlineVariant)
                     ProfileStatCell("关注", profile.followingCount, Modifier.weight(1f), onClick = { onOpenRelations(RelationKind.FOLLOW) })
@@ -939,15 +965,18 @@ private fun registerDaysLabel(regDate: Long?, now: Long): String? {
 
 @Composable
 private fun ProfileStatCell(label: String, value: Int?, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
-    Column(
-        modifier = if (onClick != null) modifier.clickable(onClick = onClick) else modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
+    // 数字与文字同一行，压缩统计区的高度
+    Row(
+        modifier = (if (onClick != null) modifier.clickable(onClick = onClick) else modifier).padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = value?.formatCompact() ?: "--",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
+        Spacer(Modifier.width(4.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
