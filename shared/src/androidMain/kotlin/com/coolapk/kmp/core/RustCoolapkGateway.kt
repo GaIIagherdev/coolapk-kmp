@@ -267,6 +267,10 @@ class RustCoolapkGateway(
         )
     }
 
+    override suspend fun getGamePage(page: Int, type: String): AppPage = onCore {
+        appParser.parsePage(core.getGameList(page.coerceAtLeast(1).toUInt(), type))
+    }
+
     override suspend fun getEvents(page: Int): ListEntryPage = onCore {
         listEntryParser.parsePage(core.getEventList(page.coerceAtLeast(1).toUInt()))
     }

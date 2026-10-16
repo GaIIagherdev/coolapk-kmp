@@ -920,6 +920,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is
 // rather `InterfaceTooLargeException`, caused by too many methods
@@ -998,6 +1000,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_get_feed_replies(
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_follow_user_list(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_followed_topics(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_game_list(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_goods_store_items(
 ): Short
@@ -1259,6 +1263,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_get_feed_replies(`ptr`: Pointer,`f
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_follow_user_list(`ptr`: Pointer,`uid`: RustBuffer.ByValue,`page`: Int,`category`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_followed_topics(`ptr`: Pointer,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_game_list(`ptr`: Pointer,`page`: Int,`gameType`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_goods_store_items(`ptr`: Pointer,`uid`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1620,6 +1626,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_followed_topics() != 56959.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_game_list() != 54624.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_goods_store_items() != 55549.toShort()) {
@@ -2343,6 +2352,11 @@ public interface CoolapkCoreInterface {
      * 用户关注的话题列表。
      */
     fun `getFollowedTopics`(`page`: kotlin.UInt): kotlin.String
+
+    /**
+     * 游戏列表，game_type 取 hot、new、single、online、casual、indie。
+     */
+    fun `getGameList`(`page`: kotlin.UInt, `gameType`: kotlin.String): kotlin.String
 
     /**
      * 我的商品店铺列表。
@@ -3201,6 +3215,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_followed_topics(
         it, FfiConverterUInt.lower(`page`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 游戏列表，game_type 取 hot、new、single、online、casual、indie。
+     */
+    @Throws(CoolapkException::class)override fun `getGameList`(`page`: kotlin.UInt, `gameType`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_game_list(
+        it, FfiConverterUInt.lower(`page`),FfiConverterString.lower(`gameType`),_status)
 }
     }
     )

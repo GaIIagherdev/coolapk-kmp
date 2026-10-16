@@ -130,6 +130,7 @@ private sealed interface ContentRoute {
     data class Question(val id: String) : ContentRoute
     data object Events : ContentRoute
     data object AppCenter : ContentRoute
+    data object GameCenter : ContentRoute
     data object ProductSelector : ContentRoute
     data object Messages : ContentRoute
     data class Compare(val configIds: List<String>, val titles: List<String>) : ContentRoute
@@ -202,6 +203,7 @@ internal fun CoolapkApp(
     val openQuestion: (String) -> Unit = { id -> contentRoutes = contentRoutes + ContentRoute.Question(id) }
     val openEvents: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Events }
     val openAppCenter: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.AppCenter }
+    val openGameCenter: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.GameCenter }
     val openProductSelector: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.ProductSelector }
     val openMessages: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Messages }
 
@@ -365,6 +367,7 @@ internal fun CoolapkApp(
                             onOpenFollowed = openFollowed,
                             onOpenEvents = openEvents,
                             onOpenAppCenter = openAppCenter,
+                            onOpenGameCenter = openGameCenter,
                             onOpenOwnTab = { tab -> state.profile?.uid?.let { contentRoutes = contentRoutes + ContentRoute.User(it, tab) } },
                             onOpenSelector = openProductSelector,
                             onOpenSettings = openSettings,
@@ -494,6 +497,10 @@ internal fun CoolapkApp(
                         onBack = closeContent,
                     )
                     is ContentRoute.Events -> EventsScreen(onBack = closeContent)
+                    is ContentRoute.GameCenter -> GameCenterScreen(
+                        onBack = closeContent,
+                        onOpenApp = { app -> openedApp = app },
+                    )
                     is ContentRoute.AppCenter -> AppCenterScreen(
                         onBack = closeContent,
                         onOpenApp = { app -> openedApp = app },
