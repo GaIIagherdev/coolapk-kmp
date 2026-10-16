@@ -105,6 +105,15 @@ interface CoolapkGateway {
     suspend fun getUserFeedsTyped(uid: String, feedType: String, page: Int = 1): HomePage =
         error("当前平台未提供用户分类动态接口")
 
+    suspend fun getRecentChats(page: Int = 1): List<ChatSession> = error("当前平台未提供私信会话接口")
+
+    suspend fun getChatHistory(ukey: String, page: Int = 1, firstItem: String? = null, lastItem: String? = null): ChatMessagePage =
+        error("当前平台未提供聊天记录接口")
+
+    suspend fun markChatRead(ukey: String): Result<Unit> = Result.failure(IllegalStateException("当前平台未提供已读接口"))
+
+    suspend fun deleteChat(ukey: String): Result<Unit> = Result.failure(IllegalStateException("当前平台未提供删除会话接口"))
+
     suspend fun getProductFeeds(productId: String, feedType: String = "feed", page: Int = 1): HomePage =
         error("当前平台未提供产品动态接口")
 

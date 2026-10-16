@@ -32,6 +32,7 @@ class RustCoolapkGateway(
     private val productInteractionParser: ProductInteractionJsonParser = ProductInteractionJsonParser(),
     private val userListParser: UserListJsonParser = UserListJsonParser(),
     private val userHomeParser: UserHomeJsonParser = UserHomeJsonParser(),
+    private val chatParser: ChatJsonParser = ChatJsonParser(),
     private val searchParser: SearchJsonParser = SearchJsonParser(),
     private val topicParser: TopicJsonParser = TopicJsonParser(),
     private val notificationListParser: NotificationListJsonParser = NotificationListJsonParser(),
@@ -212,6 +213,22 @@ class RustCoolapkGateway(
         digitalParser.parsePage(
             core.getUserTabData(uid, tab, page.coerceAtLeast(1).toUInt(), firstItem.orEmpty(), lastItem.orEmpty()),
         )
+    }
+
+    override suspend fun getRecentChats(page: Int): List<ChatSession> = onCore {
+        chatParser.parseSessions(core.getRecentChatUsers(page.coerceAtLeast(1).toUInt()))
+    }
+
+    override suspend fun getChatHistory(ukey: String, page: Int, firstItem: String?, lastItem: String?): ChatMessagePage = onCore {
+        chatParser.parseHistory(core.listChatHistory(ukey, page.coerceAtLeast(1).toUInt(), firstItem.orEmpty(), lastItem.orEmpty()))
+    }
+
+    override suspend fun markChatRead(ukey: String): Result<Unit> = runCatching {
+        onCore<Unit> { core.readMessage(ukey) }
+    }
+
+    override suspend fun deleteChat(ukey: String): Result<Unit> = runCatching {
+        onCore<Unit> { core.deleteMessageChat(ukey) }
     }
 
     override suspend fun getUserFeedsTyped(uid: String, feedType: String, page: Int): HomePage = onCore {

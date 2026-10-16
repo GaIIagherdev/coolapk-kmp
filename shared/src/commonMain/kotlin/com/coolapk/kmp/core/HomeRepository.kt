@@ -69,6 +69,15 @@ class HomeRepository(
 
     suspend fun loadUserHomeRows(uid: String): List<HomeCardRow> = gateway.getUserHomeRows(uid)
 
+    suspend fun loadRecentChats(page: Int = 1): List<ChatSession> = gateway.getRecentChats(page)
+
+    suspend fun loadChatHistory(ukey: String, page: Int = 1, firstItem: String? = null, lastItem: String? = null): ChatMessagePage =
+        gateway.getChatHistory(ukey, page, firstItem, lastItem)
+
+    suspend fun markChatRead(ukey: String): Result<Unit> = gateway.markChatRead(ukey)
+
+    suspend fun deleteChat(ukey: String): Result<Unit> = gateway.deleteChat(ukey)
+
     suspend fun loadUserFeedsTyped(uid: String, feedType: String, page: Int = 1): HomePage =
         gateway.getUserFeedsTyped(uid, feedType, page)
 
