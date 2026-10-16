@@ -72,6 +72,7 @@ internal fun DiscoveryScreen(
     onOpenFeed: (String, FeedItem?, Boolean) -> Unit,
     onOpenApp: (String, String) -> Unit,
     onOpenImage: (List<String>, Int) -> Unit,
+    onOpenMore: () -> Unit,
     fallbackContent: @Composable () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -122,6 +123,14 @@ internal fun DiscoveryScreen(
     }
 
     Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(
+            modifier = Modifier.widthIn(max = 900.dp).fillMaxWidth().padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            TextButton(onClick = onOpenMore, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text("更多内容")
+            }
+        }
         SecondaryScrollableTabRow(
             selectedTabIndex = selectedIndex,
             modifier = Modifier.widthIn(max = 900.dp).fillMaxWidth(),

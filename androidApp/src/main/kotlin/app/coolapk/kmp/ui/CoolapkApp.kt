@@ -129,6 +129,7 @@ private sealed interface ContentRoute {
     data object Followed : ContentRoute
     data class Question(val id: String) : ContentRoute
     data object Events : ContentRoute
+    data object More : ContentRoute
     data object AppCenter : ContentRoute
     data object GameCenter : ContentRoute
     data object Reviews : ContentRoute
@@ -207,6 +208,7 @@ internal fun CoolapkApp(
     val openFollowed: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Followed }
     val openQuestion: (String) -> Unit = { id -> contentRoutes = contentRoutes + ContentRoute.Question(id) }
     val openEvents: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Events }
+    val openMore: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.More }
     val openAppCenter: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.AppCenter }
     val openGameCenter: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.GameCenter }
     val openReviews: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Reviews }
@@ -334,6 +336,7 @@ internal fun CoolapkApp(
                         )
                         3 -> DiscoveryScreen(
                             viewModel = discoveryViewModel,
+                            onOpenMore = openMore,
                             feedState = state,
                             onLike = viewModel::toggleLike,
                             onOpenFeed = { id, preview, comments ->
@@ -373,14 +376,7 @@ internal fun CoolapkApp(
                             onOpenBlacklist = openBlacklist,
                             onOpenHistory = openHistory,
                             onOpenFollowed = openFollowed,
-                            onOpenEvents = openEvents,
-                            onOpenAppCenter = openAppCenter,
-                            onOpenGameCenter = openGameCenter,
-                            onOpenReviews = openReviews,
-                            onOpenAlbums = openAlbums,
-                            onOpenSecondHand = openSecondHand,
                             onOpenOwnTab = { tab -> state.profile?.uid?.let { contentRoutes = contentRoutes + ContentRoute.User(it, tab) } },
-                            onOpenSelector = openProductSelector,
                             onOpenSettings = openSettings,
                             onOpenMessages = openMessages,
                             onOpenNotifications = { notificationsOpen = true },
@@ -506,6 +502,16 @@ internal fun CoolapkApp(
                     is ContentRoute.ProfileEdit -> ProfileEditScreen(
                         profile = route.profile,
                         onBack = closeContent,
+                    )
+                    is ContentRoute.More -> MoreScreen(
+                        onBack = closeContent,
+                        onOpenAppCenter = openAppCenter,
+                        onOpenGameCenter = openGameCenter,
+                        onOpenSelector = openProductSelector,
+                        onOpenSecondHand = openSecondHand,
+                        onOpenReviews = openReviews,
+                        onOpenEvents = openEvents,
+                        onOpenAlbums = openAlbums,
                     )
                     is ContentRoute.Events -> EventsScreen(onBack = closeContent)
                     is ContentRoute.Albums -> AlbumsScreen(onBack = closeContent)
