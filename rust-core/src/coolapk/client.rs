@@ -1870,14 +1870,13 @@ impl CoolapkClient {
         query: &[(&str, String)],
         guest: bool,
     ) -> Result<Value, String> {
-        let response = if guest {
+        // 与参考项目一致：列表接口不在这里校验返回码，由调用方按数据内容判断。
+        if guest {
             self.public_api_get_from("https://api.coolapk.com", path, query)
                 .await
         } else {
             self.api_get(path, query).await
-        }?;
-        ensure_api_success(&response)?;
-        Ok(response)
+        }
     }
 
     async fn public_api_get_from(

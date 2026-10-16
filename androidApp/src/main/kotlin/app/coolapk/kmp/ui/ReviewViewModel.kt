@@ -74,7 +74,13 @@ internal class ReviewViewModel(
         viewModelScope.launch {
             try {
                 val (result, notice) = try {
-                    source.loadBoardFeeds(board.boardTag, page) to null
+                    val boardResult = source.loadBoardFeeds(board.boardTag, page)
+                    // 与参考项目一致：板块首页为空时回退到热门动态，并明确提示。
+                    if (page == 1 && boardResult.items.isEmpty()) {
+                        source.load(FeedChannel.HOT, 1) to "板块暂无内容，已显示热门动态"
+                    } else {
+                        boardResult to null
+                    }
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (failure: Exception) {
