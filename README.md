@@ -18,13 +18,27 @@
 
 ## 界面预览
 
-<p align="center">
-  <img src="docs/screenshots/discover.png" width="150" alt="发现页">
-  <img src="docs/screenshots/more.png" width="150" alt="更多页">
-  <img src="docs/screenshots/games.png" width="150" alt="游戏中心">
-  <img src="docs/screenshots/apps.png" width="150" alt="应用中心">
-  <img src="docs/screenshots/events.png" width="150" alt="活动列表">
-</p>
+以下截图来自 Android 端真机，均为公开内容；涉及账号的页面已对昵称、UID、头像和统计数量做模糊处理。
+
+| 首页 | 首页 · 深色 | 数码 | 数码 · 深色 |
+| :---: | :---: | :---: | :---: |
+| <a href="docs/screenshots/home.png"><img src="docs/screenshots/home.png" width="180" alt="首页"></a> | <a href="docs/screenshots/home-dark.png"><img src="docs/screenshots/home-dark.png" width="180" alt="首页深色"></a> | <a href="docs/screenshots/digital.png"><img src="docs/screenshots/digital.png" width="180" alt="数码"></a> | <a href="docs/screenshots/digital-dark.png"><img src="docs/screenshots/digital-dark.png" width="180" alt="数码深色"></a> |
+
+| 发现 | 更多 | 应用中心 | 游戏中心 |
+| :---: | :---: | :---: | :---: |
+| <a href="docs/screenshots/discover.png"><img src="docs/screenshots/discover.png" width="180" alt="发现"></a> | <a href="docs/screenshots/more.png"><img src="docs/screenshots/more.png" width="180" alt="更多"></a> | <a href="docs/screenshots/apps.png"><img src="docs/screenshots/apps.png" width="180" alt="应用中心"></a> | <a href="docs/screenshots/games.png"><img src="docs/screenshots/games.png" width="180" alt="游戏中心"></a> |
+
+| 评测专区 | 二手市场 | 酷友圈活动 | 产品详情 |
+| :---: | :---: | :---: | :---: |
+| <a href="docs/screenshots/reviews.png"><img src="docs/screenshots/reviews.png" width="180" alt="评测专区"></a> | <a href="docs/screenshots/secondhand.png"><img src="docs/screenshots/secondhand.png" width="180" alt="二手市场"></a> | <a href="docs/screenshots/events.png"><img src="docs/screenshots/events.png" width="180" alt="酷友圈活动"></a> | <a href="docs/screenshots/product-detail.png"><img src="docs/screenshots/product-detail.png" width="180" alt="产品详情"></a> |
+
+| 应用详情 | 搜索 | 搜索结果 | 话题详情 |
+| :---: | :---: | :---: | :---: |
+| <a href="docs/screenshots/app-detail.png"><img src="docs/screenshots/app-detail.png" width="180" alt="应用详情"></a> | <a href="docs/screenshots/search.png"><img src="docs/screenshots/search.png" width="180" alt="搜索"></a> | <a href="docs/screenshots/search-results.png"><img src="docs/screenshots/search-results.png" width="180" alt="搜索结果"></a> | <a href="docs/screenshots/topic.png"><img src="docs/screenshots/topic.png" width="180" alt="话题详情"></a> |
+
+| 我的 | 收藏的动态 | 收藏单 | 设置 |
+| :---: | :---: | :---: | :---: |
+| <a href="docs/screenshots/my.png"><img src="docs/screenshots/my.png" width="180" alt="我的"></a> | <a href="docs/screenshots/favorites.png"><img src="docs/screenshots/favorites.png" width="180" alt="收藏的动态"></a> | <a href="docs/screenshots/collections.png"><img src="docs/screenshots/collections.png" width="180" alt="收藏单"></a> | <a href="docs/screenshots/settings.png"><img src="docs/screenshots/settings.png" width="180" alt="设置"></a> |
 
 ## 模块
 
