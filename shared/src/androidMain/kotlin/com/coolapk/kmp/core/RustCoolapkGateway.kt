@@ -4,6 +4,7 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import android.util.Log
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -17,6 +18,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
 import uniffi.coolapk_core.CoolapkCore
 import uniffi.coolapk_core.CoolapkException
+
+private const val TAG = "RustCoolapkGateway"
 
 class RustCoolapkGateway(
     context: Context? = null,
@@ -670,15 +673,24 @@ private class SecureSessionStore(context: Context) {
         }
     }
 
-    fun read(): String? = runCatching {
-        val encoded = preferences.getString(KEY_COOKIE, null) ?: return null
-        val encrypted = Base64.decode(encoded, Base64.NO_WRAP)
-        val iv = encrypted.copyOfRange(0, GCM_IV_LENGTH)
-        val payload = encrypted.copyOfRange(GCM_IV_LENGTH, encrypted.size)
-        val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.DECRYPT_MODE, secretKey(), GCMParameterSpec(GCM_TAG_LENGTH, iv))
-        String(cipher.doFinal(payload), Charsets.UTF_8)
-    }.getOrNull()
+    fun read(): String? {
+        val encoded = preferences.getString(KEY_COOKIE, null)
+        if (encoded == null) {
+            Log.i(TAG, "登录凭据：本地没有保存的凭据")
+            return null
+        }
+        return runCatching {
+            val encrypted = Base64.decode(encoded, Base64.NO_WRAP)
+            val iv = encrypted.copyOfRange(0, GCM_IV_LENGTH)
+            val payload = encrypted.copyOfRange(GCM_IV_LENGTH, encrypted.size)
+            val cipher = Cipher.getInstance(TRANSFORMATION)
+            cipher.init(Cipher.DECRYPT_MODE, secretKey(), GCMParameterSpec(GCM_TAG_LENGTH, iv))
+            String(cipher.doFinal(payload), Charsets.UTF_8)
+        }.onFailure { error ->
+            // 解密失败时不再静默丢弃，便于区分“本地凭据读取失败”与“服务端会话过期”
+            Log.w(TAG, "登录凭据：解密失败，按未登录处理", error)
+        }.getOrNull()
+    }
 
     fun clear() {
         check(preferences.edit().remove(KEY_COOKIE).commit()) {
