@@ -83,8 +83,6 @@ import com.coolapk.kmp.core.DigitalEntity
 import com.coolapk.kmp.core.DigitalTab
 import com.coolapk.kmp.core.FeedItem
 import kotlinx.coroutines.flow.distinctUntilChanged
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.rounded.Compare
 import androidx.compose.material3.FilledTonalIconButton
@@ -223,41 +221,25 @@ private fun DigitalChannels(
 
     Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
         DigitalHeader(onSearch = onSearch, onCompare = onCompare)
-        // 频道：胶囊分段控件，选中项用浅色底，可横向滚动
-        Surface(
-            modifier = Modifier.widthIn(max = 900.dp).fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        // 频道：与发现、收藏等页面一致的标准 M3 二级标签栏，可横向滚动
+        SecondaryScrollableTabRow(
+            selectedTabIndex = selectedIndex,
+            modifier = Modifier.widthIn(max = 900.dp).fillMaxWidth(),
+            edgePadding = 16.dp,
         ) {
-            Row(
-                Modifier.horizontalScroll(rememberScrollState()).padding(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                state.tabs.forEachIndexed { index, tab ->
-                    val selected = index == selectedIndex
-                    Surface(
-                        onClick = {
-                            val webUrl = tab.webUrl?.takeIf { it.startsWith("http") }
-                            if (webUrl != null) {
-                                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(webUrl))) }
-                            } else {
-                                viewModel.selectTab(tab)
-                            }
-                        },
-                        shape = CircleShape,
-                        color = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-                        contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                    ) {
-                        Text(
-                            tab.title,
-                            modifier = Modifier.heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 8.dp),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
+            state.tabs.forEachIndexed { index, tab ->
+                Tab(
+                    selected = index == selectedIndex,
+                    onClick = {
+                        val webUrl = tab.webUrl?.takeIf { it.startsWith("http") }
+                        if (webUrl != null) {
+                            runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(webUrl))) }
+                        } else {
+                            viewModel.selectTab(tab)
+                        }
+                    },
+                    text = { Text(tab.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                )
             }
         }
         HorizontalPager(
