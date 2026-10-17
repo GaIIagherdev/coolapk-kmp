@@ -43,6 +43,7 @@ class RustCoolapkGateway(
     private val detailParser: FeedDetailJsonParser = FeedDetailJsonParser(),
     private val collectionParser: CollectionJsonParser = CollectionJsonParser(),
     private val listEntryParser: ListEntryJsonParser = ListEntryJsonParser(),
+    private val goodsItemParser: GoodsListItemJsonParser = GoodsListItemJsonParser(),
     private val historyParser: HistoryJsonParser = HistoryJsonParser(),
 ) : CoolapkGateway {
     private val sessionStore = context?.let(::SecureSessionStore)
@@ -269,6 +270,10 @@ class RustCoolapkGateway(
                 cursor?.lastItem.orEmpty(),
             ),
         )
+    }
+
+    override suspend fun getGoodsListItems(uid: String, goodsListId: String, page: Int): ListEntryPage = onCore {
+        goodsItemParser.parsePage(core.getGoodsListItems(uid, goodsListId, page.coerceAtLeast(1).toUInt()))
     }
 
     override suspend fun getAlbums(listType: String, page: Int): ListEntryPage = onCore {
