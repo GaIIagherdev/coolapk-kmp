@@ -32,12 +32,34 @@ internal data class PagedListState<T>(
     val hasMore: Boolean = true,
 )
 
+/** 新建或编辑收藏单的表单。id 为空表示新建。 */
+internal data class CollectionDraft(
+    val id: String? = null,
+    val title: String = "",
+    val description: String = "",
+    val isOpen: Boolean = true,
+) {
+    val isNew: Boolean get() = id == null
+    val canSubmit: Boolean get() = title.isNotBlank()
+}
+
+internal const val CollectionTitleMaxLength = 30
+internal const val CollectionDescriptionMaxLength = 100
+
 internal data class FavoritesUiState(
     val tab: FavoritesTab = FavoritesTab.FEEDS,
     val feeds: PagedListState<FeedItem> = PagedListState(),
     val collections: PagedListState<FeedCollection> = PagedListState(),
     val openedCollection: FeedCollection? = null,
     val collectionItems: PagedListState<FeedItem> = PagedListState(),
+    /** 非空时显示新建/编辑收藏单弹层。 */
+    val editor: CollectionDraft? = null,
+    val editorError: String? = null,
+    val submitting: Boolean = false,
+    /** 非空时显示删除确认弹层。 */
+    val pendingDelete: FeedCollection? = null,
+    /** 一次性提示，界面显示后调用 [FavoritesViewModel.consumeMessage] 清除。 */
+    val message: String? = null,
 )
 
 private data class PageResult<T>(
@@ -94,6 +116,151 @@ internal class FavoritesViewModel(
         if (_state.value.openedCollection == null) return false
         _state.update { it.copy(openedCollection = null, collectionItems = PagedListState()) }
         return true
+    }
+
+    fun openCreateEditor() {
+        _state.update { it.copy(editor = CollectionDraft(), editorError = null) }
+    }
+
+    fun openEditEditor(collection: FeedCollection) {
+        _state.update {
+            it.copy(
+                editor = CollectionDraft(
+                    id = collection.id,
+                    title = collection.title,
+                    description = collection.description,
+                    isOpen = collection.isOpen,
+                ),
+                editorError = null,
+            )
+        }
+    }
+
+    fun updateDraftTitle(value: String) {
+        _state.update { state ->
+            state.copy(editor = state.editor?.copy(title = value.take(CollectionTitleMaxLength)), editorError = null)
+        }
+    }
+
+    fun updateDraftDescription(value: String) {
+        _state.update { state ->
+            state.copy(
+                editor = state.editor?.copy(description = value.take(CollectionDescriptionMaxLength)),
+                editorError = null,
+            )
+        }
+    }
+
+    fun setDraftOpen(open: Boolean) {
+        _state.update { state -> state.copy(editor = state.editor?.copy(isOpen = open)) }
+    }
+
+    fun dismissEditor() {
+        if (_state.value.submitting) return
+        _state.update { it.copy(editor = null, editorError = null) }
+    }
+
+    /**
+     * 提交新建或编辑。失败时保留弹层并把原因显示在表单里，避免用户重填；
+     * 新建成功后重新拉取第一页，服务端才是收藏单 ID 的唯一来源。
+     */
+    fun submitEditor() {
+        val snapshot = _state.value
+        val draft = snapshot.editor ?: return
+        if (snapshot.submitting) return
+        val title = draft.title.trim()
+        val description = draft.description.trim()
+        if (title.isEmpty()) {
+            _state.update { it.copy(editorError = "收藏单标题不能为空") }
+            return
+        }
+        val source = repository
+        if (source == null) {
+            _state.update { it.copy(editorError = "数据服务尚未就绪") }
+            return
+        }
+        val collectionId = draft.id
+        _state.update { it.copy(submitting = true, editorError = null) }
+        viewModelScope.launch {
+            val result = if (collectionId == null) {
+                source.createCollection(title, description, isOpen = draft.isOpen)
+            } else {
+                source.updateCollection(collectionId, title, description, isOpen = draft.isOpen)
+            }
+            if (result.isFailure) {
+                _state.update {
+                    it.copy(
+                        submitting = false,
+                        editorError = result.exceptionOrNull()?.message ?: "保存失败，请稍后重试",
+                    )
+                }
+                return@launch
+            }
+            _state.update { state ->
+                state.copy(
+                    tab = if (collectionId == null) FavoritesTab.COLLECTIONS else state.tab,
+                    collections = if (collectionId == null) {
+                        state.collections
+                    } else {
+                        state.collections.replacing(collectionId, title, description, draft.isOpen)
+                    },
+                    openedCollection = collectionId?.let { id ->
+                        state.openedCollection?.updated(id, title, description, draft.isOpen)
+                    },
+                    editor = null,
+                    editorError = null,
+                    submitting = false,
+                    message = if (collectionId == null) "已创建收藏单" else "已保存修改",
+                )
+            }
+            if (collectionId == null) loadCollections(page = 1)
+        }
+    }
+
+    fun askDelete(collection: FeedCollection) {
+        _state.update { it.copy(pendingDelete = collection) }
+    }
+
+    fun dismissDelete() {
+        _state.update { it.copy(pendingDelete = null) }
+    }
+
+    /** 乐观删除：先从列表移除，接口失败时回到原位置并提示。 */
+    fun confirmDelete() {
+        val snapshot = _state.value
+        val target = snapshot.pendingDelete ?: return
+        val source = repository ?: run {
+            _state.update { it.copy(pendingDelete = null, message = "数据服务尚未就绪") }
+            return
+        }
+        val before = snapshot.collections.items
+        val index = before.indexOfFirst { it.id == target.id }
+        _state.update {
+            it.copy(
+                pendingDelete = null,
+                collections = it.collections.copy(items = it.collections.items.filterNot { item -> item.id == target.id }),
+            )
+        }
+        viewModelScope.launch {
+            val result = source.deleteCollection(target.id)
+            if (result.isFailure) {
+                _state.update { state ->
+                    val restored = state.collections.items.toMutableList().apply {
+                        add(index.coerceIn(0, size), target)
+                    }
+                    state.copy(
+                        collections = state.collections.copy(items = restored),
+                        message = result.exceptionOrNull()?.message ?: "删除失败，请稍后重试",
+                    )
+                }
+            } else {
+                _state.update { it.copy(message = "已删除收藏单") }
+            }
+        }
+    }
+
+    fun consumeMessage() {
+        _state.update { it.copy(message = null) }
     }
 
     private fun loadFeeds(page: Int) {
@@ -172,6 +339,23 @@ internal class FavoritesViewModel(
 
     private fun <T> PagedListState<T>.nextPage(): Int? =
         if (loading || page == 0 || !hasMore) null else page + 1
+
+    private fun PagedListState<FeedCollection>.replacing(
+        id: String,
+        title: String,
+        description: String,
+        isOpen: Boolean,
+    ): PagedListState<FeedCollection> = copy(
+        items = items.map { if (it.id == id) it.copy(title = title, description = description, isOpen = isOpen) else it },
+    )
+
+    private fun FeedCollection.updated(
+        id: String,
+        title: String,
+        description: String,
+        isOpen: Boolean,
+    ): FeedCollection =
+        if (this.id == id) copy(title = title, description = description, isOpen = isOpen) else this
 
     private fun <T> PagedListState<T>.merged(page: Int, result: PageResult<T>, key: (T) -> String): PagedListState<T> {
         val existing = if (page == 1) emptySet() else items.map(key).toSet()

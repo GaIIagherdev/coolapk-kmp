@@ -169,6 +169,24 @@ class HomeRepository(
     suspend fun loadCollectionItems(collectionId: String, page: Int = 1, cursor: HomeCursor? = null): HomePage =
         gateway.getCollectionItems(collectionId, page, cursor)
 
+    /** 创建收藏单。封面留空，暂不接入图片上传。 */
+    suspend fun createCollection(
+        title: String,
+        description: String,
+        cover: String = "",
+        isOpen: Boolean = true,
+    ): Result<Unit> = gateway.createCollection(title, description, cover, isOpen)
+
+    suspend fun updateCollection(
+        collectionId: String,
+        title: String,
+        description: String,
+        cover: String = "",
+        isOpen: Boolean = true,
+    ): Result<Unit> = gateway.updateCollection(collectionId, title, description, cover, isOpen)
+
+    suspend fun deleteCollection(collectionId: String): Result<Unit> = gateway.deleteCollection(collectionId)
+
     suspend fun loadTopicDetail(tag: String): TopicDetail = gateway.getTopicDetail(tag)
 
     suspend fun loadTopicFeeds(
