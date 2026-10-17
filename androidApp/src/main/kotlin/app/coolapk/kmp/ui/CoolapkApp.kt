@@ -211,7 +211,11 @@ internal fun CoolapkApp(
     val openQuestion: (String) -> Unit = { id -> contentRoutes = contentRoutes + ContentRoute.Question(id) }
     val openEvents: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Events }
     val openMore: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.More }
-    val openGoodsLists: () -> Unit = { state.profile?.uid?.let { contentRoutes = contentRoutes + ContentRoute.GoodsLists } }
+    // 资料未加载时先加载，并直接打开页面；页面内根据资料状态显示加载中或未登录提示
+    val openGoodsLists: () -> Unit = {
+        if (state.profile == null) viewModel.loadProfile()
+        contentRoutes = contentRoutes + ContentRoute.GoodsLists
+    }
     val openAppCenter: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.AppCenter }
     val openGameCenter: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.GameCenter }
     val openReviews: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Reviews }
@@ -523,7 +527,7 @@ internal fun CoolapkApp(
                             onBack = closeContent,
                             onOpenList = { entry -> contentRoutes = contentRoutes + ContentRoute.GoodsListDetail(entry.id, entry.title) },
                         )
-                    }
+                    } ?: GoodsAccountPlaceholder(loading = state.profileLoading, onBack = closeContent)
                     is ContentRoute.GoodsListDetail -> state.profile?.uid?.let { ownUid ->
                         GoodsListDetailScreen(
                             uid = ownUid,
@@ -531,7 +535,7 @@ internal fun CoolapkApp(
                             title = route.title,
                             onBack = closeContent,
                         )
-                    }
+                    } ?: GoodsAccountPlaceholder(loading = state.profileLoading, onBack = closeContent)
                     is ContentRoute.Events -> EventsScreen(onBack = closeContent)
                     is ContentRoute.Albums -> AlbumsScreen(onBack = closeContent)
                     is ContentRoute.SecondHand -> SecondHandScreen(
@@ -1215,5 +1219,22 @@ internal fun coolapkImageRequest(url: String): ImageRequest {
                 )
             }
         }.build()
+    }
+}
+
+/** 好物清单需要账号：资料加载中显示进度，未登录时给出明确提示。 */
+@Composable
+private fun GoodsAccountPlaceholder(loading: Boolean, onBack: () -> Unit) {
+    BackHandler(onBack = onBack)
+    if (loading) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { ExpressiveLoadingIndicator() }
+    } else {
+        CoolapkEmptyState(
+            title = "请先登录",
+            detail = "登录后可以查看好物清单。",
+            modifier = Modifier.fillMaxSize(),
+            actionLabel = "返回",
+            onAction = onBack,
+        )
     }
 }
