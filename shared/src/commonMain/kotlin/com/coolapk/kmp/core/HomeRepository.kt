@@ -118,6 +118,8 @@ class HomeRepository(
 
     suspend fun loadFollowedTopics(page: Int = 1): ListEntryPage = gateway.getFollowedTopics(page)
 
+    suspend fun loadMyCards(refresh: Boolean = false): List<MyCard> = gateway.getMyCards(refresh)
+
     suspend fun removeFromBlackList(uid: String): Result<Unit> = gateway.removeFromBlackList(uid)
 
     suspend fun loadFansUsers(uid: String, page: Int = 1): UserSummaryPage = gateway.getFansUsers(uid, page)

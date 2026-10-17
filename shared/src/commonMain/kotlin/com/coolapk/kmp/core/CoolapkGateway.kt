@@ -116,6 +116,9 @@ interface CoolapkGateway {
         error("当前平台未提供关注话题接口")
 
     /** 黑名单用户列表，需登录。 */
+    suspend fun getMyCards(refresh: Boolean = false): List<MyCard> =
+        error("当前平台未提供我的卡片接口")
+
     suspend fun getBlackList(page: Int = 1): UserSummaryPage =
         error("当前平台未提供黑名单接口")
 

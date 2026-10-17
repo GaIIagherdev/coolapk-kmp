@@ -886,6 +886,12 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    /// 个人中心「我的卡片」配置（含「常去」分组），供「我的」页的「我的常去」使用。
+    pub fn get_my_profile_cards(&self, refresh: bool) -> Result<String, CoolapkError> {
+        let value = self.runtime.block_on(self.client.get_my_profile_cards(refresh))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     /// 黑名单用户列表（需登录）。
     pub fn get_black_list(&self, page: u32) -> Result<String, CoolapkError> {
         let value = self.runtime.block_on(self.client.get_black_list(page))?;

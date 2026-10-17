@@ -932,6 +932,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // For large crates we prevent `MethodTooLargeException` (see #2340)
 // N.B. the name of the extension is very misleading, since it is
 // rather `InterfaceTooLargeException`, caused by too many methods
@@ -1042,6 +1044,8 @@ fun uniffi_coolapk_core_checksum_method_coolapkcore_get_my_goods_feeds(
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_my_product_list(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_my_profile(
+): Short
+fun uniffi_coolapk_core_checksum_method_coolapkcore_get_my_profile_cards(
 ): Short
 fun uniffi_coolapk_core_checksum_method_coolapkcore_get_notification_count(
 ): Short
@@ -1315,6 +1319,8 @@ fun uniffi_coolapk_core_fn_method_coolapkcore_get_my_goods_feeds(`ptr`: Pointer,
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_my_product_list(`ptr`: Pointer,`uid`: RustBuffer.ByValue,`productType`: RustBuffer.ByValue,`page`: Int,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_my_profile(`ptr`: Pointer,`uid`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+): RustBuffer.ByValue
+fun uniffi_coolapk_core_fn_method_coolapkcore_get_my_profile_cards(`ptr`: Pointer,`refresh`: Byte,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
 fun uniffi_coolapk_core_fn_method_coolapkcore_get_notification_count(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus,
 ): RustBuffer.ByValue
@@ -1704,6 +1710,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_my_profile() != 25274.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_my_profile_cards() != 8098.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_coolapk_core_checksum_method_coolapkcore_get_notification_count() != 2620.toShort()) {
@@ -2474,6 +2483,11 @@ public interface CoolapkCoreInterface {
      * 当前登录用户资料。
      */
     fun `getMyProfile`(`uid`: kotlin.String): kotlin.String
+
+    /**
+     * 个人中心「我的卡片」配置（含「常去」分组），供「我的」页的「我的常去」使用。
+     */
+    fun `getMyProfileCards`(`refresh`: kotlin.Boolean): kotlin.String
 
     /**
      * 当前用户的通知数量。
@@ -3538,6 +3552,22 @@ open class CoolapkCore: Disposable, AutoCloseable, CoolapkCoreInterface
     uniffiRustCallWithError(CoolapkException) { _status ->
     UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_my_profile(
         it, FfiConverterString.lower(`uid`),_status)
+}
+    }
+    )
+    }
+
+
+
+    /**
+     * 个人中心「我的卡片」配置（含「常去」分组），供「我的」页的「我的常去」使用。
+     */
+    @Throws(CoolapkException::class)override fun `getMyProfileCards`(`refresh`: kotlin.Boolean): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(CoolapkException) { _status ->
+    UniffiLib.INSTANCE.uniffi_coolapk_core_fn_method_coolapkcore_get_my_profile_cards(
+        it, FfiConverterBoolean.lower(`refresh`),_status)
 }
     }
     )

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -29,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Comment
 import androidx.compose.material.icons.rounded.DarkMode
@@ -74,6 +74,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coolapk.kmp.core.ListEntry
+import com.coolapk.kmp.core.MyCard
 import app.coolapk.kmp.ui.theme.ThemeMode
 import com.coolapk.kmp.core.UserProfile
 
@@ -141,9 +142,9 @@ internal fun MyHubScreen(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(Modifier.widthIn(max = 900.dp).fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Column(Modifier.widthIn(max = 900.dp).fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 8.dp)) {
             // 沉浸式顶部：与状态栏融合，标题与图标自绘，不使用原生标题栏
-            Row(Modifier.fillMaxWidth().statusBarsPadding(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
                 Text("我的", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).padding(start = 4.dp))
                 IconButton(onClick = onOpenMore) { Icon(Icons.Rounded.Apps, contentDescription = "更多内容") }
                 IconButton(onClick = onOpenSettings) { Icon(Icons.Rounded.Settings, contentDescription = "设置") }
@@ -252,7 +253,11 @@ internal fun MyHubScreen(
             }
             FollowedTopicsCard(signedIn = signedIn, onOpenFollowed = onOpenFollowed, onOpenTopic = onOpenTopic)
 
-            RecentVisitsCard(signedIn = signedIn, onOpenHistory = onOpenHistory)
+            FrequentCardsSection(
+                profile = profile,
+                onOpenUrl = { url -> openCoolapkUrl(context, url) },
+                onOpenLocal = { url -> openMyCardLocal(url, onOpenHistory, onOpenFavorites, onOpenFollowed) },
+            )
             HistoryPreviewCard(signedIn = signedIn, onOpenHistory = onOpenHistory)
 
             Spacer(Modifier.height(24.dp))
@@ -383,14 +388,13 @@ private fun formatHubCount(value: Int): String = if (value >= 10_000) {
     value.toString()
 }
 
-/** 我的常去：最近浏览的动态，展示前几条，点击进入浏览历史。 */
+/** 我的常去：读取“我的卡片”配置中的常去分组；未登录时只显示提示，不发起请求。 */
 @Composable
-private fun RecentVisitsCard(signedIn: Boolean, onOpenHistory: () -> Unit) {
-    val viewModel: EntryListViewModel = viewModel(
-        key = "my-hub-recent-visits",
-        factory = EntryListViewModel.recentVisitsFactory(),
-    )
-    val state by viewModel.state.collectAsStateWithLifecycle()
+private fun FrequentCardsSection(
+    profile: UserProfile?,
+    onOpenUrl: (String) -> Unit,
+    onOpenLocal: (String) -> Boolean,
+) {
     Column(
         Modifier
             .fillMaxWidth()
@@ -399,19 +403,78 @@ private fun RecentVisitsCard(signedIn: Boolean, onOpenHistory: () -> Unit) {
             .background(MaterialTheme.colorScheme.surfaceContainerLowest)
             .padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
-        Row(
-            Modifier.fillMaxWidth().clickable(enabled = signedIn, onClick = onOpenHistory),
+        Text("我的常去", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Text(
+            "同步酷安个人中心“我的卡片”中的常用入口",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(12.dp))
+        if (profile == null) {
+            Text("登录后查看我的常去", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
+            FrequentCardsList(profile.uid, onOpenUrl, onOpenLocal)
+        }
+    }
+}
+
+@Composable
+private fun FrequentCardsList(uid: String, onOpenUrl: (String) -> Unit, onOpenLocal: (String) -> Boolean) {
+    val viewModel: MyCardsViewModel = viewModel(key = "my-hub-frequent-$uid", factory = MyCardsViewModel.factory())
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    when {
+        state.loading && state.cards.isEmpty() -> Text("加载中…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        state.error != null -> Row(
+            Modifier.fillMaxWidth().clickable(onClick = viewModel::refresh).heightIn(min = 48.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("我的常去", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("${state.error}，点击重试", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f))
         }
-        when {
-            !signedIn -> Text("登录后查看常去的内容", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            state.items.isEmpty() && state.loading -> Text("加载中…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            state.items.isEmpty() -> Text("还没有浏览记录", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            else -> state.items.take(3).forEach { entry -> HubEntryRow(entry, onClick = onOpenHistory) }
+        state.cards.isEmpty() -> Text(
+            "暂无我的常去，可在酷安手机端的“我的卡片”中添加常用入口",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        else -> LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            items(state.cards, key = { it.id }) { card ->
+                FrequentCardTile(card) {
+                    val url = card.url ?: return@FrequentCardTile
+                    if (!onOpenLocal(url)) onOpenUrl(url)
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun FrequentCardTile(card: MyCard, onClick: () -> Unit) {
+    Column(
+        Modifier
+            .width(128.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .clickable(enabled = card.url != null, onClick = onClick),
+    ) {
+        Box(Modifier.fillMaxWidth().height(96.dp).background(MaterialTheme.colorScheme.surfaceContainerHighest), contentAlignment = Alignment.Center) {
+            val imageUrl = card.imageUrl
+            if (imageUrl != null) {
+                AsyncImage(
+                    model = coolapkImageRequest(imageUrl),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                )
+            } else {
+                Icon(Icons.Rounded.Bookmark, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Text(
+            card.title,
+            style = MaterialTheme.typography.labelLarge,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+        )
     }
 }
 
@@ -478,4 +541,17 @@ private fun HubEntryRow(entry: ListEntry, onClick: () -> Unit) {
             }
         }
     }
+}
+
+/** 「我的卡片」中的链接：能对应到本应用页面的直接打开，否则返回 false 交给浏览器。 */
+private fun openMyCardLocal(url: String, onOpenHistory: () -> Unit, onOpenFavorites: () -> Unit, onOpenFollowed: () -> Unit): Boolean = when {
+    url.contains("hitHistoryList") || url.contains("recentHistoryList") -> { onOpenHistory(); true }
+    url.contains("myCollectionList") -> { onOpenFavorites(); true }
+    url.contains("myFollowTopicList") -> { onOpenFollowed(); true }
+    else -> false
+}
+
+private fun openCoolapkUrl(context: android.content.Context, url: String) {
+    val target = if (url.startsWith("/")) "https://www.coolapk.com$url" else url
+    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(target))) }
 }

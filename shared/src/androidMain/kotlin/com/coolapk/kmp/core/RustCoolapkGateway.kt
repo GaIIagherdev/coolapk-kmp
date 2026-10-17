@@ -43,6 +43,7 @@ class RustCoolapkGateway(
     private val detailParser: FeedDetailJsonParser = FeedDetailJsonParser(),
     private val collectionParser: CollectionJsonParser = CollectionJsonParser(),
     private val listEntryParser: ListEntryJsonParser = ListEntryJsonParser(),
+    private val myCardsParser: MyCardsJsonParser = MyCardsJsonParser(),
     private val goodsItemParser: GoodsListItemJsonParser = GoodsListItemJsonParser(),
     private val historyParser: HistoryJsonParser = HistoryJsonParser(),
 ) : CoolapkGateway {
@@ -298,6 +299,10 @@ class RustCoolapkGateway(
 
     override suspend fun getFollowedForums(uid: String, page: Int): ListEntryPage = onCore {
         listEntryParser.parsePage(core.getUserForumFollowList(uid, page.coerceAtLeast(1).toUInt()))
+    }
+
+    override suspend fun getMyCards(refresh: Boolean): List<MyCard> = onCore {
+        myCardsParser.parse(core.getMyProfileCards(refresh))
     }
 
     override suspend fun getFollowedTopics(page: Int): ListEntryPage = onCore {
