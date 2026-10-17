@@ -927,6 +927,14 @@ impl CoolapkCore {
         Ok(serde_json::to_string(&value)?)
     }
 
+    /// 好物清单（万物清单）的条目列表，uid 与 goods_id 对应参考项目的 getGoodsListItems。
+    pub fn get_goods_list_items(&self, uid: String, goods_id: String, page: u32) -> Result<String, CoolapkError> {
+        let value = self
+            .runtime
+            .block_on(self.client.get_goods_list_items(&uid, &goods_id, page))?;
+        Ok(serde_json::to_string(&value)?)
+    }
+
     /// 板块动态列表，board_tag 形如 `#/board/数码测评`。
     pub fn get_board_feeds(&self, board_tag: String, page: u32) -> Result<String, CoolapkError> {
         let value = self
