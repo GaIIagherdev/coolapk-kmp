@@ -276,8 +276,8 @@ internal fun CoolapkApp(
                 containerColor = MaterialTheme.colorScheme.surface,
                 snackbarHost = { SnackbarHost(snackbarHostState) },
                 topBar = {
-                    // 「我的」标签页自绘沉浸式标题，不使用原生标题栏
-                    if (selectedIndex != 4) AppTopBar(
+                    // 「我的」「数码」标签页自绘标题，不使用原生标题栏
+                    if (selectedIndex != 1 && selectedIndex != 4) AppTopBar(
                         title = when {
                             selectedIndex == 0 && state.searchQuery != null -> "搜索结果"
                             selectedIndex == 0 -> "酷安"
@@ -342,6 +342,8 @@ internal fun CoolapkApp(
                             },
                             onOpenProduct = { id -> openedProduct = id },
                             onOpenImage = openImages,
+                            onSearch = { searchOpen = true },
+                            onCompare = openProductSelector,
                         )
                         3 -> DiscoveryScreen(
                             viewModel = discoveryViewModel,

@@ -82,6 +82,12 @@ import com.coolapk.kmp.core.DigitalEntity
 import com.coolapk.kmp.core.DigitalTab
 import com.coolapk.kmp.core.FeedItem
 import kotlinx.coroutines.flow.distinctUntilChanged
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.rounded.Compare
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.IconButton
 
 @Composable
 internal fun DigitalScreen(
@@ -92,6 +98,8 @@ internal fun DigitalScreen(
     onOpenApp: (String, String) -> Unit,
     onOpenProduct: (String) -> Unit,
     onOpenImage: (List<String>, Int) -> Unit,
+    onSearch: () -> Unit,
+    onCompare: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -144,6 +152,8 @@ internal fun DigitalScreen(
         )
         else -> DigitalChannels(
             state = state,
+            onSearch = onSearch,
+            onCompare = onCompare,
             viewModel = viewModel,
             onOpen = ::openEntity,
             onLike = onLike,
@@ -172,6 +182,8 @@ private fun DigitalUiState.visibleSubtabs(tab: DigitalTab): List<DigitalEntity> 
 private fun DigitalChannels(
     state: DigitalUiState,
     viewModel: DigitalViewModel,
+    onSearch: () -> Unit,
+    onCompare: () -> Unit,
     onOpen: (DigitalEntity) -> Unit,
     onLike: (FeedItem) -> Unit,
     onOpenFeed: (String, FeedItem?, Boolean) -> Unit,
@@ -200,24 +212,42 @@ private fun DigitalChannels(
     }
 
     Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-        SecondaryScrollableTabRow(
-            selectedTabIndex = selectedIndex,
-            modifier = Modifier.widthIn(max = 900.dp).fillMaxWidth(),
-            edgePadding = 16.dp,
+        DigitalHeader(onSearch = onSearch, onCompare = onCompare)
+        // 频道：胶囊分段控件，选中项用浅色底，可横向滚动
+        Surface(
+            modifier = Modifier.widthIn(max = 900.dp).fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {
-            state.tabs.forEachIndexed { index, tab ->
-                Tab(
-                    selected = index == selectedIndex,
-                    onClick = {
-                        val webUrl = tab.webUrl?.takeIf { it.startsWith("http") }
-                        if (webUrl != null) {
-                            runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(webUrl))) }
-                        } else {
-                            viewModel.selectTab(tab)
-                        }
-                    },
-                    text = { Text(tab.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                )
+            Row(
+                Modifier.horizontalScroll(rememberScrollState()).padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                state.tabs.forEachIndexed { index, tab ->
+                    val selected = index == selectedIndex
+                    Surface(
+                        onClick = {
+                            val webUrl = tab.webUrl?.takeIf { it.startsWith("http") }
+                            if (webUrl != null) {
+                                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(webUrl))) }
+                            } else {
+                                viewModel.selectTab(tab)
+                            }
+                        },
+                        shape = CircleShape,
+                        color = if (selected) MaterialTheme.colorScheme.surfaceContainerLowest else Color.Transparent,
+                        contentColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    ) {
+                        Text(
+                            tab.title,
+                            modifier = Modifier.heightIn(min = 40.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
             }
         }
         HorizontalPager(
@@ -304,30 +334,31 @@ private fun DigitalLibrary(
         state.libraryOptions.filter { query.isBlank() || it.title.orEmpty().contains(query.trim(), ignoreCase = true) }
     }
     Column(Modifier.fillMaxSize()) {
-        // 品牌 / 分类切换：M3E 分段控件
-        val modes = DigitalLibraryMode.entries
-        SingleChoiceSegmentedButtonRow(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        // 品牌 / 分类切换与搜索同一行
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            modes.forEachIndexed { index, mode ->
-                SegmentedButton(
+            DigitalLibraryMode.entries.forEach { mode ->
+                FilterChip(
                     selected = state.libraryMode == mode,
                     onClick = { onMode(mode) },
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = modes.size),
                     label = { Text(if (mode == DigitalLibraryMode.BRAND) "品牌" else "分类") },
+                    modifier = Modifier.heightIn(min = 48.dp),
                 )
             }
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                placeholder = { Text(if (state.libraryMode == DigitalLibraryMode.BRAND) "搜索品牌" else "搜索分类") },
+                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+            )
         }
-        OutlinedTextField(
-            value = query,
-            onValueChange = { query = it },
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 8.dp),
-            singleLine = true,
-            placeholder = { Text(if (state.libraryMode == DigitalLibraryMode.BRAND) "搜索品牌" else "搜索分类") },
-            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-        )
         BoxWithConstraints(Modifier.fillMaxSize()) {
-            val sideWidth = if (maxWidth >= 840.dp) 240.dp else 112.dp
+            val sideWidth = if (maxWidth >= 840.dp) 240.dp else 88.dp
             Row(Modifier.fillMaxSize()) {
                 Column(
                     Modifier
@@ -354,7 +385,7 @@ private fun DigitalLibrary(
                         else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             items(options, key = DigitalEntity::id) { item ->
                                 val selected = state.selectedLibraryItem?.id == item.id
-                                LibrarySideItem(item, selected) { onSelect(item) }
+                                LibrarySideItem(item, selected, compact = sideWidth < 240.dp) { onSelect(item) }
                             }
                         }
                     }
@@ -419,34 +450,59 @@ private fun DigitalLibrary(
 }
 
 @Composable
-private fun LibrarySideItem(item: DigitalEntity, selected: Boolean, onClick: () -> Unit) {
+private fun LibrarySideItem(item: DigitalEntity, selected: Boolean, compact: Boolean = false, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(if (compact) 20.dp else 16.dp),
         color = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
         contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
     ) {
-        Row(
-            Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            item.imageUrl?.let { url ->
-                AsyncImage(
-                    model = coolapkImageRequest(url),
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    contentScale = ContentScale.Fit,
+        if (compact) {
+            Column(
+                Modifier.padding(horizontal = 4.dp, vertical = 10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                item.imageUrl?.let { url ->
+                    AsyncImage(
+                        model = coolapkImageRequest(url),
+                        contentDescription = null,
+                        modifier = Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surface),
+                        contentScale = ContentScale.Fit,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                }
+                Text(
+                    item.title ?: "未命名",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
-                Spacer(Modifier.width(8.dp))
             }
-            Text(
-                item.title ?: "未命名",
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.labelLarge,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+        } else {
+            Row(
+                Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                item.imageUrl?.let { url ->
+                    AsyncImage(
+                        model = coolapkImageRequest(url),
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp),
+                        contentScale = ContentScale.Fit,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                }
+                Text(
+                    item.title ?: "未命名",
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
@@ -936,3 +992,19 @@ private fun DigitalEmptyState(
 private val FEED_TARGET = Regex("(?:^|[/#])feed/(\\d+)", RegexOption.IGNORE_CASE)
 private val APP_TARGET = Regex("(?:^|[/#])apk/([A-Za-z0-9._-]+)", RegexOption.IGNORE_CASE)
 private val PRODUCT_TARGET = Regex("(?:^|[/#])product/(\\d+)", RegexOption.IGNORE_CASE)
+
+/** 数码页自绘标题：标题、搜索和选机对比。 */
+@Composable
+private fun DigitalHeader(onSearch: () -> Unit, onCompare: () -> Unit) {
+    Row(
+        Modifier
+            .widthIn(max = 900.dp)
+            .fillMaxWidth()
+            .padding(start = 20.dp, end = 12.dp, top = 8.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("数码", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+        FilledTonalIconButton(onClick = onSearch) { Icon(Icons.Rounded.Search, contentDescription = "搜索") }
+        IconButton(onClick = onCompare) { Icon(Icons.Rounded.Compare, contentDescription = "选机对比") }
+    }
+}
