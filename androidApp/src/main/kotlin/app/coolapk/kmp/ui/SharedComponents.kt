@@ -374,6 +374,7 @@ internal fun FeedCard(
     card: Boolean = false,
     dividerAbove: Boolean = false,
     horizontalPadding: Dp = 16.dp,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLowest,
 ) {
     val content: @Composable () -> Unit = {
         FeedHeader(item, onOpenAuthor)
@@ -421,7 +422,7 @@ internal fun FeedCard(
             modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenDetail),
             shape = RoundedCornerShape(26.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                containerColor = containerColor,
             ),
         ) {
             Column(Modifier.padding(14.dp)) { content() }

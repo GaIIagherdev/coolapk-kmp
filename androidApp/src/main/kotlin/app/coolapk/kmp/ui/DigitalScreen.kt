@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import com.coolapk.kmp.core.productSpecs
 import com.coolapk.kmp.core.hasRequestArgs
 import com.coolapk.kmp.core.listScore
@@ -166,6 +167,13 @@ internal fun DigitalScreen(
     }
 }
 
+/**
+ * 暗色主题下 surfaceContainerLowest 比页面背景更暗，卡片会显得凹陷；
+ * 数码页的卡片、输入框和侧栏因此按主题切换到更亮的表面层级。
+ */
+@Composable
+private fun digitalDarkTheme(): Boolean = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+
 /** 频道的子栏目，筛选规则与参考项目一致。 */
 private fun DigitalUiState.visibleSubtabs(tab: DigitalTab): List<DigitalEntity> {
     val channelTargets = tabs.flatMap { listOfNotNull(it.key, it.url, it.pageName, it.webUrl) }
@@ -237,12 +245,12 @@ private fun DigitalChannels(
                             }
                         },
                         shape = CircleShape,
-                        color = if (selected) MaterialTheme.colorScheme.surfaceContainerLowest else Color.Transparent,
-                        contentColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                        contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
                     ) {
                         Text(
                             tab.title,
-                            modifier = Modifier.heightIn(min = 40.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+                            modifier = Modifier.heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 8.dp),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                             maxLines = 1,
@@ -364,7 +372,7 @@ private fun DigitalLibrary(
                     .weight(1f)
                     .heightIn(min = 48.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                     .padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -401,7 +409,10 @@ private fun DigitalLibrary(
                     Modifier
                         .width(sideWidth)
                         .fillMaxHeight()
-                        .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                        .background(
+                            if (digitalDarkTheme()) MaterialTheme.colorScheme.surfaceContainer
+                            else MaterialTheme.colorScheme.surfaceContainerLow,
+                        )
                         .padding(horizontal = 8.dp, vertical = 8.dp),
                 ) {
                     when {
@@ -464,10 +475,10 @@ private fun DigitalLibrary(
                                     val selected = productGrid == grid
                                     Surface(
                                         onClick = { productGrid = grid },
-                                        modifier = Modifier.heightIn(min = 40.dp),
+                                        modifier = Modifier.heightIn(min = 48.dp),
                                         shape = CircleShape,
-                                        color = if (selected) MaterialTheme.colorScheme.surfaceContainerLowest else Color.Transparent,
-                                        contentColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                                        contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
                                     ) {
                                         Text(
                                             label,
@@ -723,6 +734,8 @@ private fun DigitalProductCard(
         modifier = modifier.fillMaxWidth(),
         onClick = { onOpen(product) },
         shape = MaterialTheme.shapes.large,
+        containerColor = if (digitalDarkTheme()) MaterialTheme.colorScheme.surfaceContainerLow
+        else MaterialTheme.colorScheme.surfaceContainerLowest,
     ) {
         if (grid) {
             ProductImageBox(product, Modifier.fillMaxWidth().aspectRatio(4f / 3f))
@@ -839,6 +852,8 @@ private fun DigitalEntityCard(
 ) {
     val template = entity.entityTemplate.orEmpty().lowercase()
     val children = entity.entities
+    val feedCardColor = if (digitalDarkTheme()) MaterialTheme.colorScheme.surfaceContainerLow
+    else MaterialTheme.colorScheme.surfaceContainerLowest
     when {
         template.startsWith("imagecarouselcard") && children.isNotEmpty() ->
             DigitalCarousel(children, onOpen)
@@ -858,6 +873,7 @@ private fun DigitalEntityCard(
                         onReply = { onOpenFeed(feed.id, feed, true) },
                         onOpenImage = onOpenImage,
                         card = true,
+                        containerColor = feedCardColor,
                     )
                 }
             }
@@ -871,6 +887,7 @@ private fun DigitalEntityCard(
                 onReply = { onOpenFeed(feed.id, feed, true) },
                 onOpenImage = onOpenImage,
                 card = true,
+                containerColor = feedCardColor,
             )
         }
         else -> Card(
