@@ -1,6 +1,10 @@
 package app.coolapk.kmp.ui
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.coolapk.kmp.core.HomeRepository
+import com.coolapk.kmp.core.createPlatformGateway
 import androidx.lifecycle.viewModelScope
 import com.coolapk.kmp.core.ListEntry
 import com.coolapk.kmp.core.ListEntryPage
@@ -55,6 +59,13 @@ internal class EntryListViewModel(
             } catch (failure: Exception) {
                 _state.update { it.copy(loading = false, error = failure.message ?: "加载失败") }
             }
+        }
+    }
+
+    companion object {
+        /** 关注的话题，供「我的」页的「我的卡片」复用。 */
+        fun followedTopicsFactory() = viewModelFactory {
+            initializer { EntryListViewModel { page -> HomeRepository(createPlatformGateway()).loadFollowedTopics(page) } }
         }
     }
 }
