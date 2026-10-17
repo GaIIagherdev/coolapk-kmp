@@ -5,13 +5,36 @@ on:
   workflow_dispatch:
     inputs:
       build_type:
-        description: "构建类型：debug（默认签名，可直接安装）或 release（未签名，需自行签名）"
+        description: "构建类型：debug（默认签名，可直接安装）或 release（配置密钥时签名，否则未签名）"
         required: true
         default: debug
         type: choice
         options:
           - debug
           - release
+      publish_release:
+        description: "构建完成后创建 GitHub Release 并上传 APK（仅支持 release 构建，且需配置签名密钥）"
+        required: false
+        default: false
+        type: boolean
+      release_tag:
+        description: "Release 标签，留空使用 v<versionName>；同名 Release 已存在时覆盖其中的 APK"
+        required: false
+        default: ""
+        type: string
+      release_name:
+        description: "Release 标题，留空使用标签"
+        required: false
+        default: ""
+        type: string
+      prerelease:
+        description: "标记为预发布（Pre-release）"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
 
 jobs:
   build-apk:
@@ -23,6 +46,26 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
+
+      - name: 校验发布参数
+        if: ${{ inputs.publish_release }}
+        env:
+          BUILD_TYPE: ${{ inputs.build_type }}
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ "$BUILD_TYPE" != "release" ]; then
+            echo "::error::发布 GitHub Release 只能使用 release 构建类型"
+            exit 1
+          fi
+          for name in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::未配置签名密钥 $name，不能发布 Release"
+              exit 1
+            fi
+          done
 
       - name: 安装 JDK 21
         uses: actions/setup-java@v4
@@ -56,6 +99,10 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "未配置 ANDROID_KEYSTORE_BASE64，本次 release 构建将不签名"
+            exit 0
+          fi
           echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
 
@@ -79,3 +126,39 @@ jobs:
           path: androidApp/build/outputs/apk/${{ inputs.build_type }}/*.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: 发布 GitHub Release
+        if: ${{ inputs.publish_release }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_NAME: ${{ inputs.release_name }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          VERSION_NAME="$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' androidApp/build.gradle.kts | head -1)"
+          VERSION_NAME="${VERSION_NAME:-dev}"
+          TAG="${RELEASE_TAG:-v${VERSION_NAME}}"
+          NAME="${RELEASE_NAME:-$TAG}"
+          APK_PATH="$(find androidApp/build/outputs/apk/release -maxdepth 1 -name '*.apk' | head -1)"
+          if [ -z "$APK_PATH" ]; then
+            echo "::error::未找到 release APK"
+            exit 1
+          fi
+          ASSET="$RUNNER_TEMP/coolapk-kmp-${VERSION_NAME}.apk"
+          cp "$APK_PATH" "$ASSET"
+          if [ "$PRERELEASE" = "true" ]; then
+            PRERELEASE_FLAG="--prerelease"
+          else
+            PRERELEASE_FLAG="--prerelease=false"
+          fi
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG 已存在，覆盖 APK 并更新标题"
+            gh release upload "$TAG" "$ASSET" --clobber
+            gh release edit "$TAG" --title "$NAME" "$PRERELEASE_FLAG"
+          else
+            echo "创建 Release $TAG"
+            gh release create "$TAG" "$ASSET" \
+              --title "$NAME" \
+              --generate-notes \
+              "$PRERELEASE_FLAG"
+          fi

@@ -58,4 +58,6 @@ Android 目前只提供 `arm64-v8a` 原生库构建脚本。配置 Android SDK/N
 cargo test --manifest-path rust-core/Cargo.toml --all-targets
 ```
 
+仓库的 `手动打包 APK` 工作流支持选择 debug/release 构建；勾选「发布 GitHub Release」后会在构建成功后创建（或覆盖同名）Release 并上传 APK。发布需要预先配置 `ANDROID_KEYSTORE_BASE64`、`ANDROID_KEYSTORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD` 四个 Secrets，否则 release APK 未签名，工作流会拒绝发布。
+
 iOS 需要 Xcode、XcodeGen 及 `aarch64-apple-ios-sim`、`aarch64-apple-ios` Rust targets。构建脚本生成 Swift 绑定、模拟器/设备静态库、XCFramework 和 Xcode 工程；具体命令见 [iOS 构建说明](iosApp/README.md)。Android 单元测试和 Debug 构建已通过，并在 Pixel 9 Pro XL 模拟器确认官方登录页加载、取消后保留游客态；iOS arm64 模拟器构建通过，官方登录页也已显示。两端都未使用真实账号验收本次网页登录的授权回跳、验证码与登录后会话，发布和互动也未做真实账号验证。
