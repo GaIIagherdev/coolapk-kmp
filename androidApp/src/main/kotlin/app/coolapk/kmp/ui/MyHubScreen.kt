@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -61,6 +62,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -139,8 +142,9 @@ internal fun MyHubScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Column(Modifier.widthIn(max = 900.dp).fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-            // 顶部工具：搜索（在发现/首页）、设置、应用中心、消息
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+            // 沉浸式顶部：与状态栏融合，标题与图标自绘，不使用原生标题栏
+            Row(Modifier.fillMaxWidth().statusBarsPadding(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                Text("我的", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).padding(start = 4.dp))
                 IconButton(onClick = onOpenMore) { Icon(Icons.Rounded.Apps, contentDescription = "更多内容") }
                 IconButton(onClick = onOpenSettings) { Icon(Icons.Rounded.Settings, contentDescription = "设置") }
                 IconButton(onClick = onOpenMessages) {
@@ -248,20 +252,8 @@ internal fun MyHubScreen(
             }
             FollowedTopicsCard(signedIn = signedIn, onOpenFollowed = onOpenFollowed, onOpenTopic = onOpenTopic)
 
-            // 我的常去：暂无对应接口，入口打开浏览历史
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-                    .clickable(enabled = signedIn, onClick = onOpenHistory)
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("我的常去", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            RecentVisitsCard(signedIn = signedIn, onOpenHistory = onOpenHistory)
+            HistoryPreviewCard(signedIn = signedIn, onOpenHistory = onOpenHistory)
 
             Spacer(Modifier.height(24.dp))
         }
@@ -315,7 +307,17 @@ private fun TopicTile(topic: ListEntry, onOpenTopic: (String) -> Unit) {
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh),
             contentAlignment = Alignment.Center,
         ) {
-            Text(topic.title.take(1), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            val imageUrl = topic.imageUrl
+            if (imageUrl != null) {
+                AsyncImage(
+                    model = coolapkImageRequest(imageUrl),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                )
+            } else {
+                Text(topic.title.take(1), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
         Spacer(Modifier.height(6.dp))
         Text(topic.title, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
@@ -379,4 +381,101 @@ private fun formatHubCount(value: Int): String = if (value >= 10_000) {
     "${"%.1f".format(tenThousands)}万"
 } else {
     value.toString()
+}
+
+/** 我的常去：最近浏览的动态，展示前几条，点击进入浏览历史。 */
+@Composable
+private fun RecentVisitsCard(signedIn: Boolean, onOpenHistory: () -> Unit) {
+    val viewModel: EntryListViewModel = viewModel(
+        key = "my-hub-recent-visits",
+        factory = EntryListViewModel.recentVisitsFactory(),
+    )
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+    ) {
+        Row(
+            Modifier.fillMaxWidth().clickable(enabled = signedIn, onClick = onOpenHistory),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("我的常去", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        when {
+            !signedIn -> Text("登录后查看常去的内容", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            state.items.isEmpty() && state.loading -> Text("加载中…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            state.items.isEmpty() -> Text("还没有浏览记录", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            else -> state.items.take(3).forEach { entry -> HubEntryRow(entry, onClick = onOpenHistory) }
+        }
+    }
+}
+
+/** 浏览历史：下方的条目列表，最近几条，点击进入完整的浏览历史。 */
+@Composable
+private fun HistoryPreviewCard(signedIn: Boolean, onOpenHistory: () -> Unit) {
+    val viewModel: EntryListViewModel = viewModel(
+        key = "my-hub-history-preview",
+        factory = EntryListViewModel.feedHistoryFactory(),
+    )
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+    ) {
+        Row(
+            Modifier.fillMaxWidth().clickable(enabled = signedIn, onClick = onOpenHistory),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("浏览历史", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        when {
+            !signedIn -> Text("登录后查看浏览历史", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            state.items.isEmpty() && state.loading -> Text("加载中…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            state.items.isEmpty() -> Text("还没有浏览记录", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            else -> state.items.take(3).forEach { entry -> HubEntryRow(entry, onClick = onOpenHistory) }
+        }
+    }
+}
+
+@Composable
+private fun HubEntryRow(entry: ListEntry, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // 无图时保留同样大小的占位，保证标题与简介始终对齐
+        val imageUrl = entry.imageUrl
+        Box(
+            Modifier.size(48.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (imageUrl != null) {
+                AsyncImage(
+                    model = coolapkImageRequest(imageUrl),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                )
+            } else {
+                Text(entry.title.take(1), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(entry.title, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            entry.subtitle?.takeIf(String::isNotBlank)?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
 }

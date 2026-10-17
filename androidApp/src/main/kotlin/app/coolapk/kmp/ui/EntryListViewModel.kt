@@ -64,6 +64,34 @@ internal class EntryListViewModel(
 
     companion object {
         /** 关注的话题，供「我的」页的「我的卡片」复用。 */
+        /** 我的常去：参考项目的 /member/recentHistoryList（最近访问的动态）。 */
+        fun recentVisitsFactory() = viewModelFactory {
+            initializer {
+                EntryListViewModel { page ->
+                    val result = HomeRepository(createPlatformGateway()).loadRecentHistory(page)
+                    ListEntryPage(
+                        items = result.items.map { feed ->
+                            ListEntry(id = feed.id, title = feed.title ?: feed.message.take(40), subtitle = feed.username, imageUrl = feed.imageUrls.firstOrNull())
+                        },
+                        hasMore = result.hasMore,
+                    )
+                }
+            }
+        }
+
+        /** 浏览历史：参考项目的 /member/hitHistoryList。 */
+        fun feedHistoryFactory() = viewModelFactory {
+            initializer {
+                EntryListViewModel { page ->
+                    val result = HomeRepository(createPlatformGateway()).loadFeedHistory(page)
+                    ListEntryPage(
+                        items = result.items.map { ListEntry(id = it.id, title = it.title, subtitle = it.description, imageUrl = it.imageUrl) },
+                        hasMore = result.hasMore,
+                    )
+                }
+            }
+        }
+
         fun followedTopicsFactory() = viewModelFactory {
             initializer { EntryListViewModel { page -> HomeRepository(createPlatformGateway()).loadFollowedTopics(page) } }
         }

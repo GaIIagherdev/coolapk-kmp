@@ -32,7 +32,7 @@ class ListEntryJsonParser(
                 id = id,
                 title = title,
                 subtitle = row.text("description", "subTitle", "subtitle", "summary", "intro"),
-                imageUrl = (row.text("pic", "cover", "logo", "icon", "image") ?: row.firstArrayText("picArr"))
+                imageUrl = (row.text("logo", "pic", "cover_pic", "cover", "icon", "image", "userAvatar") ?: row.firstArrayText("picArr"))
                     ?.let(::normalizeImage),
             )
         }
