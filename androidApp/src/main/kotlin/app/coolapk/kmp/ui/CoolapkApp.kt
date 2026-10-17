@@ -130,6 +130,8 @@ private sealed interface ContentRoute {
     data class Question(val id: String) : ContentRoute
     data object Events : ContentRoute
     data object More : ContentRoute
+    data object GoodsLists : ContentRoute
+    data class GoodsListDetail(val id: String, val title: String) : ContentRoute
     data object AppCenter : ContentRoute
     data object GameCenter : ContentRoute
     data object Reviews : ContentRoute
@@ -209,6 +211,7 @@ internal fun CoolapkApp(
     val openQuestion: (String) -> Unit = { id -> contentRoutes = contentRoutes + ContentRoute.Question(id) }
     val openEvents: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Events }
     val openMore: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.More }
+    val openGoodsLists: () -> Unit = { state.profile?.uid?.let { contentRoutes = contentRoutes + ContentRoute.GoodsLists } }
     val openAppCenter: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.AppCenter }
     val openGameCenter: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.GameCenter }
     val openReviews: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Reviews }
@@ -512,7 +515,23 @@ internal fun CoolapkApp(
                         onOpenReviews = openReviews,
                         onOpenEvents = openEvents,
                         onOpenAlbums = openAlbums,
+                        onOpenGoodsLists = openGoodsLists,
                     )
+                    is ContentRoute.GoodsLists -> state.profile?.uid?.let { ownUid ->
+                        GoodsListsScreen(
+                            uid = ownUid,
+                            onBack = closeContent,
+                            onOpenList = { entry -> contentRoutes = contentRoutes + ContentRoute.GoodsListDetail(entry.id, entry.title) },
+                        )
+                    }
+                    is ContentRoute.GoodsListDetail -> state.profile?.uid?.let { ownUid ->
+                        GoodsListDetailScreen(
+                            uid = ownUid,
+                            listId = route.id,
+                            title = route.title,
+                            onBack = closeContent,
+                        )
+                    }
                     is ContentRoute.Events -> EventsScreen(onBack = closeContent)
                     is ContentRoute.Albums -> AlbumsScreen(onBack = closeContent)
                     is ContentRoute.SecondHand -> SecondHandScreen(

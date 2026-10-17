@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Compare
+import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.Event
 import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material.icons.rounded.RateReview
@@ -57,6 +58,7 @@ internal fun MoreScreen(
     onOpenReviews: () -> Unit,
     onOpenEvents: () -> Unit,
     onOpenAlbums: () -> Unit,
+    onOpenGoodsLists: () -> Unit,
 ) {
     BackHandler(onBack = onBack)
     val sections = listOf(
@@ -66,6 +68,7 @@ internal fun MoreScreen(
         ),
         "数码与装备" to listOf(
             MoreItem("机型对比", Icons.Rounded.Compare, onOpenSelector),
+            MoreItem("好物清单", Icons.Rounded.Inventory2, onOpenGoodsLists),
             MoreItem("二手市场", Icons.Rounded.ShoppingBag, onOpenSecondHand),
             MoreItem("评测专区", Icons.Rounded.RateReview, onOpenReviews),
         ),

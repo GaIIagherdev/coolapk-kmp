@@ -84,6 +84,10 @@ interface CoolapkGateway {
         cursor: HomeCursor? = null,
     ): HomePage = error("当前平台未提供问题回答接口")
 
+    /** 当前账号的好物清单列表（万物清单的清单索引），需要登录。 */
+    suspend fun getGoodsLists(uid: String, page: Int = 1): ListEntryPage =
+        error("当前平台未提供好物清单列表接口")
+
     /** 好物清单（万物清单）条目；uid 与清单 ID 对应参考项目的 getGoodsListItems。 */
     suspend fun getGoodsListItems(uid: String, goodsListId: String, page: Int = 1): ListEntryPage =
         error("当前平台未提供好物清单条目接口")

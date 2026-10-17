@@ -272,6 +272,10 @@ class RustCoolapkGateway(
         )
     }
 
+    override suspend fun getGoodsLists(uid: String, page: Int): ListEntryPage = onCore {
+        listEntryParser.parsePage(core.getGoodsList(uid, "", page.coerceAtLeast(1).toUInt()))
+    }
+
     override suspend fun getGoodsListItems(uid: String, goodsListId: String, page: Int): ListEntryPage = onCore {
         goodsItemParser.parsePage(core.getGoodsListItems(uid, goodsListId, page.coerceAtLeast(1).toUInt()))
     }
