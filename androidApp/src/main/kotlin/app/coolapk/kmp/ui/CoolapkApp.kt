@@ -76,6 +76,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -201,6 +202,12 @@ internal fun CoolapkApp(
             contentRoutes = contentRoutes + ContentRoute.Topic(it)
         }
     }
+    val openRichLink: (String, String) -> Unit = { label, href ->
+        val trimmed = label.trim()
+        val topic = trimmed.removePrefix("#").removeSuffix("#").trim()
+        if (trimmed.startsWith("#") && topic.isNotBlank()) openTopic(topic) else openCoolapkUrl(appContext, href)
+    }
+    CompositionLocalProvider(LocalOpenRichLink provides openRichLink) {
     val closeContent: () -> Unit = { contentRoutes = contentRoutes.dropLast(1) }
     val openSettings: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.Settings }
     val openMyGoods: () -> Unit = { contentRoutes = contentRoutes + ContentRoute.MyGoods }
@@ -666,6 +673,7 @@ internal fun CoolapkApp(
                 viewModel.loginWithCookie(cookie) { error -> onResult(error) }
             },
         )
+    }
     }
 }
 

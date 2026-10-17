@@ -443,9 +443,10 @@ private fun DetailBody(
             Spacer(Modifier.height(20.dp))
             Text(it.toPlainText(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
         }
-        item.message.toPlainText().takeIf(String::isNotBlank)?.let {
+        val richMessage = rememberRichText(item.message)
+        if (richMessage.isNotBlank()) {
             Spacer(Modifier.height(if (item.title.isNullOrBlank()) 20.dp else 10.dp))
-            Text(it, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text(richMessage, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
         }
         if (item.imageUrls.isNotEmpty()) {
             Spacer(Modifier.height(16.dp))

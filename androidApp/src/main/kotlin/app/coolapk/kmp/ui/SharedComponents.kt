@@ -378,6 +378,7 @@ internal fun FeedCard(
     val content: @Composable () -> Unit = {
         FeedHeader(item, onOpenAuthor)
         val message = item.message.toPlainText()
+        val richMessage = rememberRichText(item.message)
         val title = feedDisplayTitle(item.title, item.username)
         val expandable = message.length > 120
         var expanded by remember(item.id) { mutableStateOf(false) }
@@ -388,7 +389,7 @@ internal fun FeedCard(
         if (message.isNotBlank()) {
             Spacer(Modifier.height(if (title == null) 10.dp else 6.dp))
             Text(
-                text = message,
+                text = richMessage,
                 style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 26.sp),
                 maxLines = if (expandable && !expanded) 4 else Int.MAX_VALUE,
                 overflow = if (expandable && !expanded) TextOverflow.Ellipsis else TextOverflow.Clip,

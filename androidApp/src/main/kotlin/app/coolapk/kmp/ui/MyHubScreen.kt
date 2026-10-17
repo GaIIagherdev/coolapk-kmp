@@ -551,7 +551,7 @@ private fun openMyCardLocal(url: String, onOpenHistory: () -> Unit, onOpenFavori
     else -> false
 }
 
-private fun openCoolapkUrl(context: android.content.Context, url: String) {
+internal fun openCoolapkUrl(context: android.content.Context, url: String) {
     val target = if (url.startsWith("/")) "https://www.coolapk.com$url" else url
     runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(target))) }
 }
