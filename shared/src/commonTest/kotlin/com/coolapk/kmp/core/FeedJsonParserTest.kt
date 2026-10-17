@@ -2,6 +2,7 @@ package com.coolapk.kmp.core
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class FeedJsonParserTest {
@@ -220,6 +221,23 @@ class FeedJsonParserTest {
         )
 
         assertEquals(listOf("item-9", "item-10"), page.items.map(FeedItem::collectionItemId))
+    }
+
+    @Test
+    fun readsFavoriteStateAndTypeFromFeedFields() {
+        val page = parser.parseHomePage(
+            """
+            {"data":[
+              {"id":"1","username":"酷友","message":"正文","userAction":{"collect":"1"},"feedType":"feed","trace":"t1"},
+              {"id":"2","username":"酷友","message":"正文","userAction":{"favorite":0}}
+            ]}
+            """.trimIndent(),
+        )
+
+        assertTrue(page.items[0].isFavorited)
+        assertEquals("feed", page.items[0].feedType)
+        assertEquals("t1", page.items[0].trace)
+        assertFalse(page.items[1].isFavorited)
     }
 }
 

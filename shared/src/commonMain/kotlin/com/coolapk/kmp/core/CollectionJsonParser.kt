@@ -29,6 +29,14 @@ data class FeedCollectionPage(
     val lastItem: String? = null,
 )
 
+/** 动态所在的收藏单：默认收藏单用于一键收藏，isCollected 用于取消收藏。 */
+data class FeedCollectionOption(
+    val id: String,
+    val title: String,
+    val isDefault: Boolean,
+    val isCollected: Boolean,
+)
+
 class CollectionJsonParser(
     private val json: Json = Json { ignoreUnknownKeys = true; isLenient = true },
 ) {
@@ -51,6 +59,40 @@ class CollectionJsonParser(
         val data = root["data"] as? JsonObject ?: return null
         val withId = if ("id" in data) data else JsonObject(data + ("id" to JsonPrimitive(collectionId)))
         return parseCollection(withId)
+    }
+
+    /** 动态所在收藏单的状态；data 可能是数组，也可能包在 entities/list/rows/data 里。 */
+    fun parseStatus(raw: String): List<FeedCollectionOption> {
+        val root = json.parseToJsonElement(raw) as? JsonObject ?: return emptyList()
+        val data = root["data"] ?: return emptyList()
+        return data.statusRows()
+            .mapNotNull(::parseStatusRow)
+            .distinctBy(FeedCollectionOption::id)
+    }
+
+    private fun JsonElement.statusRows(): List<JsonObject> = when (this) {
+        is JsonArray -> mapNotNull { it as? JsonObject }
+        is JsonObject -> sequenceOf("entities", "list", "rows", "data")
+            .mapNotNull { key -> this[key]?.statusRows() }
+            .firstOrNull { it.isNotEmpty() }
+            ?: listOfNotNull(takeIf { row -> row.text("id", "collectionId", "entityId") != null })
+        else -> emptyList()
+    }
+
+    private fun parseStatusRow(row: JsonObject): FeedCollectionOption? {
+        val id = row.text("id", "collectionId", "entityId") ?: return null
+        return FeedCollectionOption(
+            id = id,
+            title = row.text("title", "name").orEmpty(),
+            isDefault = row.flag(
+                "defaultCollected",
+                "default_collected",
+                "isDefault",
+                "is_default",
+                "isDefaultCollection",
+            ) ?: false,
+            isCollected = row.flag("isBeCollected", "is_be_collected") ?: false,
+        )
     }
 
     private fun parseCollection(row: JsonObject): FeedCollection? {

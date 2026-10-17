@@ -253,6 +253,19 @@ interface CoolapkGateway {
     suspend fun removeCollectionItem(itemId: String): Result<Unit> =
         Result.failure(IllegalStateException("当前平台未提供移出收藏接口"))
 
+    /** 动态所在的收藏单，包含默认收藏单与已收藏状态。 */
+    suspend fun getFeedCollectionStatus(feedId: String): List<FeedCollectionOption> =
+        error("当前平台未提供收藏状态接口")
+
+    /** 把动态加入（collectionIds）或移出（cancelIds）收藏单。 */
+    suspend fun updateCollectionItem(
+        targetId: String,
+        collectionIds: String,
+        cancelIds: String,
+        feedType: String = "feed",
+        trace: String = "",
+    ): Result<Unit> = Result.failure(IllegalStateException("当前平台未提供收藏接口"))
+
     suspend fun setCollectionFollow(collectionId: String, follow: Boolean): Result<Unit> =
         Result.failure(IllegalStateException("当前平台未提供关注收藏单接口"))
 

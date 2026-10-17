@@ -3,6 +3,7 @@ package com.coolapk.kmp.core
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class HomeRepositoryTest {
     @Test
@@ -47,6 +48,33 @@ class HomeRepositoryTest {
         )
     }
 
+    @Test
+    fun favoritingUsesDefaultCollectionAndUnfavoritingCancelsCollected() = runTest {
+        val gateway = RecordingGateway()
+        gateway.collectionOptions = listOf(
+            FeedCollectionOption("default-1", "默认收藏单", isDefault = true, isCollected = false),
+            FeedCollectionOption("c2", "旅行", isDefault = false, isCollected = true),
+        )
+        val repository = HomeRepository(gateway)
+
+        repository.setFeedFavorited("feed-1", favorited = true).getOrThrow()
+        repository.setFeedFavorited("feed-1", favorited = false).getOrThrow()
+
+        assertEquals(
+            listOf("feed-1|default-1|", "feed-1||c2"),
+            gateway.collectionUpdates,
+        )
+    }
+
+    @Test
+    fun favoritingWithoutAnyCollectionFails() = runTest {
+        val gateway = RecordingGateway()
+        val result = HomeRepository(gateway).setFeedFavorited("feed-1", favorited = true)
+
+        assertTrue(result.isFailure)
+        assertTrue(gateway.collectionUpdates.isEmpty())
+    }
+
     private class RecordingGateway : CoolapkGateway {
         var requestedPage: Int? = null
         var requestedFirstItem: String? = null
@@ -54,6 +82,8 @@ class HomeRepositoryTest {
         var requestedCode: String? = null
         var requestedCookie: String? = null
         val collectionCalls = mutableListOf<String>()
+        var collectionOptions: List<FeedCollectionOption> = emptyList()
+        val collectionUpdates = mutableListOf<String>()
 
         override suspend fun getHomePage(
             page: Int,
@@ -119,6 +149,20 @@ class HomeRepositoryTest {
 
         override suspend fun removeCollectionItem(itemId: String): Result<Unit> {
             collectionCalls += "remove:$itemId"
+            return Result.success(Unit)
+        }
+
+        override suspend fun getFeedCollectionStatus(feedId: String): List<FeedCollectionOption> =
+            collectionOptions
+
+        override suspend fun updateCollectionItem(
+            targetId: String,
+            collectionIds: String,
+            cancelIds: String,
+            feedType: String,
+            trace: String,
+        ): Result<Unit> {
+            collectionUpdates += "$targetId|$collectionIds|$cancelIds"
             return Result.success(Unit)
         }
     }

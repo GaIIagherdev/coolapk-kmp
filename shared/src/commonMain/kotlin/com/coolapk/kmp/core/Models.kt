@@ -17,6 +17,11 @@ data class FeedItem(
     val questionId: String? = null,
     /** 收藏单条目的独立 ID，仅收藏单内容列表返回；移出收藏单时使用。 */
     val collectionItemId: String? = null,
+    /** 是否已收藏（userAction.collect / favorite）。 */
+    val isFavorited: Boolean = false,
+    /** 动态类型与 trace，收藏/取消收藏时回传给服务端；缺失时用 feed 与空串。 */
+    val feedType: String? = null,
+    val trace: String? = null,
 )
 
 data class HomePage(

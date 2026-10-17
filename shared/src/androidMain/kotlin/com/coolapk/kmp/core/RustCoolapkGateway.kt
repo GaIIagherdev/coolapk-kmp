@@ -492,6 +492,20 @@ class RustCoolapkGateway(
         onCore<Unit> { core.removeCollectionItem(itemId) }
     }
 
+    override suspend fun getFeedCollectionStatus(feedId: String): List<FeedCollectionOption> = onCore {
+        collectionParser.parseStatus(core.getFeedCollectionStatus(feedId))
+    }
+
+    override suspend fun updateCollectionItem(
+        targetId: String,
+        collectionIds: String,
+        cancelIds: String,
+        feedType: String,
+        trace: String,
+    ): Result<Unit> = runCatching {
+        onCore<Unit> { core.updateCollectionItem(collectionIds, cancelIds, targetId, feedType, trace) }
+    }
+
     override suspend fun setCollectionFollow(collectionId: String, follow: Boolean): Result<Unit> = runCatching {
         onCore<Unit> {
             if (follow) core.followCollection(collectionId) else core.unfollowCollection(collectionId)

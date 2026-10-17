@@ -77,7 +77,7 @@
 | 我的动态 | `section=my_feeds` | 🟡 | 复用用户主页的“动态”标签，入口已接入；入口在真机验证过（“我的”页菜单可见） |
 | 浏览历史 | `/history` | 🟡 | 与参考项目一致，使用点击历史接口（feed 类型），点击打开动态；真机上已显示记录。部分记录没有图片；用户、话题、应用类历史未做 |
 | 我的常去 | `section=my_recent` | ✅ | 读取「我的卡片」配置（`my_page_card_config`）的常去分组，真机已验证；卡片字段依据参考项目推断 |
-| 收藏与收藏单 | `/favorites`、`/collection/:id` | 🟡 | 已接入收藏的动态、收藏单列表与收藏单内容；收藏单支持新建、编辑、删除，收藏单内容可按条目 ID 移出（均为乐观更新，失败回滚并提示）。未做：封面上传、关注/点赞收藏单、动态收藏入口；条目 ID 字段依据参考项目推断，未经真实样本验证；接口未经真实账号验证 |
+| 收藏与收藏单 | `/favorites`、`/collection/:id` | 🟡 | 已接入收藏的动态、收藏单列表与收藏单内容；收藏单支持新建、编辑、删除，收藏单内容可按条目 ID 移出（均为乐观更新，失败回滚并提示）；动态详情支持收藏/取消收藏（收藏加入默认收藏单，取消移出全部已收藏的收藏单）。未做：收藏时选择收藏单、封面上传、关注/点赞收藏单。条目 ID 与收藏状态字段依据参考项目推断，未经真实样本验证；接口未经真实账号验证 |
 | 关注的论坛 / 话题 / 收藏单 / 问题 / 数码吧 | `/followed-nodes` 等 | 🟡 | 已接入关注的论坛与话题（同一页两个标签），入口在“我的”页。关注的话题：真机标题、简介、图片均正常。关注的论坛：请求方式与参考项目一致（同一 uid、同一接口、只取第一页），真机返回为空，待在参考项目中用同一账号核对是否确实没有关注的论坛；收藏单、关注的问题、数码吧未做 |
 | 内容回收站 | `/recycle-bin` | ⬜ | |
 | 隐藏的回复 | `/hidden-replies` | ⬜ | |
@@ -104,7 +104,7 @@
 
 | 功能 | `client.rs` 已实现 | FFI 已导出 | 仍需 |
 | --- | --- | --- | --- |
-| 收藏 / 收藏单 | `get_favorite_list`、`get_collection_list`、`get_collection_detail`、`get_collection_item_list`、`create_collection`、`update_collection`、`delete_collection`、`follow_collection` 等 | 否 | FFI 导出、Gateway、解析器、界面 |
+| 收藏 / 收藏单 | `get_favorite_list`、`get_collection_list`、`get_collection_detail`、`get_collection_item_list`、`create_collection`、`update_collection`、`delete_collection`、`remove_collection_item`、`update_collection_item`、`get_feed_collection_status` 等 | 是（列表、详情、增删改、移出、收藏状态） | 封面上传、收藏时选择收藏单、关注/点赞收藏单 |
 | 我的赞 / 我的评论 | `get_user_like_list`、`get_user_feeds`（已导出） | 部分 | 核对评论列表接口 |
 | 浏览历史 | `get_recent_history` | 否 | FFI 导出、解析、界面 |
 | 黑名单 | `get_black_list`、`add_to_black_list`、`remove_from_black_list` | 否 | 同上 |
@@ -128,7 +128,7 @@
 
 ## 建议执行顺序（每项一次提交）
 
-1. **收藏与收藏单**：列表、详情、收藏单新建/编辑/删除与移出内容已完成；下一步接入动态详情的收藏入口（收藏状态读取 + 加入/移出默认收藏单）。
+1. **收藏与收藏单**：列表、详情、收藏单新建/编辑/删除、移出内容与动态收藏入口已完成；剩余收藏时选择收藏单、封面上传与关注/点赞收藏单。
 2. **我的赞、我的评论、我的动态**：核对接口后接入，复用 `MyHubScreen` 入口。
 3. **浏览历史、黑名单、关注的论坛 / 话题**：列表型页面，可共用一个分页列表组件。
 4. **问答详情、直播详情、相册、活动**：独立详情页。

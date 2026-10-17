@@ -41,6 +41,8 @@ data class FeedDetailUiState(
     val threadHasMore: Boolean = true,
     val feedLikeOverride: Boolean? = null,
     val feedLiking: Boolean = false,
+    val favoriteOverride: Boolean? = null,
+    val favoriteToggling: Boolean = false,
     val replyLikeOverrides: Map<String, Boolean> = emptyMap(),
     val likingReplyIds: Set<String> = emptySet(),
     val interactionError: String? = null,
@@ -265,6 +267,35 @@ class FeedDetailViewModel(
             } else {
                 _state.update { it.copy(feedLiking = false) }
                 onChanged()
+            }
+        }
+    }
+
+    fun toggleFeedFavorite() {
+        val snapshot = _state.value
+        val detail = snapshot.detail ?: return
+        if (snapshot.favoriteToggling) return
+        val favorited = snapshot.favoriteOverride ?: detail.isFavorited
+        val generation = feedGeneration
+        _state.update { it.copy(favoriteOverride = !favorited, favoriteToggling = true, interactionError = null) }
+        viewModelScope.launch {
+            val result = repository?.setFeedFavorited(
+                feedId = detail.id,
+                favorited = !favorited,
+                feedType = detail.feedType ?: "feed",
+                trace = detail.trace.orEmpty(),
+            )
+            if (generation != feedGeneration) return@launch
+            if (result == null || result.isFailure) {
+                _state.update {
+                    it.copy(
+                        favoriteOverride = snapshot.favoriteOverride,
+                        favoriteToggling = false,
+                        interactionError = result?.exceptionOrNull()?.message ?: "数据服务尚未就绪",
+                    )
+                }
+            } else {
+                _state.update { it.copy(favoriteToggling = false) }
             }
         }
     }

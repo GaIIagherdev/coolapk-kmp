@@ -61,4 +61,35 @@ class CollectionJsonParserTest {
         assertEquals("旧机回收", detail?.title)
         assertEquals(3, detail?.itemCount)
     }
+
+    @Test
+    fun parsesCollectionStatusWithDefaultAndCollectedFlags() {
+        val options = parser.parseStatus(
+            """{"code":200,"data":[
+            {"id":"default-1","title":"默认收藏单","defaultCollected":1,"isBeCollected":"1"},
+            {"collectionId":"c2","title":"旅行","isDefault":"0"}
+            ]}""",
+        )
+
+        assertEquals(listOf("default-1", "c2"), options.map { it.id })
+        assertTrue(options[0].isDefault)
+        assertTrue(options[0].isCollected)
+        assertFalse(options[1].isDefault)
+        assertFalse(options[1].isCollected)
+    }
+
+    @Test
+    fun parsesCollectionStatusWrappedInEntities() {
+        val options = parser.parseStatus(
+            """{"code":200,"data":{"entities":[{"entityId":"c3","title":"待看","defaultCollected":true}]}}""",
+        )
+        assertEquals("c3", options.single().id)
+        assertTrue(options.single().isDefault)
+    }
+
+    @Test
+    fun emptyCollectionStatusIsNotAFailure() {
+        assertTrue(parser.parseStatus("""{"code":200,"data":[]}""").isEmpty())
+        assertTrue(parser.parseStatus("""{"code":200}""").isEmpty())
+    }
 }

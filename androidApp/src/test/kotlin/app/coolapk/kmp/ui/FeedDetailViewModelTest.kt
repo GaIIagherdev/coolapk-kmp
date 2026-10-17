@@ -2,6 +2,7 @@ package app.coolapk.kmp.ui
 
 import com.coolapk.kmp.core.CaptchaChallenge
 import com.coolapk.kmp.core.CoolapkGateway
+import com.coolapk.kmp.core.FeedCollectionOption
 import com.coolapk.kmp.core.FeedItem
 import com.coolapk.kmp.core.FeedUnavailableException
 import com.coolapk.kmp.core.HomePage
@@ -19,6 +20,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -120,6 +122,40 @@ class FeedDetailViewModelTest {
         assertEquals("网络连接超时", viewModel.state.value.detailError)
     }
 
+    @Test
+    fun favoriteAddsToDefaultCollectionAndUnfavoriteCancelsCollected() = runTest(dispatcher) {
+        val gateway = FavoriteGateway()
+        val viewModel = FeedDetailViewModel { HomeRepository(gateway) }
+        viewModel.open("100", null)
+        runCurrent()
+
+        viewModel.toggleFeedFavorite()
+        runCurrent()
+        assertEquals(true, viewModel.state.value.favoriteOverride)
+        assertFalse(viewModel.state.value.favoriteToggling)
+        assertEquals(listOf("100|default-1||feed|"), gateway.updates)
+
+        viewModel.toggleFeedFavorite()
+        runCurrent()
+        assertEquals(false, viewModel.state.value.favoriteOverride)
+        assertEquals("100||c2|feed|", gateway.updates.last())
+    }
+
+    @Test
+    fun failedFavoriteRollsBackOverrideAndShowsReason() = runTest(dispatcher) {
+        val gateway = FavoriteGateway().apply { failFavorite = "收藏失败" }
+        val viewModel = FeedDetailViewModel { HomeRepository(gateway) }
+        viewModel.open("100", null)
+        runCurrent()
+
+        viewModel.toggleFeedFavorite()
+        runCurrent()
+
+        assertNull(viewModel.state.value.favoriteOverride)
+        assertFalse(viewModel.state.value.favoriteToggling)
+        assertEquals("收藏失败", viewModel.state.value.interactionError)
+    }
+
     private fun captchaError() = IllegalStateException(
         """{"code":403,"messageStatus":"err_request_captcha_v2","captchaId":"abc12345","captchaField":"_v2_post_token"}""",
     )
@@ -164,6 +200,45 @@ private class FakeFeedDetailGateway : CoolapkGateway {
     ): ReplyPage = ReplyPage(emptyList(), hasMore = false)
 
     override suspend fun getSessionState() = SessionState(loggedIn = false)
+
+    override suspend fun getHomePage(page: Int, firstItem: String?, lastItem: String?) =
+        HomePage(emptyList())
+
+    override fun setSessionCookie(cookie: String) = Unit
+}
+
+private class FavoriteGateway : CoolapkGateway {
+    var failFavorite: String? = null
+    val updates = mutableListOf<String>()
+
+    override suspend fun getFeedDetail(feedId: String): FeedItem =
+        FeedItem(feedId, null, "正文", "作者", null, null, null, 0, 0, emptyList())
+
+    override suspend fun getFeedReplies(
+        feedId: String,
+        page: Int,
+        sort: ReplySort,
+        authorOnly: Boolean,
+    ): ReplyPage = ReplyPage(emptyList(), hasMore = false)
+
+    override suspend fun getFeedCollectionStatus(feedId: String): List<FeedCollectionOption> = listOf(
+        FeedCollectionOption("default-1", "默认收藏单", isDefault = true, isCollected = false),
+        FeedCollectionOption("c2", "旅行", isDefault = false, isCollected = true),
+    )
+
+    override suspend fun updateCollectionItem(
+        targetId: String,
+        collectionIds: String,
+        cancelIds: String,
+        feedType: String,
+        trace: String,
+    ): Result<Unit> {
+        failFavorite?.let { return Result.failure(IllegalStateException(it)) }
+        updates += "$targetId|$collectionIds|$cancelIds|$feedType|$trace"
+        return Result.success(Unit)
+    }
+
+    override suspend fun getSessionState() = SessionState(loggedIn = true)
 
     override suspend fun getHomePage(page: Int, firstItem: String?, lastItem: String?) =
         HomePage(emptyList())

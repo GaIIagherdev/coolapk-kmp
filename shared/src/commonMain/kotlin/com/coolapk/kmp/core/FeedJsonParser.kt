@@ -111,6 +111,11 @@ class FeedJsonParser(
                 ?: user?.string("uid") ?: user?.string("userId") ?: user?.string("id"),
             questionId = questionIdOf(obj, id),
             collectionItemId = collectionItemIdOf(obj),
+            isFavorited = (obj["userAction"] as? JsonObject)?.let { action ->
+                action.boolean("collect") ?: action.boolean("favorite")
+            } ?: obj.boolean("isFavorited") ?: obj.boolean("is_favorited") ?: false,
+            feedType = obj.string("feedType") ?: obj.string("feed_type"),
+            trace = obj.string("trace"),
         )
     }
 

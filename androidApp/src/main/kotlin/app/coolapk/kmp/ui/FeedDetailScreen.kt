@@ -29,6 +29,8 @@ import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -222,7 +224,10 @@ fun FeedDetailScreen(
                                 state.detail != null -> DetailBody(
                                     item = state.detail!!,
                                     liked = state.feedLikeOverride ?: state.detail!!.isLiked,
+                                    favorited = state.favoriteOverride ?: state.detail!!.isFavorited,
+                                    favoriteToggling = state.favoriteToggling,
                                     onLike = { viewModel.toggleFeedLike(onFeedChanged) },
+                                    onToggleFavorite = viewModel::toggleFeedFavorite,
                                     onReply = { replyTarget = null; composerOpen = true },
                                     onOpenImage = onOpenImage,
                                     onOpenAuthor = onOpenAuthor,
@@ -410,7 +415,10 @@ internal class CommentFocusGate {
 private fun DetailBody(
     item: FeedItem,
     liked: Boolean,
+    favorited: Boolean,
+    favoriteToggling: Boolean,
     onLike: () -> Unit,
+    onToggleFavorite: () -> Unit,
     onReply: () -> Unit,
     onOpenImage: (List<String>, Int) -> Unit,
     onOpenAuthor: (String) -> Unit,
@@ -469,6 +477,17 @@ private fun DetailBody(
                 Icon(Icons.Rounded.ChatBubbleOutline, contentDescription = null, modifier = Modifier.size(19.dp))
                 Spacer(Modifier.width(6.dp))
                 Text(item.replyCount.formatCompact())
+            }
+            TextButton(onClick = onToggleFavorite, enabled = !favoriteToggling) {
+                Icon(
+                    if (favorited) Icons.Rounded.Star else Icons.Rounded.StarBorder,
+                    contentDescription = null,
+                    modifier = Modifier.size(19.dp),
+                    tint = if (favorited) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(if (favorited) "已收藏" else "收藏")
             }
         }
     }

@@ -172,6 +172,49 @@ class HomeRepository(
     /** 从收藏单移出内容；itemId 是收藏条目 ID（[FeedItem.collectionItemId]），不是动态 ID。 */
     suspend fun removeCollectionItem(itemId: String): Result<Unit> = gateway.removeCollectionItem(itemId)
 
+    /**
+     * 收藏或取消收藏动态。与参考项目一致：先查询动态所在的收藏单，
+     * 收藏时加入默认收藏单，取消时移出全部已收藏的收藏单。
+     */
+    suspend fun setFeedFavorited(
+        feedId: String,
+        favorited: Boolean,
+        feedType: String = "feed",
+        trace: String = "",
+    ): Result<Unit> = runCatching {
+        val collections = gateway.getFeedCollectionStatus(feedId)
+        if (favorited) {
+            val collectionId = collections.firstOrNull { it.isDefault }?.id
+                ?: collections.firstOrNull { collection ->
+                    collection.title.contains("默认") || collection.title.contains("default", ignoreCase = true)
+                }?.id
+                ?: collections.firstOrNull { it.id.isNotBlank() }?.id
+                ?: error("未找到酷安默认收藏单，收藏失败")
+            gateway.updateCollectionItem(
+                targetId = feedId,
+                collectionIds = collectionId,
+                cancelIds = "",
+                feedType = feedType,
+                trace = trace,
+            ).getOrThrow()
+        } else {
+            val cancelIds = collections
+                .filter { it.isCollected }
+                .map { it.id }
+                .filter(String::isNotBlank)
+                .joinToString(",")
+                .ifBlank { collections.firstOrNull { it.isDefault }?.id.orEmpty() }
+            if (cancelIds.isBlank()) error("未找到动态所在的收藏单，取消收藏失败")
+            gateway.updateCollectionItem(
+                targetId = feedId,
+                collectionIds = "",
+                cancelIds = cancelIds,
+                feedType = feedType,
+                trace = trace,
+            ).getOrThrow()
+        }
+    }
+
     /** 创建收藏单。封面留空，暂不接入图片上传。 */
     suspend fun createCollection(
         title: String,
