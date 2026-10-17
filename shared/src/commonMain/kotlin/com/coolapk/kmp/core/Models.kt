@@ -15,6 +15,8 @@ data class FeedItem(
     val uid: String? = null,
     /** 问题动态的问题 ID（与参考项目一致，没有则用动态 ID）；普通动态为 null。 */
     val questionId: String? = null,
+    /** 收藏单条目的独立 ID，仅收藏单内容列表返回；移出收藏单时使用。 */
+    val collectionItemId: String? = null,
 )
 
 data class HomePage(

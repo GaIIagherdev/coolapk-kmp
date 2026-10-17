@@ -110,7 +110,23 @@ class FeedJsonParser(
             uid = obj.string("uid") ?: obj.string("userId") ?: obj.string("user_id")
                 ?: user?.string("uid") ?: user?.string("userId") ?: user?.string("id"),
             questionId = questionIdOf(obj, id),
+            collectionItemId = collectionItemIdOf(obj),
         )
+    }
+
+    /**
+     * 收藏单内容列表把条目 ID 放在 collectionItem / collection_item_info 等嵌套对象里，
+     * 与动态 ID 不同；移出收藏单必须使用这个 ID。
+     */
+    private fun collectionItemIdOf(obj: JsonObject): String? {
+        val nested = sequenceOf("collectionItem", "collection_item_info", "collectionItemInfo")
+            .mapNotNull { key -> obj[key] as? JsonObject }
+            .firstOrNull()
+        return nested?.string("id")
+            ?: nested?.string("itemId")
+            ?: nested?.string("item_id")
+            ?: obj.string("collectionItemId")
+            ?: obj.string("collection_item_id")
     }
 
     /**

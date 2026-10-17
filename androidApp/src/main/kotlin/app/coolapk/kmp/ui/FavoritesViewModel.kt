@@ -263,6 +263,48 @@ internal class FavoritesViewModel(
         _state.update { it.copy(message = null) }
     }
 
+    /**
+     * 从当前收藏单移出内容。乐观移除，失败时放回原位置并提示；
+     * 条目 ID 与动态 ID 不同，缺失时只提示，不发请求。
+     */
+    fun removeFromCollection(feed: FeedItem) {
+        val snapshot = _state.value
+        val collection = snapshot.openedCollection ?: return
+        val itemId = feed.collectionItemId
+        if (itemId.isNullOrBlank()) {
+            _state.update { it.copy(message = "这条内容缺少收藏条目 ID，暂时无法移出") }
+            return
+        }
+        val source = repository ?: run {
+            _state.update { it.copy(message = "数据服务尚未就绪") }
+            return
+        }
+        val index = snapshot.collectionItems.items.indexOfFirst { it.id == feed.id }
+        _state.update { state ->
+            state
+                .copy(collectionItems = state.collectionItems.copy(items = state.collectionItems.items.filterNot { it.id == feed.id }))
+                .withCollectionItemCount(collection.id, -1)
+        }
+        viewModelScope.launch {
+            val result = source.removeCollectionItem(itemId)
+            if (result.isFailure) {
+                _state.update { state ->
+                    val restored = state.collectionItems.items.toMutableList().apply {
+                        add(index.coerceIn(0, size), feed)
+                    }
+                    state
+                        .copy(
+                            collectionItems = state.collectionItems.copy(items = restored),
+                            message = result.exceptionOrNull()?.message ?: "移出失败，请稍后重试",
+                        )
+                        .withCollectionItemCount(collection.id, 1)
+                }
+            } else {
+                _state.update { it.copy(message = "已移出收藏单") }
+            }
+        }
+    }
+
     private fun loadFeeds(page: Int) {
         val source = repository
         fetchPage(
@@ -348,6 +390,15 @@ internal class FavoritesViewModel(
     ): PagedListState<FeedCollection> = copy(
         items = items.map { if (it.id == id) it.copy(title = title, description = description, isOpen = isOpen) else it },
     )
+
+    /** 收藏单里的内容数量随移出/回滚同步更新，列表与详情共用同一个收藏单对象。 */
+    private fun FavoritesUiState.withCollectionItemCount(collectionId: String, delta: Int): FavoritesUiState {
+        fun FeedCollection.adjusted() = if (id == collectionId) copy(itemCount = (itemCount + delta).coerceAtLeast(0)) else this
+        return copy(
+            collections = collections.copy(items = collections.items.map { it.adjusted() }),
+            openedCollection = openedCollection?.adjusted(),
+        )
+    }
 
     private fun FeedCollection.updated(
         id: String,

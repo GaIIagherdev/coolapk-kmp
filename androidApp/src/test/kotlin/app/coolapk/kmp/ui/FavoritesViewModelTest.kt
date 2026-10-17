@@ -3,6 +3,7 @@ package app.coolapk.kmp.ui
 import com.coolapk.kmp.core.CoolapkGateway
 import com.coolapk.kmp.core.FeedCollection
 import com.coolapk.kmp.core.FeedCollectionPage
+import com.coolapk.kmp.core.FeedItem
 import com.coolapk.kmp.core.HomeCursor
 import com.coolapk.kmp.core.HomePage
 import com.coolapk.kmp.core.HomeRepository
@@ -135,14 +136,56 @@ class FavoritesViewModelTest {
         assertEquals("已删除收藏单", viewModel.state.value.message)
     }
 
+    @Test fun removeFromCollectionUsesEntryIdAndUpdatesCount() = runTest(dispatcher) {
+        val gateway = FakeCollectionGateway()
+        val viewModel = FavoritesViewModel { HomeRepository(gateway) }
+        runCurrent()
+        viewModel.select(FavoritesTab.COLLECTIONS)
+        runCurrent()
+        viewModel.openCollection(viewModel.state.value.collections.items.first())
+        runCurrent()
+
+        viewModel.removeFromCollection(viewModel.state.value.collectionItems.items.first())
+        runCurrent()
+
+        assertEquals(listOf("item-c1"), gateway.removed)
+        assertEquals(listOf("c2-item"), viewModel.state.value.collectionItems.items.map(FeedItem::collectionItemId))
+        assertEquals("已移出收藏单", viewModel.state.value.message)
+        assertEquals(1, viewModel.state.value.openedCollection?.itemCount)
+    }
+
+    @Test fun failedRemovalRestoresRowAndCount() = runTest(dispatcher) {
+        val gateway = FakeCollectionGateway()
+        val viewModel = FavoritesViewModel { HomeRepository(gateway) }
+        runCurrent()
+        viewModel.select(FavoritesTab.COLLECTIONS)
+        runCurrent()
+        viewModel.openCollection(viewModel.state.value.collections.items.first())
+        runCurrent()
+
+        gateway.removeFailure = "移出失败"
+        viewModel.removeFromCollection(viewModel.state.value.collectionItems.items.first())
+        runCurrent()
+
+        assertEquals(listOf("item-c1", "c2-item"), viewModel.state.value.collectionItems.items.map(FeedItem::collectionItemId))
+        assertEquals("移出失败", viewModel.state.value.message)
+        assertEquals(2, viewModel.state.value.openedCollection?.itemCount)
+    }
+
     private class FakeCollectionGateway : CoolapkGateway {
         val created = mutableListOf<Pair<String, String>>()
         var createdOpen: Boolean? = null
         var updateFailure: String? = null
         var deleteFailure: String? = null
+        var removeFailure: String? = null
+        val removed = mutableListOf<String>()
         private val collections = mutableListOf(
             collection("c1", "旧标题"),
             collection("c2", "另一个收藏单"),
+        )
+        private val collectionFeeds = listOf(
+            feed("f1", "item-c1"),
+            feed("f2", "c2-item"),
         )
 
         override suspend fun getHomePage(page: Int, firstItem: String?, lastItem: String?): HomePage =
@@ -157,6 +200,15 @@ class FavoritesViewModelTest {
 
         override suspend fun getCollections(uid: String, page: Int, cursor: HomeCursor?): FeedCollectionPage =
             FeedCollectionPage(items = collections.toList(), hasMore = false)
+
+        override suspend fun getCollectionItems(collectionId: String, page: Int, cursor: HomeCursor?): HomePage =
+            HomePage(items = collectionFeeds.toList(), hasMore = false)
+
+        override suspend fun removeCollectionItem(itemId: String): Result<Unit> {
+            removeFailure?.let { return Result.failure(IllegalStateException(it)) }
+            removed += itemId
+            return Result.success(Unit)
+        }
 
         override suspend fun createCollection(
             title: String,
@@ -197,12 +249,26 @@ class FavoritesViewModelTest {
                 title = title,
                 description = description,
                 coverUrl = null,
-                itemCount = 0,
+                itemCount = 2,
                 followCount = 0,
                 likeCount = 0,
                 isOpen = isOpen,
                 isDefault = false,
                 ownerUid = null,
             )
+
+        private fun feed(id: String, collectionItemId: String) = FeedItem(
+            id = id,
+            title = null,
+            message = "正文",
+            username = "酷友",
+            avatarUrl = null,
+            device = null,
+            createdAt = null,
+            likeCount = 0,
+            replyCount = 0,
+            imageUrls = emptyList(),
+            collectionItemId = collectionItemId,
+        )
     }
 }

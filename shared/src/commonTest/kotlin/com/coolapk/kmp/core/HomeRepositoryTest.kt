@@ -39,9 +39,10 @@ class HomeRepositoryTest {
         repository.createCollection("旅行", "路上拍的", isOpen = false)
         repository.updateCollection("c1", "新标题", "新简介", isOpen = true)
         repository.deleteCollection("c1")
+        repository.removeCollectionItem("item-1")
 
         assertEquals(
-            listOf("create:旅行:false", "update:c1:新标题:true", "delete:c1"),
+            listOf("create:旅行:false", "update:c1:新标题:true", "delete:c1", "remove:item-1"),
             gateway.collectionCalls,
         )
     }
@@ -113,6 +114,11 @@ class HomeRepositoryTest {
 
         override suspend fun deleteCollection(collectionId: String): Result<Unit> {
             collectionCalls += "delete:$collectionId"
+            return Result.success(Unit)
+        }
+
+        override suspend fun removeCollectionItem(itemId: String): Result<Unit> {
+            collectionCalls += "remove:$itemId"
             return Result.success(Unit)
         }
     }

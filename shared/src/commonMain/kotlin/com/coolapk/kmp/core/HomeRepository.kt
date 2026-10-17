@@ -169,6 +169,9 @@ class HomeRepository(
     suspend fun loadCollectionItems(collectionId: String, page: Int = 1, cursor: HomeCursor? = null): HomePage =
         gateway.getCollectionItems(collectionId, page, cursor)
 
+    /** 从收藏单移出内容；itemId 是收藏条目 ID（[FeedItem.collectionItemId]），不是动态 ID。 */
+    suspend fun removeCollectionItem(itemId: String): Result<Unit> = gateway.removeCollectionItem(itemId)
+
     /** 创建收藏单。封面留空，暂不接入图片上传。 */
     suspend fun createCollection(
         title: String,

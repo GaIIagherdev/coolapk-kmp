@@ -195,6 +195,32 @@ class FeedJsonParserTest {
         assertEquals(null, page.lastItem)
         assertEquals(false, page.hasMore)
     }
+
+    @Test
+    fun readsCollectionItemIdFromNestedCollectionItem() {
+        val page = parser.parseHomePage(
+            """
+            {
+              "data": [
+                {
+                  "id": "feed-1",
+                  "username": "酷友",
+                  "message": "正文",
+                  "collection_item_info": { "id": "item-9" }
+                },
+                {
+                  "id": "feed-2",
+                  "username": "酷友",
+                  "message": "正文",
+                  "collectionItemId": "item-10"
+                }
+              ]
+            }
+            """.trimIndent(),
+        )
+
+        assertEquals(listOf("item-9", "item-10"), page.items.map(FeedItem::collectionItemId))
+    }
 }
 
 class AppAndProfileJsonParserTest {

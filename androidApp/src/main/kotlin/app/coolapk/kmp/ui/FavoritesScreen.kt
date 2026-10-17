@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -143,6 +146,7 @@ internal fun FavoritesScreen(
                     onOpenFeed = onOpenFeed,
                     onLike = onLike,
                     likeOverrides = likeOverrides,
+                    onRemoveFromCollection = viewModel::removeFromCollection,
                 )
                 state.tab == FavoritesTab.FEEDS -> PagedFeedList(
                     list = state.feeds,
@@ -204,6 +208,7 @@ private fun PagedFeedList(
     onOpenFeed: (FeedItem) -> Unit,
     onLike: (FeedItem) -> Unit,
     likeOverrides: Map<String, Boolean>,
+    onRemoveFromCollection: ((FeedItem) -> Unit)? = null,
 ) {
     PagedColumn(
         list = list,
@@ -213,15 +218,33 @@ private fun PagedFeedList(
         onLoadMore = onLoadMore,
         onRetry = onRetry,
     ) { feed ->
-        FeedCard(
-            item = feed,
-            liked = likeOverrides[feed.id] ?: feed.isLiked,
-            onLike = { onLike(feed) },
-            onOpenDetail = { onOpenFeed(feed) },
-            onReply = { onOpenFeed(feed) },
-            onOpenImage = { _, _ -> },
-            card = true,
-        )
+        Column {
+            FeedCard(
+                item = feed,
+                liked = likeOverrides[feed.id] ?: feed.isLiked,
+                onLike = { onLike(feed) },
+                onOpenDetail = { onOpenFeed(feed) },
+                onReply = { onOpenFeed(feed) },
+                onOpenImage = { _, _ -> },
+                card = true,
+            )
+            if (onRemoveFromCollection != null && feed.collectionItemId != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(end = 4.dp),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    TextButton(onClick = { onRemoveFromCollection(feed) }) {
+                        Icon(
+                            Icons.Rounded.RemoveCircleOutline,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text("移出收藏单")
+                    }
+                }
+            }
+        }
     }
 }
 
