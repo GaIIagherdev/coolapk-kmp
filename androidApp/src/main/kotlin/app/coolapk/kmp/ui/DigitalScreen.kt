@@ -88,6 +88,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.rounded.Compare
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.IconButton
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.graphics.SolidColor
 
 @Composable
 internal fun DigitalScreen(
@@ -334,28 +336,63 @@ private fun DigitalLibrary(
         state.libraryOptions.filter { query.isBlank() || it.title.orEmpty().contains(query.trim(), ignoreCase = true) }
     }
     Column(Modifier.fillMaxSize()) {
-        // 品牌 / 分类切换与搜索同一行
+        // 品牌 / 分类切换与搜索同一行：统一的浅色胶囊，无描边
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             DigitalLibraryMode.entries.forEach { mode ->
-                FilterChip(
-                    selected = state.libraryMode == mode,
+                val selected = state.libraryMode == mode
+                Surface(
                     onClick = { onMode(mode) },
-                    label = { Text(if (mode == DigitalLibraryMode.BRAND) "品牌" else "分类") },
                     modifier = Modifier.heightIn(min = 48.dp),
-                )
+                    shape = CircleShape,
+                    color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                ) {
+                    Text(
+                        if (mode == DigitalLibraryMode.BRAND) "品牌" else "分类",
+                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                    )
+                }
             }
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                modifier = Modifier.weight(1f),
-                singleLine = true,
-                placeholder = { Text(if (state.libraryMode == DigitalLibraryMode.BRAND) "搜索品牌" else "搜索分类") },
-                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-            )
+            Row(
+                Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Rounded.Search,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Box(Modifier.weight(1f)) {
+                    if (query.isEmpty()) {
+                        Text(
+                            if (state.libraryMode == DigitalLibraryMode.BRAND) "搜索品牌" else "搜索分类",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    BasicTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                    )
+                }
+            }
         }
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val sideWidth = if (maxWidth >= 840.dp) 240.dp else 88.dp
@@ -416,14 +453,29 @@ private fun DigitalLibrary(
                                     )
                                 }
                             }
-                            SingleChoiceSegmentedButtonRow {
-                                listOf(true to "网格", false to "列表").forEachIndexed { index, (grid, label) ->
-                                    SegmentedButton(
-                                        selected = productGrid == grid,
+                            Row(
+                                Modifier
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                    .padding(4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                listOf(true to "网格", false to "列表").forEach { (grid, label) ->
+                                    val selected = productGrid == grid
+                                    Surface(
                                         onClick = { productGrid = grid },
-                                        shape = SegmentedButtonDefaults.itemShape(index = index, count = 2),
-                                        label = { Text(label) },
-                                    )
+                                        modifier = Modifier.heightIn(min = 40.dp),
+                                        shape = CircleShape,
+                                        color = if (selected) MaterialTheme.colorScheme.surfaceContainerLowest else Color.Transparent,
+                                        contentColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    ) {
+                                        Text(
+                                            label,
+                                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                        )
+                                    }
                                 }
                             }
                         }
